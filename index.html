@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Christ Focus Mission | Harnessing Data for a Higher Purpose</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c-primary: #4A4B8C;
+  --c-secondary: #1BA3CC;
+  --c-accent: #F5A623;
+  --c-accent2: #F8C41C;
+  --c-dark: #FFFFFF;
+  --c-darker: #F5F7FC;
+  --c-light: #181A3A;
+  --c-muted: #5B5E7A;
+  --c-card: #FFFFFF;
+  --c-card-hover: #EEF1F9;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-body); background: var(--c-darker); color: var(--c-light); overflow-x: hidden; }
+#particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.cfm-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(74,75,140,0.15); transition: all 0.3s ease; }
+.cfm-nav.scrolled { padding: 10px 40px; background: rgba(255,255,255,0.95); box-shadow: 0 2px 20px rgba(74,75,140,0.08); }
+.cfm-nav-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.cfm-nav-logo .logo-icon { height: 40px; width: auto; }
+.cfm-nav-logo span { font-family: var(--font-heading); font-weight: 700; font-size: 1.15rem; color: var(--c-light); letter-spacing: -0.02em; }
+.cfm-nav-links { display: flex; gap: 32px; align-items: center; }
+.cfm-nav-links a { color: var(--c-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.3s ease; position: relative; cursor: pointer; }
+.cfm-nav-links a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: linear-gradient(90deg, var(--c-secondary), var(--c-accent)); transition: width 0.3s ease; }
+.cfm-nav-links a:hover { color: var(--c-light); }
+.cfm-nav-links a:hover::after { width: 100%; }
+.cfm-nav-cta { background: linear-gradient(135deg, var(--c-accent), var(--c-accent2)); color: var(--c-light) !important; padding: 10px 24px; border-radius: 8px; font-weight: 700 !important; text-transform: uppercase; font-size: 0.8rem !important; letter-spacing: 0.08em; border: none; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.cfm-nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(245,166,35,0.3); }
+.cfm-nav-cta::after { display: none !important; }
+.cfm-mobile-menu-btn { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+.cfm-mobile-menu-btn span { width: 24px; height: 2px; background: var(--c-light); transition: all 0.3s ease; }
+.cfm-hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 140px 40px 80px; overflow: hidden; }
+.cfm-hero-glow { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(27,163,204,0.15) 0%, transparent 70%); top: 10%; left: 50%; transform: translateX(-50%); animation: glowPulse 6s ease-in-out infinite; z-index: 1; }
+@keyframes glowPulse { 0%,100% { opacity: 0.6; transform: translateX(-50%) scale(1); } 50% { opacity: 1; transform: translateX(-50%) scale(1.1); } }
+.cfm-hero-content { position: relative; z-index: 2; text-align: center; max-width: 900px; }
+.cfm-hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 50px; background: rgba(27,163,204,0.1); border: 1px solid rgba(27,163,204,0.2); color: var(--c-secondary); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 32px; animation: fadeInDown 0.8s ease; }
+.cfm-hero-badge .dot { width: 8px; height: 8px; background: var(--c-accent); border-radius: 50%; animation: dotPulse 2s ease infinite; }
+@keyframes dotPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+.cfm-hero h1 { font-family: var(--font-heading); font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; line-height: 1.1; margin-bottom: 24px; letter-spacing: -0.03em; }
+.cfm-hero h1 .gradient-text { background: linear-gradient(135deg, var(--c-secondary), var(--c-accent), var(--c-accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.cfm-hero p { font-size: clamp(1rem, 2vw, 1.25rem); color: var(--c-muted); max-width: 640px; margin: 0 auto 40px; line-height: 1.7; animation: fadeInUp 0.8s ease 0.2s both; }
+.cfm-hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease 0.4s both; }
+.cfm-btn { padding: 14px 32px; border-radius: 10px; font-weight: 600; font-size: 0.95rem; letter-spacing: 0.02em; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; border: none; }
+.cfm-btn-primary { background: linear-gradient(135deg, var(--c-accent), var(--c-accent2)); color: var(--c-light); box-shadow: 0 4px 20px rgba(245,166,35,0.25); }
+.cfm-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 35px rgba(245,166,35,0.4); }
+.cfm-btn-secondary { background: transparent; color: var(--c-light); border: 1.5px solid rgba(138,141,181,0.3); }
+.cfm-btn-secondary:hover { border-color: var(--c-secondary); color: var(--c-secondary); transform: translateY(-3px); }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+.cfm-section { position: relative; z-index: 2; padding: 100px 40px; }
+.cfm-section-header { text-align: center; max-width: 700px; margin: 0 auto 64px; }
+.cfm-section-tag { display: inline-block; padding: 6px 16px; border-radius: 50px; background: rgba(27,163,204,0.1); border: 1px solid rgba(27,163,204,0.2); color: var(--c-secondary); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; }
+.cfm-section h2 { font-family: var(--font-heading); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em; }
+.cfm-section h2 .accent { color: var(--c-accent); }
+.cfm-section-desc { color: var(--c-muted); font-size: 1.1rem; line-height: 1.7; }
+.cfm-about { background: linear-gradient(180deg, var(--c-darker) 0%, var(--c-dark) 100%); }
+.cfm-about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; max-width: 1200px; margin: 0 auto; align-items: center; }
+.cfm-about-visual { position: relative; display: flex; justify-content: center; align-items: center; min-height: 400px; }
+.cfm-about-visual .logo-large { width: 100%; max-width: 280px; opacity: 0.9; animation: floatLogo 6s ease-in-out infinite; position: relative; z-index: 2; }
+@keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+.cfm-about-visual .glow-ring { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 280px; height: 280px; border-radius: 50%; border: 2px solid rgba(27,163,204,0.1); animation: ringExpand 4s ease-in-out infinite; }
+.cfm-about-visual .glow-ring:nth-child(2) { width: 360px; height: 360px; animation-delay: 1s; border-color: rgba(245,166,35,0.08); }
+.cfm-about-visual .glow-ring:nth-child(3) { width: 440px; height: 440px; animation-delay: 2s; border-color: rgba(74,75,140,0.06); }
+@keyframes ringExpand { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; } 50% { transform: translate(-50%,-50%) scale(1.05); opacity: 1; } }
+.cfm-about-text h3 { font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 20px; color: var(--c-light); }
+.cfm-about-text p { color: var(--c-muted); line-height: 1.8; margin-bottom: 16px; font-size: 1rem; }
+.cfm-vision-box { position: relative; background: var(--c-card); border-radius: 12px; padding: 24px 28px 24px 32px; margin: 28px 0; border-left: 3px solid var(--c-secondary); }
+.cfm-vision-box .icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(27,163,204,0.15); display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-bottom: 14px; }
+.cfm-vision-box h4 { font-family: var(--font-heading); font-size: 0.8rem; color: var(--c-secondary); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px; }
+.cfm-vision-box p { color: var(--c-light); line-height: 1.7; font-size: 1rem; font-style: italic; margin: 0; }
+.cfm-about-values { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 32px; }
+.cfm-value-card { background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); border-radius: 12px; padding: 24px; transition: all 0.3s ease; box-shadow: 0 2px 14px rgba(74,75,140,0.06); }
+.cfm-value-card:hover { background: var(--c-card-hover); border-color: rgba(27,163,204,0.3); transform: translateY(-4px); }
+.cfm-value-card .icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px; }
+.cfm-value-card:nth-child(1) .icon { background: rgba(27,163,204,0.15); }
+.cfm-value-card:nth-child(2) .icon { background: rgba(245,166,35,0.15); }
+.cfm-value-card:nth-child(3) .icon { background: rgba(74,75,140,0.2); }
+.cfm-value-card:nth-child(4) .icon { background: rgba(248,196,28,0.15); }
+.cfm-value-card h4 { font-family: var(--font-heading); font-size: 1rem; margin-bottom: 6px; color: var(--c-light); }
+.cfm-value-card p { font-size: 0.85rem; color: var(--c-muted); margin: 0; line-height: 1.6; }
+.cfm-projects { background: var(--c-dark); }
+.cfm-projects-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; max-width: 1100px; margin: 0 auto; }
+.cfm-project-card { background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); border-radius: 20px; padding: 48px 40px; position: relative; overflow: hidden; transition: all 0.4s ease; cursor: pointer; box-shadow: 0 4px 20px rgba(74,75,140,0.07); }
+.cfm-project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c-secondary), var(--c-accent)); transform: scaleX(0); transition: transform 0.4s ease; }
+.cfm-project-card:hover::before { transform: scaleX(1); }
+.cfm-project-card:hover { transform: translateY(-8px); border-color: rgba(27,163,204,0.25); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+.cfm-project-card .project-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 24px; }
+.cfm-project-card.dfc .project-icon { background: linear-gradient(135deg, rgba(27,163,204,0.2), rgba(27,163,204,0.05)); }
+.cfm-project-card.kd .project-icon { background: linear-gradient(135deg, rgba(245,166,35,0.2), rgba(245,166,35,0.05)); }
+.cfm-project-card h3 { font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 12px; color: var(--c-light); }
+.cfm-project-card p { color: var(--c-muted); line-height: 1.7; margin-bottom: 24px; font-size: 0.95rem; }
+.cfm-project-features { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.cfm-project-features li { display: flex; align-items: center; gap: 10px; color: var(--c-muted); font-size: 0.9rem; list-style: none; }
+.cfm-project-features li::before { content: '✓'; width: 20px; height: 20px; border-radius: 50%; background: rgba(27,163,204,0.15); color: var(--c-secondary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+.cfm-project-card.kd .cfm-project-features li::before { background: rgba(245,166,35,0.15); color: var(--c-accent); }
+.cfm-project-card .cfm-btn { width: 100%; justify-content: center; }
+.cfm-trinity-badge { max-width: 200px; height: auto; margin-bottom: 24px; display: block; }
+.cfm-focus-pillars { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+.cfm-focus-pill { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 50px; background: rgba(27,163,204,0.1); border: 1px solid rgba(27,163,204,0.2); font-size: 0.8rem; font-weight: 600; color: var(--c-secondary); }
+.cfm-focus-pill .pill-icon { font-size: 0.9rem; }
+.cfm-how { background: linear-gradient(180deg, var(--c-dark) 0%, var(--c-darker) 100%); }
+.cfm-how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+.cfm-how-card { background: var(--c-card); border: 1px solid rgba(74,75,140,0.12); border-radius: 16px; padding: 36px 28px; text-align: center; position: relative; transition: all 0.3s ease; box-shadow: 0 2px 14px rgba(74,75,140,0.06); }
+.cfm-how-card:hover { border-color: rgba(27,163,204,0.25); transform: translateY(-6px); }
+.cfm-how-card .step-num { font-family: var(--font-heading); font-size: 3rem; font-weight: 800; color: transparent; -webkit-text-stroke: 1.5px rgba(27,163,204,0.3); margin-bottom: 16px; line-height: 1; }
+.cfm-how-card:nth-child(2) .step-num { -webkit-text-stroke-color: rgba(245,166,35,0.3); }
+.cfm-how-card:nth-child(3) .step-num { -webkit-text-stroke-color: rgba(74,75,140,0.3); }
+.cfm-how-card:nth-child(4) .step-num { -webkit-text-stroke-color: rgba(248,196,28,0.3); }
+.cfm-how-card h4 { font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 10px; color: var(--c-light); }
+.cfm-how-card p { font-size: 0.88rem; color: var(--c-muted); line-height: 1.6; }
+.cfm-support { background: linear-gradient(180deg, var(--c-darker) 0%, var(--c-dark) 100%); }
+.cfm-support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1100px; margin: 0 auto; align-items: start; }
+.cfm-support-grid-single { grid-template-columns: 1fr; max-width: 700px; }
+.cfm-support-info h3 { font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 16px; }
+.cfm-support-info > p { color: var(--c-muted); line-height: 1.8; margin-bottom: 32px; }
+.cfm-razorpay-card { background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); border-radius: 16px; padding: 28px; box-shadow: 0 2px 14px rgba(74,75,140,0.06); text-align: center; margin-bottom: 24px; }
+.cfm-razorpay-card h4 { font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 16px; }
+.cfm-bank-details { background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); border-radius: 16px; padding: 28px; box-shadow: 0 2px 14px rgba(74,75,140,0.06); }
+.cfm-bank-details h4 { font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.cfm-bank-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(74,75,140,0.1); }
+.cfm-bank-row:last-child { border-bottom: none; }
+.cfm-bank-row .label { font-size: 0.85rem; color: var(--c-muted); }
+.cfm-bank-row .value { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 600; color: var(--c-light); display: flex; align-items: center; gap: 8px; }
+.cfm-copy-btn { background: rgba(27,163,204,0.15); border: none; color: var(--c-secondary); padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s ease; }
+.cfm-copy-btn:hover { background: rgba(27,163,204,0.3); }
+.cfm-tax-note { text-align: center; font-size: 0.8rem; color: var(--c-muted); margin-top: 16px; padding: 12px; background: rgba(27,163,204,0.05); border-radius: 8px; border: 1px solid rgba(27,163,204,0.1); }
+.cfm-contact { background: var(--c-dark); border-top: 1px solid rgba(74,75,140,0.1); }
+.cfm-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; max-width: 1100px; margin: 0 auto; align-items: start; }
+.cfm-contact-info h3 { font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 16px; }
+.cfm-contact-info > p { color: var(--c-muted); line-height: 1.8; margin-bottom: 32px; }
+.cfm-contact-items { display: flex; flex-direction: column; gap: 20px; }
+.cfm-contact-item { display: flex; align-items: flex-start; gap: 16px; }
+.cfm-contact-item .contact-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(27,163,204,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.cfm-contact-item:nth-child(2) .contact-icon { background: rgba(245,166,35,0.1); }
+.cfm-contact-item:nth-child(3) .contact-icon { background: rgba(74,75,140,0.15); }
+.cfm-contact-item:nth-child(4) .contact-icon { background: rgba(248,196,28,0.15); }
+.cfm-contact-item h5 { font-family: var(--font-heading); font-size: 0.95rem; color: var(--c-light); margin-bottom: 4px; }
+.cfm-contact-item p, .cfm-contact-item a { font-size: 0.9rem; color: var(--c-muted); text-decoration: none; line-height: 1.5; transition: color 0.2s ease; }
+.cfm-contact-item a:hover { color: var(--c-secondary); }
+.cfm-map-embed { background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); border-radius: 16px; overflow: hidden; height: 100%; min-height: 350px; }
+.cfm-map-embed iframe { width: 100%; height: 100%; min-height: 350px; border: none; }
+.cfm-footer { background: var(--c-darker); border-top: 1px solid rgba(74,75,140,0.1); padding: 60px 40px 30px; position: relative; z-index: 2; }
+.cfm-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; max-width: 1100px; margin: 0 auto 48px; }
+.cfm-footer-brand .logo-icon { height: 50px; margin-bottom: 16px; }
+.cfm-footer-brand p { color: var(--c-muted); font-size: 0.9rem; line-height: 1.7; max-width: 300px; }
+.cfm-footer-col h5 { font-family: var(--font-heading); font-size: 0.9rem; color: var(--c-light); margin-bottom: 20px; letter-spacing: 0.05em; }
+.cfm-footer-col a { display: block; color: var(--c-muted); text-decoration: none; font-size: 0.88rem; margin-bottom: 12px; transition: color 0.2s ease; cursor: pointer; }
+.cfm-footer-col a:hover { color: var(--c-secondary); }
+.cfm-footer-bottom { max-width: 1100px; margin: 0 auto; padding-top: 24px; border-top: 1px solid rgba(74,75,140,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.cfm-footer-bottom p { color: var(--c-muted); font-size: 0.8rem; }
+.cfm-footer-social { display: flex; gap: 12px; }
+.cfm-footer-social a { width: 36px; height: 36px; border-radius: 8px; background: var(--c-card); border: 1px solid rgba(74,75,140,0.15); display: flex; align-items: center; justify-content: center; color: var(--c-muted); text-decoration: none; font-size: 0.9rem; transition: all 0.2s ease; }
+.cfm-footer-social a:hover { background: var(--c-secondary); color: var(--c-dark); border-color: var(--c-secondary); }
+.reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal.active { opacity: 1; transform: translateY(0); }
+@media (max-width: 900px) {
+  .cfm-nav-links { display: none; }
+  .cfm-mobile-menu-btn { display: flex; }
+  .cfm-about-grid, .cfm-support-grid, .cfm-contact-grid { grid-template-columns: 1fr; gap: 40px; }
+  .cfm-projects-grid { grid-template-columns: 1fr; }
+  .cfm-how-grid { grid-template-columns: repeat(2, 1fr); }
+  .cfm-about-values { grid-template-columns: 1fr; }
+  .cfm-footer-grid { grid-template-columns: 1fr 1fr; }
+  .cfm-section { padding: 60px 24px; }
+  .cfm-hero { padding: 120px 24px 60px; }
+  .cfm-nav { padding: 12px 24px; }
+}
+@media (max-width: 600px) {
+  .cfm-how-grid { grid-template-columns: 1fr; }
+  .cfm-footer-grid { grid-template-columns: 1fr; }
+}
+.cfm-mobile-menu { position: fixed; top: 0; right: -100%; width: 80%; max-width: 320px; height: 100vh; background: var(--c-dark); z-index: 1001; padding: 80px 32px 32px; transition: right 0.4s ease; border-left: 1px solid rgba(74,75,140,0.15); }
+.cfm-mobile-menu.open { right: 0; }
+.cfm-mobile-menu a { display: block; color: var(--c-light); text-decoration: none; font-size: 1.1rem; font-weight: 500; padding: 16px 0; border-bottom: 1px solid rgba(74,75,140,0.1); cursor: pointer; }
+.cfm-mobile-menu .cfm-btn-primary { margin-top: 24px; width: 100%; justify-content: center; }
+.cfm-mobile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.cfm-mobile-overlay.open { opacity: 1; pointer-events: all; }
+.cfm-mobile-close { position: absolute; top: 20px; right: 24px; font-size: 1.5rem; color: var(--c-light); cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="cfm-app" id="cfmApp">
+  <canvas id="particleCanvas"></canvas>
+
+  <nav class="cfm-nav" id="cfmNav">
+    <div class="cfm-nav-logo" onclick="scrollToSection('hero')">
+      <svg class="logo-icon" viewBox="107 333 317 359" xmlns="http://www.w3.org/2000/svg">
+<g transform="matrix(1.4483589645546522 0 0 1.4483589645546524 265.5296439628483 512.5154798761611)" id="logo-logo-nav"  >
+<g style=""  paint-order="stroke"   >
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 1.9436941026546606 -0.010145166112550896)"  >
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(90,93,169); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-113.68868747553071, -78.535)" d="M 100.397 94.169 C 91.775 85.547 91.775 71.522 100.394 62.9 L 100.394 62.9 C 104.572 58.723 110.12400000000001 56.424 116.031 56.424 L 116.031 56.424 C 121.93700000000001 56.424 127.49000000000001 58.723 131.666 62.9 L 131.666 62.9 C 134.041 65.277 134.041 69.127 131.666 71.502 L 131.666 71.502 C 129.29 73.87599999999999 125.439 73.877 123.062 71.50099999999999 L 123.062 71.50099999999999 C 121.18599999999999 69.62299999999999 118.688 68.588 116.03099999999999 68.588 L 116.03099999999999 68.588 C 113.37499999999999 68.588 110.877 69.62299999999999 108.996 71.50099999999999 L 108.996 71.50099999999999 C 105.11699999999999 75.38 105.11699999999999 81.69099999999999 108.99799999999999 85.56799999999998 L 108.99799999999999 85.56799999999998 C 110.877 87.44899999999998 113.37499999999999 88.48299999999999 116.03099999999999 88.48299999999999 L 116.03099999999999 88.48299999999999 C 118.68799999999999 88.48299999999999 121.18599999999999 87.44899999999998 123.062 85.56799999999998 L 123.062 85.56799999999998 C 125.438 83.19299999999998 129.288 83.19499999999998 131.666 85.56799999999998 L 131.666 85.56799999999998 C 134.041 87.94299999999998 134.041 91.79299999999998 131.666 94.16899999999998 L 131.666 94.16899999999998 C 127.49 98.34599999999998 121.937 100.64599999999999 116.03099999999999 100.64599999999999 L 116.03099999999999 100.64599999999999 C 110.124 100.64599999999999 104.57199999999999 98.34599999999999 100.39699999999999 94.16899999999998" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -84.35907403321468 -34.73460121499116)"  >
+<linearGradient id="SVGID_203_6_733546_nav" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.572006 0 0 -88.572006 72.441406 90.514648)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_203_6_733546_nav); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-83.91493265228603, -90.51465561362045)" d="M 78.215 92.641 C 77.042 89.494 78.644 85.991 81.788 84.816 L 81.788 84.816 C 84.937 83.641 88.441 85.241 89.61399999999999 88.389 L 89.61399999999999 88.389 C 90.788 91.53699999999999 89.189 95.03999999999999 86.041 96.21499999999999 L 86.041 96.21499999999999 C 85.341 96.47599999999998 84.62299999999999 96.59899999999999 83.91799999999999 96.59899999999999 L 83.91799999999999 96.59899999999999 C 81.451 96.59899999999999 79.12899999999999 95.08699999999999 78.21499999999999 92.64099999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 22.691527710731577 -81.85087526421376)"  >
+<linearGradient id="SVGID_204_7_733547_nav" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.561768 0 0 -88.561768 72.443848 106.76953)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_204_7_733547_nav); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-120.84652174091403, -106.76938790120869)" d="M 96.842 114.022 C 96.827 114.022 96.827 114.022 96.81099999999999 114.00800000000001 L 96.81099999999999 114.00800000000001 C 96.67399999999999 113.93200000000002 96.53599999999999 113.86900000000001 96.41499999999999 113.77700000000002 L 96.41499999999999 113.77700000000002 C 93.663 112.15300000000002 92.645 108.62300000000002 94.166 105.75000000000001 L 94.166 105.75000000000001 C 95.731 102.77000000000001 99.41199999999999 101.63000000000001 102.375 103.19500000000001 L 102.375 103.19500000000001 C 106.42 105.447 111.074 106.72300000000001 116.031 106.72300000000001 L 116.031 106.72300000000001 C 124.653 106.72300000000001 132.39100000000002 102.83000000000001 137.561 96.70300000000002 L 137.561 96.70300000000002 L 137.592 96.71900000000002 C 139.79600000000002 94.19300000000003 143.645 93.95100000000002 146.169 96.17000000000002 L 146.169 96.17000000000002 C 148.51000000000002 98.22300000000001 148.89100000000002 101.68900000000002 147.155 104.19900000000001 L 147.155 104.19900000000001 C 147.141 104.21400000000001 147.126 104.21400000000001 147.126 104.23100000000001 L 147.126 104.23100000000001 C 146.897 104.50300000000001 146.671 104.77700000000002 146.412 105.051 L 146.412 105.051 C 139.02100000000002 113.519 128.148 118.886 116.031 118.886 L 116.031 118.886 C 109.09800000000001 118.886 102.543 117.12299999999999 96.84200000000001 114.02199999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -30.3470838013979 66.92331291602295)"  >
+<linearGradient id="SVGID_205_8_733548_nav" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.565887 0 0 -88.565887 72.441406 55.443359)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_205_8_733548_nav); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-102.54863107718302, -55.44350000000001)" d="M 81.771 72.327 C 78.626 71.173 77.013 67.66 78.185 64.513 L 78.185 64.513 C 78.245 64.36 78.306 64.208 78.36800000000001 64.072 L 78.36800000000001 64.072 C 84.17500000000001 48.942 98.864 38.17700000000001 116.031 38.17700000000001 L 116.031 38.17700000000001 C 118.06700000000001 38.17700000000001 120.061 38.32900000000001 122.02300000000001 38.63300000000001 L 122.02300000000001 38.63300000000001 C 125.352 39.07400000000001 127.69400000000002 42.14600000000001 127.23800000000001 45.46100000000001 L 127.23800000000001 45.46100000000001 C 126.78100000000002 48.807000000000016 123.74100000000001 51.131000000000014 120.40800000000002 50.674000000000014 L 120.40800000000002 50.674000000000014 L 120.39600000000002 50.674000000000014 C 120.36300000000001 50.674000000000014 120.33300000000001 50.661000000000016 120.30400000000002 50.661000000000016 L 120.30400000000002 50.661000000000016 C 118.90400000000001 50.448000000000015 117.47400000000002 50.341000000000015 116.03100000000002 50.341000000000015 L 116.03100000000002 50.341000000000015 C 103.92700000000002 50.341000000000015 93.58800000000002 58.006000000000014 89.60300000000002 68.73800000000001 L 89.60300000000002 68.73800000000001 L 89.58900000000003 68.73800000000001 C 88.67700000000002 71.18900000000001 86.35500000000003 72.70900000000002 83.88600000000002 72.71000000000001 L 83.88600000000002 72.71000000000001 C 83.18300000000002 72.71000000000001 82.46900000000002 72.587 81.77100000000003 72.32700000000001" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 83.63855325947299 65.26034827162914)"  >
+<linearGradient id="SVGID_206_9_733549_nav" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.575767 0 0 -88.575767 72.433594 56.017578)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_206_9_733549_nav); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-141.87275108546345, -56.01720931050509)" d="M 137.361 60.093 C 135.108 57.597 135.301 53.752 137.79399999999998 51.502 L 137.79399999999998 51.502 C 140.29 49.248000000000005 144.14499999999998 49.45 146.38799999999998 51.945 L 146.38799999999998 51.945 C 148.63899999999998 54.439 148.44199999999998 58.289 145.94899999999998 60.53 L 145.94899999999998 60.53 C 144.784 61.582 143.325 62.1 141.873 62.1 L 141.873 62.1 C 140.21099999999998 62.1 138.558 61.423 137.361 60.093" stroke-linecap="round" />
+</g>
+</g>
+</g>
+</svg>
+      <span>Christ Focus Mission</span>
+    </div>
+    <div class="cfm-nav-links">
+      <a onclick="scrollToSection('about')">About</a>
+      <a onclick="scrollToSection('projects')">Projects</a>
+      <a onclick="scrollToSection('support')">Support Us</a>
+      <a onclick="scrollToSection('contact')">Contact</a>
+      <a class="cfm-nav-cta" onclick="scrollToSection('support')">Donate Now</a>
+    </div>
+    <div class="cfm-mobile-menu-btn" onclick="toggleMobileMenu()"><span></span><span></span><span></span></div>
+  </nav>
+
+  <div class="cfm-mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+  <div class="cfm-mobile-menu" id="mobileMenu">
+    <div class="cfm-mobile-close" onclick="toggleMobileMenu()">&#10005;</div>
+    <a onclick="scrollToSection('about');toggleMobileMenu()">About</a>
+    <a onclick="scrollToSection('projects');toggleMobileMenu()">Projects</a>
+    <a onclick="scrollToSection('support');toggleMobileMenu()">Support Us</a>
+    <a onclick="scrollToSection('contact');toggleMobileMenu()">Contact</a>
+    <a class="cfm-btn cfm-btn-primary" onclick="scrollToSection('support');toggleMobileMenu()">Donate Now</a>
+  </div>
+
+  <section class="cfm-hero" id="hero">
+    <div class="cfm-hero-glow"></div>
+    <div class="cfm-hero-content">
+      <div class="cfm-hero-badge"><span class="dot"></span> Non-Profit Organization</div>
+      <h1>Harnessing the Power of Data<br>for a <span class="gradient-text">Higher Purpose</span></h1>
+      <p>Christ Focus Mission combines cutting-edge data science with faith-driven action to transform communities across India. Through data-driven insights and creative empowerment, we serve those who need it most.</p>
+      <div class="cfm-hero-buttons">
+        <a class="cfm-btn cfm-btn-primary" onclick="scrollToSection('projects')">Explore Our Work</a>
+        <a class="cfm-btn cfm-btn-secondary" onclick="scrollToSection('support')">Support the Mission</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cfm-section cfm-about" id="about">
+    <div class="cfm-about-grid">
+      <div class="cfm-about-visual reveal">
+        <div class="glow-ring"></div><div class="glow-ring"></div><div class="glow-ring"></div>
+        <svg class="logo-large" viewBox="102 328 622 369" xmlns="http://www.w3.org/2000/svg">
+<g transform="matrix(1.4483589645546522 0 0 1.4483589645546524 265.5296439628483 512.5154798761611)" id="logo-logo-about"  >
+<g style=""  paint-order="stroke"   >
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 1.9436941026546606 -0.010145166112550896)"  >
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(90,93,169); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-113.68868747553071, -78.535)" d="M 100.397 94.169 C 91.775 85.547 91.775 71.522 100.394 62.9 L 100.394 62.9 C 104.572 58.723 110.12400000000001 56.424 116.031 56.424 L 116.031 56.424 C 121.93700000000001 56.424 127.49000000000001 58.723 131.666 62.9 L 131.666 62.9 C 134.041 65.277 134.041 69.127 131.666 71.502 L 131.666 71.502 C 129.29 73.87599999999999 125.439 73.877 123.062 71.50099999999999 L 123.062 71.50099999999999 C 121.18599999999999 69.62299999999999 118.688 68.588 116.03099999999999 68.588 L 116.03099999999999 68.588 C 113.37499999999999 68.588 110.877 69.62299999999999 108.996 71.50099999999999 L 108.996 71.50099999999999 C 105.11699999999999 75.38 105.11699999999999 81.69099999999999 108.99799999999999 85.56799999999998 L 108.99799999999999 85.56799999999998 C 110.877 87.44899999999998 113.37499999999999 88.48299999999999 116.03099999999999 88.48299999999999 L 116.03099999999999 88.48299999999999 C 118.68799999999999 88.48299999999999 121.18599999999999 87.44899999999998 123.062 85.56799999999998 L 123.062 85.56799999999998 C 125.438 83.19299999999998 129.288 83.19499999999998 131.666 85.56799999999998 L 131.666 85.56799999999998 C 134.041 87.94299999999998 134.041 91.79299999999998 131.666 94.16899999999998 L 131.666 94.16899999999998 C 127.49 98.34599999999998 121.937 100.64599999999999 116.03099999999999 100.64599999999999 L 116.03099999999999 100.64599999999999 C 110.124 100.64599999999999 104.57199999999999 98.34599999999999 100.39699999999999 94.16899999999998" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -84.35907403321468 -34.73460121499116)"  >
+<linearGradient id="SVGID_203_6_733546_about" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.572006 0 0 -88.572006 72.441406 90.514648)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_203_6_733546_about); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-83.91493265228603, -90.51465561362045)" d="M 78.215 92.641 C 77.042 89.494 78.644 85.991 81.788 84.816 L 81.788 84.816 C 84.937 83.641 88.441 85.241 89.61399999999999 88.389 L 89.61399999999999 88.389 C 90.788 91.53699999999999 89.189 95.03999999999999 86.041 96.21499999999999 L 86.041 96.21499999999999 C 85.341 96.47599999999998 84.62299999999999 96.59899999999999 83.91799999999999 96.59899999999999 L 83.91799999999999 96.59899999999999 C 81.451 96.59899999999999 79.12899999999999 95.08699999999999 78.21499999999999 92.64099999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 22.691527710731577 -81.85087526421376)"  >
+<linearGradient id="SVGID_204_7_733547_about" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.561768 0 0 -88.561768 72.443848 106.76953)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_204_7_733547_about); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-120.84652174091403, -106.76938790120869)" d="M 96.842 114.022 C 96.827 114.022 96.827 114.022 96.81099999999999 114.00800000000001 L 96.81099999999999 114.00800000000001 C 96.67399999999999 113.93200000000002 96.53599999999999 113.86900000000001 96.41499999999999 113.77700000000002 L 96.41499999999999 113.77700000000002 C 93.663 112.15300000000002 92.645 108.62300000000002 94.166 105.75000000000001 L 94.166 105.75000000000001 C 95.731 102.77000000000001 99.41199999999999 101.63000000000001 102.375 103.19500000000001 L 102.375 103.19500000000001 C 106.42 105.447 111.074 106.72300000000001 116.031 106.72300000000001 L 116.031 106.72300000000001 C 124.653 106.72300000000001 132.39100000000002 102.83000000000001 137.561 96.70300000000002 L 137.561 96.70300000000002 L 137.592 96.71900000000002 C 139.79600000000002 94.19300000000003 143.645 93.95100000000002 146.169 96.17000000000002 L 146.169 96.17000000000002 C 148.51000000000002 98.22300000000001 148.89100000000002 101.68900000000002 147.155 104.19900000000001 L 147.155 104.19900000000001 C 147.141 104.21400000000001 147.126 104.21400000000001 147.126 104.23100000000001 L 147.126 104.23100000000001 C 146.897 104.50300000000001 146.671 104.77700000000002 146.412 105.051 L 146.412 105.051 C 139.02100000000002 113.519 128.148 118.886 116.031 118.886 L 116.031 118.886 C 109.09800000000001 118.886 102.543 117.12299999999999 96.84200000000001 114.02199999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -30.3470838013979 66.92331291602295)"  >
+<linearGradient id="SVGID_205_8_733548_about" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.565887 0 0 -88.565887 72.441406 55.443359)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_205_8_733548_about); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-102.54863107718302, -55.44350000000001)" d="M 81.771 72.327 C 78.626 71.173 77.013 67.66 78.185 64.513 L 78.185 64.513 C 78.245 64.36 78.306 64.208 78.36800000000001 64.072 L 78.36800000000001 64.072 C 84.17500000000001 48.942 98.864 38.17700000000001 116.031 38.17700000000001 L 116.031 38.17700000000001 C 118.06700000000001 38.17700000000001 120.061 38.32900000000001 122.02300000000001 38.63300000000001 L 122.02300000000001 38.63300000000001 C 125.352 39.07400000000001 127.69400000000002 42.14600000000001 127.23800000000001 45.46100000000001 L 127.23800000000001 45.46100000000001 C 126.78100000000002 48.807000000000016 123.74100000000001 51.131000000000014 120.40800000000002 50.674000000000014 L 120.40800000000002 50.674000000000014 L 120.39600000000002 50.674000000000014 C 120.36300000000001 50.674000000000014 120.33300000000001 50.661000000000016 120.30400000000002 50.661000000000016 L 120.30400000000002 50.661000000000016 C 118.90400000000001 50.448000000000015 117.47400000000002 50.341000000000015 116.03100000000002 50.341000000000015 L 116.03100000000002 50.341000000000015 C 103.92700000000002 50.341000000000015 93.58800000000002 58.006000000000014 89.60300000000002 68.73800000000001 L 89.60300000000002 68.73800000000001 L 89.58900000000003 68.73800000000001 C 88.67700000000002 71.18900000000001 86.35500000000003 72.70900000000002 83.88600000000002 72.71000000000001 L 83.88600000000002 72.71000000000001 C 83.18300000000002 72.71000000000001 82.46900000000002 72.587 81.77100000000003 72.32700000000001" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 83.63855325947299 65.26034827162914)"  >
+<linearGradient id="SVGID_206_9_733549_about" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.575767 0 0 -88.575767 72.433594 56.017578)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_206_9_733549_about); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-141.87275108546345, -56.01720931050509)" d="M 137.361 60.093 C 135.108 57.597 135.301 53.752 137.79399999999998 51.502 L 137.79399999999998 51.502 C 140.29 49.248000000000005 144.14499999999998 49.45 146.38799999999998 51.945 L 146.38799999999998 51.945 C 148.63899999999998 54.439 148.44199999999998 58.289 145.94899999999998 60.53 L 145.94899999999998 60.53 C 144.784 61.582 143.325 62.1 141.873 62.1 L 141.873 62.1 C 140.21099999999998 62.1 138.558 61.423 137.361 60.093" stroke-linecap="round" />
+</g>
+</g>
+</g>
+<g transform="matrix(1.9211538461538462 0 0 1.9211538461538462 561.7202690043189 509.45409413480655)" id="text-logo-about"  >
+<g style=""  paint-order="stroke"   >
+		<g transform="matrix(1 0 0 1 0 0)" id="text-logo-path-0-about"  >
+<path style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(90,93,169); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-76.12499999999999, 19.575)" d="M 1.91 -39.09 C 0.75 -39.09 -0.17 -38.16 -0.17 -37 L -0.17 -2.09 C -0.17 -0.93 0.75 0 1.91 0 L 3.54 0 C 4.64 0 5.63 -0.93 5.63 -2.09 L 5.63 -16.7 L 12.12 -16.7 C 13.28 -16.7 14.21 -17.63 14.21 -18.79 L 14.21 -20.36 C 14.21 -21.52 13.28 -22.45 12.12 -22.45 L 5.63 -22.45 L 5.63 -33.35 L 14.44 -33.35 C 15.6 -33.35 16.53 -34.28 16.53 -35.44 L 16.53 -37 C 16.53 -38.16 15.6 -39.09 14.44 -39.09 Z M 29.7 -11.37 C 29.7 -6.79 30.97 -4.12 32.77 -2.32 C 34.68 -0.46 37.12 0 39.21 0 C 41.35 0 43.79 -0.46 45.7 -2.32 C 47.5 -4.12 48.72 -6.79 48.72 -11.37 L 48.72 -27.78 C 48.72 -35.15 45.59 -39.09 39.21 -39.09 C 32.89 -39.09 29.7 -35.09 29.7 -27.78 Z M 35.5 -27.78 C 35.5 -31.55 36.66 -33.35 39.21 -33.35 C 41.7 -33.35 42.92 -31.67 42.92 -27.78 L 42.92 -11.37 C 42.92 -7.42 41.64 -5.74 39.21 -5.74 C 36.71 -5.74 35.5 -7.54 35.5 -11.37 Z M 64.73 -11.37 C 64.73 -6.79 66 -4.12 67.8 -2.32 C 69.72 -0.46 72.09 0 74.3 0 C 76.39 0 78.82 -0.46 80.74 -2.32 C 82.53 -4.12 83.75 -6.79 83.75 -11.37 L 83.75 -12.18 C 83.75 -13.34 82.82 -14.27 81.72 -14.27 L 80.04 -14.27 C 78.88 -14.27 77.95 -13.34 77.95 -12.18 L 77.95 -11.37 C 77.95 -9.28 77.66 -7.71 76.97 -6.79 C 76.44 -6.21 75.4 -5.74 74.3 -5.74 C 71.8 -5.74 70.59 -7.48 70.59 -11.37 L 70.59 -27.78 C 70.59 -31.67 71.86 -33.35 74.3 -33.35 C 76.68 -33.35 77.95 -31.67 77.95 -27.78 L 77.95 -26.97 C 77.95 -25.81 78.88 -24.88 80.04 -24.88 L 81.72 -24.88 C 82.82 -24.88 83.75 -25.81 83.75 -26.97 L 83.75 -27.78 C 83.75 -32.19 82.53 -35.09 80.68 -36.83 C 78.76 -38.57 76.44 -39.09 74.3 -39.09 C 72.09 -39.09 69.77 -38.57 67.86 -36.83 C 66 -35.09 64.73 -32.19 64.73 -27.78 Z M 98.89 -10.67 C 98.89 -4.52 101.44 -0.06 108.4 -0.06 C 115.13 -0.06 117.91 -4.18 117.91 -10.67 L 117.91 -37.06 C 117.91 -38.22 116.99 -39.15 115.83 -39.15 L 114.2 -39.15 C 113.1 -39.15 112.17 -38.22 112.17 -37.06 L 112.17 -10.67 C 112.17 -7.89 111.36 -5.8 108.4 -5.8 C 105.56 -5.8 104.63 -7.6 104.63 -10.67 L 104.63 -37.06 C 104.63 -38.22 103.7 -39.15 102.54 -39.15 L 100.92 -39.15 C 99.82 -39.15 98.89 -38.22 98.89 -37.06 Z M 133.28 -11.37 C 133.28 -3.77 136.47 -0.06 142.85 -0.06 C 149 -0.06 152.42 -3.54 152.42 -10.03 C 152.42 -15.66 148.54 -18.62 144.71 -21.58 L 144.77 -21.58 C 141.93 -23.78 139.08 -26.04 139.08 -29 C 139.08 -32.02 140.42 -33.35 142.85 -33.35 C 145.41 -33.35 146.62 -31.61 146.62 -27.78 L 146.62 -26.97 C 146.62 -25.81 147.55 -24.88 148.71 -24.88 L 150.34 -24.88 C 151.5 -24.88 152.42 -25.81 152.42 -26.97 L 152.42 -27.78 C 152.42 -35.15 149.12 -39.15 142.85 -39.15 C 136.71 -39.15 133.28 -35.38 133.28 -28.83 C 133.28 -23.08 137.29 -19.95 141.11 -16.94 L 141.11 -16.99 C 143.96 -14.79 146.62 -12.64 146.62 -9.92 C 146.62 -6.84 145.29 -5.8 142.85 -5.8 C 142.04 -5.8 141.06 -5.92 140.42 -6.55 C 139.61 -7.25 139.08 -8.58 139.08 -11.37 L 139.08 -12.12 C 139.08 -13.28 138.1 -14.21 137 -14.21 L 135.37 -14.21 C 134.21 -14.21 133.28 -13.28 133.28 -12.12 Z" stroke-linecap="round" />
+</g>
+</g>
+</g>
+</svg>
+      </div>
+      <div class="cfm-about-text reveal">
+        <div class="cfm-section-header" style="text-align:left;margin:0 0 24px 0;">
+          <span class="cfm-section-tag">Our Mission</span>
+          <h2>Faith Meets <span class="accent">Innovation</span></h2>
+        </div>
+        <p>Christ Focus Mission is a registered non-profit organization (CSR Registration: CSR00082712) driven by a single purpose — empowering the underprivileged to become better people through the amazing character of Christ. We use technology, data, and music as tools to reach communities and uplift lives.</p>
+        <p>Our work spans two transformative initiatives — one that maps and uplifts communities through data intelligence, and another that nurtures young talent through the universal language of music — both built to reach the unreached and bring lasting change across India.</p>
+        <div class="cfm-vision-box">
+          <div class="icon">&#128204;</div>
+          <h4>Our Vision</h4>
+          <p>An India where every unreached community has encountered the love and character of Christ — where the underprivileged are empowered, uplifted, and transformed to become the best version of themselves.</p>
+        </div>
+        <div class="cfm-about-values">
+          <div class="cfm-value-card"><div class="icon">&#128202;</div><h4>Data-Driven</h4><p>Using analytics to identify needs and measure impact across communities.</p></div>
+          <div class="cfm-value-card"><div class="icon">&#127925;</div><h4>Creative Empowerment</h4><p>Unlocking potential through music education and artistic development.</p></div>
+          <div class="cfm-value-card"><div class="icon">&#129309;</div><h4>Community First</h4><p>Every initiative is rooted in serving and uplifting local communities.</p></div>
+          <div class="cfm-value-card"><div class="icon">&#10013;</div><h4>Faith-Led</h4><p>Guided by Christian values of compassion, service, and love.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cfm-section cfm-projects" id="projects">
+    <div class="cfm-section-header reveal">
+      <span class="cfm-section-tag">What We Do</span>
+      <h2>Our <span class="accent">Flagship Projects</span></h2>
+      <p class="cfm-section-desc">Two powerful initiatives, one mission — transforming lives through data and music.</p>
+    </div>
+    <div class="cfm-projects-grid">
+      <div class="cfm-project-card dfc reveal">
+        <div class="project-icon">&#128202;</div>
+        <h3>Data for Christ</h3>
+        <p>Our flagship data science initiative that collects, analyzes, and visualizes community data across India. But we go beyond data — wherever possible, we launch our own on-the-ground initiatives in the places we survey, rather than just handing over insights. Our work is focused on four core pillars for the underprivileged:</p>
+        <div class="cfm-focus-pillars">
+          <div class="cfm-focus-pill"><span class="pill-icon">&#128218;</span> Education</div>
+          <div class="cfm-focus-pill"><span class="pill-icon">&#127973;</span> Healthcare</div>
+          <div class="cfm-focus-pill"><span class="pill-icon">&#128188;</span> Employment</div>
+          <div class="cfm-focus-pill"><span class="pill-icon">&#10013;</span> Gospel</div>
+        </div>
+        <ul class="cfm-project-features">
+          <li>Education access & support for underprivileged children</li>
+          <li>Healthcare outreach & community wellness initiatives</li>
+          <li>Employment & livelihood opportunities for local communities</li>
+          <li>Sharing the good news of Christ to inspire personal transformation</li>
+          <li>Pan-India data collection & mapping</li>
+          <li>On-ground initiatives launched wherever possible</li>
+        </ul>
+      </div>
+      <div class="cfm-project-card kd reveal" onclick="window.open('https://kingdavidventure.com','_blank')">
+        <div class="project-icon">&#127925;</div>
+        <h3>King David Project</h3>
+        <p>Named after the biblical shepherd-king who became a renowned musician, this initiative reaches underprivileged children and teaches them music. We prepare them for internationally recognized Grade exams by Trinity College London — opening doors to scholarships and professional careers.</p>
+        <ul class="cfm-project-features">
+          <li>Free music education for underprivileged kids</li>
+          <li>Trinity College London exam preparation</li>
+          <li>Instrument provision & maintenance</li>
+          <li>Certified music educator mentorship</li>
+          <li>Scholarship & career pathway support</li>
+        </ul>
+        <img class="cfm-trinity-badge" src="trinity-exam-centre-badge.jpg" alt="Trinity College London Registered Exam Centre 73289">
+        <a class="cfm-btn cfm-btn-primary" href="https://kingdavidventure.com" target="_blank" style="background:linear-gradient(135deg,var(--c-accent),var(--c-accent2));">Visit King David &#8594;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cfm-section cfm-how" id="how">
+    <div class="cfm-section-header reveal">
+      <span class="cfm-section-tag">The Process</span>
+      <h2>How We <span class="accent">Create Impact</span></h2>
+      <p class="cfm-section-desc">From data collection to community transformation — our systematic approach ensures measurable results.</p>
+    </div>
+    <div class="cfm-how-grid">
+      <div class="cfm-how-card reveal"><div class="step-num">01</div><h4>Collect</h4><p>We gather ground-level data across Indian communities through surveys, digital tools, and field research.</p></div>
+      <div class="cfm-how-card reveal"><div class="step-num">02</div><h4>Analyze</h4><p>Our team processes raw data into actionable insights — identifying needs, trends, and growth opportunities.</p></div>
+      <div class="cfm-how-card reveal"><div class="step-num">03</div><h4>Empower</h4><p>We equip local leaders and organizations with data-driven strategies to serve their communities better.</p></div>
+      <div class="cfm-how-card reveal"><div class="step-num">04</div><h4>Transform</h4><p>Measurable community improvement through informed decisions, music education, and sustained outreach.</p></div>
+    </div>
+  </section>
+
+  <section class="cfm-section cfm-support" id="support">
+    <div class="cfm-section-header reveal">
+      <span class="cfm-section-tag">Give Back</span>
+      <h2>Support the <span class="accent">Mission</span></h2>
+      <p class="cfm-section-desc">Every rupee you donate goes directly toward empowering the underprivileged and music education for underprivileged children. Your contribution is eligible for tax deduction u/s 80G.</p>
+    </div>
+    <div class="cfm-support-grid cfm-support-grid-single">
+      <div class="cfm-support-info reveal">
+        <div class="cfm-razorpay-card">
+          <h4>Donate Online</h4>
+          <form>
+            <script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_SZ4ILxPfjsYSOA" async> </script>
+          </form>
+        </div>
+        <div class="cfm-bank-details">
+          <h4>&#127974; Bank Transfer Details</h4>
+          <div class="cfm-bank-row"><span class="label">Account Name</span><span class="value">CHRIST FOCUS MISSION</span></div>
+          <div class="cfm-bank-row"><span class="label">Account Number</span><span class="value">110131539128 <button class="cfm-copy-btn" onclick="copyText('110131539128')">Copy</button></span></div>
+          <div class="cfm-bank-row"><span class="label">IFSC Code</span><span class="value">CNRB0001287 <button class="cfm-copy-btn" onclick="copyText('CNRB0001287')">Copy</button></span></div>
+          <div class="cfm-bank-row"><span class="label">Bank</span><span class="value">Canara Bank</span></div>
+          <div class="cfm-bank-row"><span class="label">CSR Reg. No.</span><span class="value">CSR00082712</span></div>
+          <div class="cfm-bank-row"><span class="label">80G Reg. No.</span><span class="value">AADTC2907RF20241</span></div>
+          <div class="cfm-bank-row"><span class="label">UPI ID</span><span class="value">319326812539128@cnrb <button class="cfm-copy-btn" onclick="copyText('319326812539128@cnrb')">Copy</button></span></div>
+        </div>
+        <div class="cfm-tax-note">&#10003; Contributions eligible for deduction u/s 80G of the Income Tax Act (Reg. No. AADTC2907RF20241)</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cfm-section cfm-contact" id="contact">
+    <div class="cfm-section-header reveal">
+      <span class="cfm-section-tag">Get in Touch</span>
+      <h2>Contact <span class="accent">Us</span></h2>
+      <p class="cfm-section-desc">Have questions about our projects or want to partner with us? We'd love to hear from you.</p>
+    </div>
+    <div class="cfm-contact-grid">
+      <div class="cfm-contact-info reveal">
+        <h3>Reach Out</h3>
+        <p>Whether you're interested in volunteering, donating, or collaborating — our team is ready to connect with you.</p>
+        <div class="cfm-contact-items">
+          <div class="cfm-contact-item">
+            <div class="contact-icon">&#128205;</div>
+            <div><h5>Office Address</h5><p>9th Floor, Industrial Estate, Plot No.33-B, above Regus, South Phase, Ambedkar Nagar, SIDCO Industrial Estate, Guindy, Chennai, St.Thomas Mount, Tamil Nadu 600032</p></div>
+          </div>
+          <div class="cfm-contact-item">
+            <div class="contact-icon">&#128222;</div>
+            <div><h5>Phone</h5><a href="tel:+919962680639">+91 99626 80639</a></div>
+          </div>
+          <div class="cfm-contact-item">
+            <div class="contact-icon">&#9993;</div>
+            <div><h5>Email</h5><a href="mailto:admin@christfocusmission.org">admin@christfocusmission.org</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="cfm-map-embed reveal">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.1!2d80.208!3d13.006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5266!2sGuindy%2C%20Chennai!5e0!3m2!1sen!2sin!4v1" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <footer class="cfm-footer">
+    <div class="cfm-footer-grid">
+      <div class="cfm-footer-brand">
+        <svg class="logo-icon" viewBox="107 333 317 359" xmlns="http://www.w3.org/2000/svg">
+<g transform="matrix(1.4483589645546522 0 0 1.4483589645546524 265.5296439628483 512.5154798761611)" id="logo-logo-footer"  >
+<g style=""  paint-order="stroke"   >
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 1.9436941026546606 -0.010145166112550896)"  >
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(90,93,169); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-113.68868747553071, -78.535)" d="M 100.397 94.169 C 91.775 85.547 91.775 71.522 100.394 62.9 L 100.394 62.9 C 104.572 58.723 110.12400000000001 56.424 116.031 56.424 L 116.031 56.424 C 121.93700000000001 56.424 127.49000000000001 58.723 131.666 62.9 L 131.666 62.9 C 134.041 65.277 134.041 69.127 131.666 71.502 L 131.666 71.502 C 129.29 73.87599999999999 125.439 73.877 123.062 71.50099999999999 L 123.062 71.50099999999999 C 121.18599999999999 69.62299999999999 118.688 68.588 116.03099999999999 68.588 L 116.03099999999999 68.588 C 113.37499999999999 68.588 110.877 69.62299999999999 108.996 71.50099999999999 L 108.996 71.50099999999999 C 105.11699999999999 75.38 105.11699999999999 81.69099999999999 108.99799999999999 85.56799999999998 L 108.99799999999999 85.56799999999998 C 110.877 87.44899999999998 113.37499999999999 88.48299999999999 116.03099999999999 88.48299999999999 L 116.03099999999999 88.48299999999999 C 118.68799999999999 88.48299999999999 121.18599999999999 87.44899999999998 123.062 85.56799999999998 L 123.062 85.56799999999998 C 125.438 83.19299999999998 129.288 83.19499999999998 131.666 85.56799999999998 L 131.666 85.56799999999998 C 134.041 87.94299999999998 134.041 91.79299999999998 131.666 94.16899999999998 L 131.666 94.16899999999998 C 127.49 98.34599999999998 121.937 100.64599999999999 116.03099999999999 100.64599999999999 L 116.03099999999999 100.64599999999999 C 110.124 100.64599999999999 104.57199999999999 98.34599999999999 100.39699999999999 94.16899999999998" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -84.35907403321468 -34.73460121499116)"  >
+<linearGradient id="SVGID_203_6_733546_footer" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.572006 0 0 -88.572006 72.441406 90.514648)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_203_6_733546_footer); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-83.91493265228603, -90.51465561362045)" d="M 78.215 92.641 C 77.042 89.494 78.644 85.991 81.788 84.816 L 81.788 84.816 C 84.937 83.641 88.441 85.241 89.61399999999999 88.389 L 89.61399999999999 88.389 C 90.788 91.53699999999999 89.189 95.03999999999999 86.041 96.21499999999999 L 86.041 96.21499999999999 C 85.341 96.47599999999998 84.62299999999999 96.59899999999999 83.91799999999999 96.59899999999999 L 83.91799999999999 96.59899999999999 C 81.451 96.59899999999999 79.12899999999999 95.08699999999999 78.21499999999999 92.64099999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 22.691527710731577 -81.85087526421376)"  >
+<linearGradient id="SVGID_204_7_733547_footer" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.561768 0 0 -88.561768 72.443848 106.76953)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(109,201,197);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(3,139,197);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_204_7_733547_footer); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-120.84652174091403, -106.76938790120869)" d="M 96.842 114.022 C 96.827 114.022 96.827 114.022 96.81099999999999 114.00800000000001 L 96.81099999999999 114.00800000000001 C 96.67399999999999 113.93200000000002 96.53599999999999 113.86900000000001 96.41499999999999 113.77700000000002 L 96.41499999999999 113.77700000000002 C 93.663 112.15300000000002 92.645 108.62300000000002 94.166 105.75000000000001 L 94.166 105.75000000000001 C 95.731 102.77000000000001 99.41199999999999 101.63000000000001 102.375 103.19500000000001 L 102.375 103.19500000000001 C 106.42 105.447 111.074 106.72300000000001 116.031 106.72300000000001 L 116.031 106.72300000000001 C 124.653 106.72300000000001 132.39100000000002 102.83000000000001 137.561 96.70300000000002 L 137.561 96.70300000000002 L 137.592 96.71900000000002 C 139.79600000000002 94.19300000000003 143.645 93.95100000000002 146.169 96.17000000000002 L 146.169 96.17000000000002 C 148.51000000000002 98.22300000000001 148.89100000000002 101.68900000000002 147.155 104.19900000000001 L 147.155 104.19900000000001 C 147.141 104.21400000000001 147.126 104.21400000000001 147.126 104.23100000000001 L 147.126 104.23100000000001 C 146.897 104.50300000000001 146.671 104.77700000000002 146.412 105.051 L 146.412 105.051 C 139.02100000000002 113.519 128.148 118.886 116.031 118.886 L 116.031 118.886 C 109.09800000000001 118.886 102.543 117.12299999999999 96.84200000000001 114.02199999999999" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 -30.3470838013979 66.92331291602295)"  >
+<linearGradient id="SVGID_205_8_733548_footer" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.565887 0 0 -88.565887 72.441406 55.443359)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_205_8_733548_footer); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-102.54863107718302, -55.44350000000001)" d="M 81.771 72.327 C 78.626 71.173 77.013 67.66 78.185 64.513 L 78.185 64.513 C 78.245 64.36 78.306 64.208 78.36800000000001 64.072 L 78.36800000000001 64.072 C 84.17500000000001 48.942 98.864 38.17700000000001 116.031 38.17700000000001 L 116.031 38.17700000000001 C 118.06700000000001 38.17700000000001 120.061 38.32900000000001 122.02300000000001 38.63300000000001 L 122.02300000000001 38.63300000000001 C 125.352 39.07400000000001 127.69400000000002 42.14600000000001 127.23800000000001 45.46100000000001 L 127.23800000000001 45.46100000000001 C 126.78100000000002 48.807000000000016 123.74100000000001 51.131000000000014 120.40800000000002 50.674000000000014 L 120.40800000000002 50.674000000000014 L 120.39600000000002 50.674000000000014 C 120.36300000000001 50.674000000000014 120.33300000000001 50.661000000000016 120.30400000000002 50.661000000000016 L 120.30400000000002 50.661000000000016 C 118.90400000000001 50.448000000000015 117.47400000000002 50.341000000000015 116.03100000000002 50.341000000000015 L 116.03100000000002 50.341000000000015 C 103.92700000000002 50.341000000000015 93.58800000000002 58.006000000000014 89.60300000000002 68.73800000000001 L 89.60300000000002 68.73800000000001 L 89.58900000000003 68.73800000000001 C 88.67700000000002 71.18900000000001 86.35500000000003 72.70900000000002 83.88600000000002 72.71000000000001 L 83.88600000000002 72.71000000000001 C 83.18300000000002 72.71000000000001 82.46900000000002 72.587 81.77100000000003 72.32700000000001" stroke-linecap="round" />
+</g>
+		<g transform="matrix(2.8986188892941334 0 0 -2.898618889294134 83.63855325947299 65.26034827162914)"  >
+<linearGradient id="SVGID_206_9_733549_footer" gradientUnits="userSpaceOnUse" gradientTransform="matrix(88.575767 0 0 -88.575767 72.433594 56.017578)"  x1="0" y1="0" x2="1" y2="0">
+<stop offset="0%" style="stop-color:rgb(254,204,7);stop-opacity: 1"/>
+<stop offset="100%" style="stop-color:rgb(248,163,27);stop-opacity: 1"/>
+</linearGradient>
+<path style="stroke: none; stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: url(#SVGID_206_9_733549_footer); fill-rule: nonzero; opacity: 1;"  paint-order="stroke"  transform=" translate(-141.87275108546345, -56.01720931050509)" d="M 137.361 60.093 C 135.108 57.597 135.301 53.752 137.79399999999998 51.502 L 137.79399999999998 51.502 C 140.29 49.248000000000005 144.14499999999998 49.45 146.38799999999998 51.945 L 146.38799999999998 51.945 C 148.63899999999998 54.439 148.44199999999998 58.289 145.94899999999998 60.53 L 145.94899999999998 60.53 C 144.784 61.582 143.325 62.1 141.873 62.1 L 141.873 62.1 C 140.21099999999998 62.1 138.558 61.423 137.361 60.093" stroke-linecap="round" />
+</g>
+</g>
+</g>
+</svg>
+        <p>Christ Focus Mission is a registered non-profit organization harnessing data and music to transform communities across India.</p>
+      </div>
+      <div class="cfm-footer-col">
+        <h5>Organization</h5>
+        <a onclick="scrollToSection('about')">About Us</a>
+        <a onclick="scrollToSection('projects')">Our Projects</a>
+        <a onclick="scrollToSection('how')">How It Works</a>
+      </div>
+      <div class="cfm-footer-col">
+        <h5>Projects</h5>
+        <a onclick="scrollToSection('projects')">Data for Christ</a>
+        <a href="https://kingdavidventure.com" target="_blank">King David Project</a>
+        <a onclick="scrollToSection('support')">Support Us</a>
+      </div>
+      <div class="cfm-footer-col">
+        <h5>Connect</h5>
+        <a onclick="scrollToSection('contact')">Contact Us</a>
+        <a href="https://wa.me/919962680639" target="_blank" rel="noopener" class="cfm-whatsapp-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366" style="vertical-align:-3px;margin-right:6px;"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.83 14.06c-.24.68-1.19 1.25-1.94 1.4-.52.11-1.2.19-3.48-.75-2.92-1.21-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.43.75-2.13 1.02-2.42.27-.29.58-.36.78-.36l.55.01c.18.01.42-.07.65.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.29.14.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.38-.24.63-.14.26.1 1.65.78 1.93.92.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg>+91 99626 80639</a>
+        <a>Chennai, India</a>
+      </div>
+    </div>
+    <div class="cfm-footer-bottom">
+      <p>&#169; 2026 Christ Focus Mission. All rights reserved. | CSR Reg. No. CSR00082712</p>
+      <div class="cfm-footer-social">
+        <a href="https://www.instagram.com/christ_focus_mission/?hl=en" target="_blank" rel="noopener" title="Instagram">&#128247;</a>
+        <a href="https://open.spotify.com/artist/7L9p6L5qSnXCa2Dz1xZ5fN" target="_blank" rel="noopener" title="Spotify">&#127925;</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+// Particle Canvas
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let w, h;
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = (Math.random() - 0.5) * 0.5;
+    this.size = Math.random() * 2 + 1;
+    this.opacity = Math.random() * 0.5 + 0.1;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0 || this.x > w) this.vx *= -1;
+    if (this.y < 0 || this.y > h) this.vy *= -1;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(27, 163, 204, ${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, w, h);
+  particles.forEach(p => { p.update(); p.draw(); });
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(27, 163, 204, ${0.1 * (1 - dist / 150)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Scroll Navigation
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('cfmNav');
+  if (window.scrollY > 50) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+// Mobile Menu
+function toggleMobileMenu() {
+  document.getElementById('mobileMenu').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+}
+
+// Scroll Reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Copy Text
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Copied: ' + text);
+  });
+}
+
+</script>
+</body>
+</html>
