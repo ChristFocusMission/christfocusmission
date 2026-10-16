@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Christ Focus Mission - Fundraising Leads Collection
+    match /cfm_leads/{leadId} {
+      // Allow read and write for your mission team members
+      // (For production with Firebase Auth, change to: if request.auth != null)
+      allow read, write: if true;
+    }
+    
+    // Christ Focus Mission - Campaigns Collection
+    match /cfm_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+  }
+}

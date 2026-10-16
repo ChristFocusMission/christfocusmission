@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Christ Focus Mission | Fundraising Leads & Donor Pipeline</title>
+  <meta name="description" content="Fundraising Leads and Donor Relationship Management Tracker for Christ Focus Mission, linked with Firebase Firestore.">
+  <link rel="icon" type="image/svg+xml" href="assets/cfm-icon.svg">
+
+  <!-- Google Fonts: Space Grotesk (Headings) & Inter (Body) as on christfocusmission.org -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cfm: {
+              primary: '#4A4B8C',
+              primarydark: '#37386d',
+              cyan: '#1BA3CC',
+              gold: '#F5A623',
+              goldlight: '#F8C41C',
+              navy: '#181A3A',
+              darker: '#F5F7FC',
+              muted: '#5B5E7A'
+            }
+          },
+          fontFamily: {
+            heading: ['Space Grotesk', 'sans-serif'],
+            body: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Firebase Compat Web SDK (Loads in browser when connected to network) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-admin">
+
+  <!-- TOP HEADER / BRANDING BAR -->
+  <header class="bg-[#181A3A] text-white sticky top-0 z-40 shadow-lg border-b border-indigo-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Official Logo & Organization Name from christfocusmission.org -->
+        <div class="flex items-center space-x-3.5 cursor-pointer" onclick="app.switchView('kanban')">
+          <div class="w-12 h-12 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-white/15 shadow-inner">
+            <img src="assets/cfm-icon.svg" alt="Christ Focus Mission" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl font-bold tracking-tight text-white font-heading">
+                Christ Focus Mission
+              </h1>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest">
+                Stewardship CRM
+              </span>
+            </div>
+            <p class="text-xs text-slate-300 hidden sm:block">
+              Harnessing Data for a Higher Purpose • Partner Pipeline
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Side: Role Switcher, Firebase Badge & Actions -->
+        <div class="flex items-center space-x-2.5">
+          
+          <!-- Role Switcher Pill (Admin vs CRM) -->
+          <div class="relative">
+            <button id="btn-role-switcher" onclick="app.openRoleModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm border bg-indigo-950/70 border-indigo-700/60 text-slate-200 hover:text-white" title="Click to toggle Admin / CRM mode">
+              <span id="role-badge-icon">👑</span>
+              <span id="role-badge-text">Admin</span>
+              <i class="fas fa-chevron-down text-[10px] opacity-70"></i>
+            </button>
+          </div>
+
+          <!-- Firebase Connection Status Badge (Admin gets full details, CRM gets clean simple status) -->
+          <div id="firebase-status-badge">
+            <!-- Rendered dynamically by app.js based on active role -->
+          </div>
+
+          <!-- Currency Selector -->
+          <div class="relative hidden sm:block">
+            <select id="currency-selector" class="bg-slate-800/90 text-amber-300 text-xs font-bold rounded-lg border border-slate-700 py-1.5 px-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+              <option value="USD">USD ($)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+            </select>
+          </div>
+
+          <!-- Firebase Setup Button (Strictly Admin-Only) -->
+          <button id="btn-firebase-settings" class="admin-only bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5 transition" title="Firebase Settings & Cloud Sync (Admin Only)">
+            <i class="fas fa-cloud text-amber-400"></i>
+            <span class="hidden md:inline">Firebase Link</span>
+          </button>
+
+          <!-- Team Users Management (Admin Only) -->
+          <button id="btn-manage-users" onclick="app.openUserModal()" class="admin-only bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5 transition" title="User & Staff Management (Admin Only)">
+            <i class="fas fa-users-cog text-cyan-400"></i>
+            <span class="hidden md:inline">Users</span>
+          </button>
+
+          <!-- Add New Lead Button -->
+          <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-3.5 py-2 rounded-lg shadow-md flex items-center gap-1.5 transition">
+            <i class="fas fa-plus text-slate-950"></i>
+            <span>New Lead</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="border-t border-slate-700/60 bg-slate-900/60 backdrop-blur-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto text-xs font-semibold">
+          <button data-view-target="kanban" class="px-3.5 py-2 rounded-lg bg-amber-600 text-white flex items-center gap-2 transition">
+            <i class="fas fa-columns"></i>
+            <span>Pipeline Kanban</span>
+          </button>
+          <button data-view-target="table" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+            <i class="fas fa-table-list"></i>
+            <span>All Leads (Table)</span>
+          </button>
+          <button data-view-target="campaigns" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+            <i class="fas fa-bullseye"></i>
+            <span>Mission Funds & Campaigns</span>
+          </button>
+          <button data-view-target="network" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+            <i class="fas fa-sitemap text-amber-400"></i>
+            <span>Rapid 5-Level Scaling</span>
+          </button>
+          <button data-view-target="followups" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+            <i class="fas fa-pray"></i>
+            <span>Follow-ups & Prayer</span>
+          </button>
+          <button data-view-target="analytics" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+            <i class="fas fa-chart-pie"></i>
+            <span>Analytics & Forecast</span>
+          </button>
+          <button data-view-target="users" class="admin-only px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition border border-indigo-500/40 bg-indigo-950/40" title="Team Users & Staff Directory (Admin Only)">
+            <i class="fas fa-users-gear text-cyan-400"></i>
+            <span>Team Users (Admin)</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- METRICS OVERVIEW CARDS -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      <!-- Total Pipeline -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Potential</div>
+        <div id="metric-total-pipeline" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">$0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <i class="fas fa-stream text-amber-500"></i> All active stages
+        </div>
+      </div>
+
+      <!-- Committed / Won -->
+      <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
+        <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Committed / Raised</div>
+        <div id="metric-total-committed" class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">$0</div>
+        <div class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+          <i class="fas fa-check-double"></i> Confirmed partners
+        </div>
+      </div>
+
+      <!-- Active Prospects -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Prospects</div>
+        <div id="metric-active-leads" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <i class="fas fa-user-clock text-blue-500"></i> In discussions
+        </div>
+      </div>
+
+      <!-- Conversion Rate -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
+        <div id="metric-conversion-rate" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0%</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <i class="fas fa-chart-line text-indigo-500"></i> Closed won ratio
+        </div>
+      </div>
+
+      <!-- Follow-ups Due -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Follow-ups Due</div>
+        <div id="metric-followups-due" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0</div>
+        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <i class="far fa-bell text-rose-500"></i> Due today or past
+        </div>
+      </div>
+    </section>
+
+    <!-- SEARCH & FILTER TOOLBAR (For Kanban & Table views) -->
+    <section id="leads-filter-toolbar" class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
+      
+      <!-- Search Input -->
+      <div class="relative w-full lg:w-96">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+          <i class="fas fa-search text-xs"></i>
+        </span>
+        <input type="text" id="search-leads-input" placeholder="Search donor name, church, email, city, notes..." 
+               class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+      </div>
+
+      <!-- Filters & Actions -->
+      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+        
+        <!-- Stage Filter -->
+        <select id="filter-stage" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+          <option value="all">All Stages</option>
+          <option value="new">New / Identified</option>
+          <option value="contacted">Contacted</option>
+          <option value="meeting_scheduled">Meeting / Pitch</option>
+          <option value="proposal_sent">Proposal Sent</option>
+          <option value="committed">Committed Partner</option>
+          <option value="stalled">Deferred / Follow-up</option>
+          <option value="declined">Declined</option>
+        </select>
+
+        <!-- Campaign Filter -->
+        <select id="filter-campaign" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500 max-w-[170px] truncate">
+          <option value="all">All Campaigns</option>
+        </select>
+
+        <!-- Priority Filter -->
+        <select id="filter-priority" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+          <option value="all">All Priorities</option>
+          <option value="High">High Priority</option>
+          <option value="Medium">Medium Priority</option>
+          <option value="Normal">Normal Priority</option>
+        </select>
+
+        <!-- Export CSV Button -->
+        <button id="btn-export-csv" class="text-xs bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition" title="Export current leads to CSV file">
+          <i class="fas fa-download text-emerald-600"></i>
+          <span class="hidden sm:inline">Export CSV</span>
+        </button>
+
+        <!-- Reset Sample Data (Admin Only) -->
+        <button id="btn-reset-demo" class="admin-only text-xs text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition" title="Reset sample test leads (Admin Only)">
+          <i class="fas fa-rotate-right"></i>
+        </button>
+
+      </div>
+    </section>
+
+    <!-- DYNAMIC VIEW CONTAINER -->
+    <section id="main-view-container" class="min-h-[480px]">
+      <!-- Populated via app.js -->
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div>
+        <span class="font-bold text-slate-700">Christ Focus Mission</span> &copy; 2026. Fundraising Leads & Ministry Stewardship Portal.
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>Linked with Google Firebase Firestore</span>
+        <span class="admin-only text-slate-300">•</span>
+        <button onclick="app.openFirebaseModal()" class="admin-only text-amber-700 hover:underline font-semibold">
+          Configure Firebase Cloud Sync (Admin)
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================== MODALS ======================== -->
+
+  <!-- 1. LEAD DETAILS & ACTIVITY LOG MODAL -->
+  <div id="modal-lead-details" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden modal-container">
+      
+      <!-- Modal Header -->
+      <div class="p-5 bg-gradient-to-r from-slate-900 to-cfm-navy text-white flex items-start justify-between">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 text-xl font-bold">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="detail-lead-name" class="text-lg font-bold">Arthur Vance</h3>
+              <span id="detail-lead-type" class="text-[10px] font-bold px-2 py-0.5 rounded bg-white/20 text-slate-200 uppercase">Major Donor</span>
+              <span id="detail-lead-tier" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 uppercase hidden"></span>
+            </div>
+            <p id="detail-lead-org" class="text-xs text-slate-300">Grace Family Healthcare</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="app.openLeadModal(app.selectedLead?.id)" class="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition flex items-center gap-1">
+            <i class="far fa-edit"></i> Edit
+          </button>
+          <button onclick="app.closeLeadDetails()" class="text-slate-400 hover:text-white p-1 text-lg">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Financial Snapshot Bar -->
+      <div class="bg-slate-50 border-b border-slate-200 p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div>
+          <span class="text-slate-400 font-semibold block text-[10px] uppercase">Target Amount</span>
+          <span id="detail-lead-target" class="font-black text-slate-900 text-base">$0</span>
+        </div>
+        <div>
+          <span class="text-emerald-700 font-semibold block text-[10px] uppercase">Received / Pledged</span>
+          <span id="detail-lead-received" class="font-black text-emerald-700 text-base">$0</span>
+        </div>
+        <div>
+          <span class="text-slate-400 font-semibold block text-[10px] uppercase">Frequency</span>
+          <span id="detail-lead-frequency" class="font-bold text-slate-800 text-sm">Annual</span>
+        </div>
+        <div class="flex items-center">
+          <button onclick="app.recordPaymentPrompt()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+            <i class="fas fa-hand-holding-usd"></i> Record Gift
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 overflow-y-auto space-y-5 flex-1 text-xs">
+        
+        <!-- Stage Status Controller -->
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 border border-slate-200">
+          <span class="font-bold text-slate-700">Pipeline Stage:</span>
+          <select id="detail-lead-stage-select" onchange="app.handleStageChangeFromModal(this.value)" class="font-semibold text-xs rounded-lg px-3 py-1.5 bg-white border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            <option value="new">New / Identified</option>
+            <option value="contacted">Contacted</option>
+            <option value="meeting_scheduled">Meeting / Pitch</option>
+            <option value="proposal_sent">Proposal Sent</option>
+            <option value="committed">Committed Partner</option>
+            <option value="stalled">Deferred / Follow-up</option>
+            <option value="declined">Declined</option>
+          </select>
+        </div>
+
+        <!-- Contact Info Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-amber-700">Contact Details</h4>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Email</span>
+              <span id="detail-lead-email" class="font-medium text-slate-800"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Phone</span>
+              <span id="detail-lead-phone" class="font-medium text-slate-800"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Location</span>
+              <span id="detail-lead-location" class="font-medium text-slate-800"></span>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2">
+            <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-amber-700">Mission Stewardship</h4>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Campaign / Fund</span>
+              <span id="detail-lead-campaign" class="font-medium text-slate-800"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Assigned Team Member</span>
+              <span id="detail-lead-assigned" class="font-medium text-slate-800"></span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">Next Scheduled Touchpoint</span>
+              <span id="detail-lead-followup" class="font-medium text-slate-800"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Lineage & Level Quota Status Card (Who is under who & level progress) -->
+        <div id="detail-lead-network-lineage">
+          <!-- Dynamically populated by app.js -->
+        </div>
+
+        <!-- Pastoral Prayer Request Card -->
+        <div id="detail-lead-prayer">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Notes -->
+        <div class="p-3.5 rounded-xl border border-slate-200 bg-white">
+          <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-slate-500 mb-1">Notes & Context</h4>
+          <p id="detail-lead-notes" class="text-slate-700 leading-relaxed whitespace-pre-line"></p>
+        </div>
+
+        <!-- Touchpoint & Activity History -->
+        <div class="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
+          <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider text-slate-500">Touchpoint Activity History</h4>
+
+          <!-- New Touchpoint Input -->
+          <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-semibold text-slate-700 text-xs flex items-center gap-1.5">
+              <i class="fas fa-plus-circle text-amber-600"></i> Log New Communication Touchpoint
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <select id="new-activity-type" class="text-xs p-1.5 rounded border border-slate-300 bg-white">
+                <option value="Call">Phone Call</option>
+                <option value="Email">Email Sent</option>
+                <option value="Meeting">In-Person / Zoom Meeting</option>
+                <option value="Prayer">Prayer Intercession</option>
+                <option value="Proposal">Proposal Submitted</option>
+                <option value="Note">General Note</option>
+              </select>
+              <input type="text" id="new-activity-author" placeholder="Staff Name" value="Pastor David" class="text-xs p-1.5 rounded border border-slate-300 bg-white">
+              <button onclick="app.logNewActivityFromModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-1.5 px-3 rounded shadow-sm transition">
+                Add Touchpoint
+              </button>
+            </div>
+            <textarea id="new-activity-summary" rows="2" placeholder="Summary of conversation, questions raised, prayer shared..." class="w-full text-xs p-2 rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500"></textarea>
+          </div>
+
+          <!-- Timeline Container -->
+          <div id="detail-lead-timeline" class="space-y-2 pt-2">
+            <!-- Rendered by app.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs">
+        <button onclick="app.confirmDeleteLead(app.selectedLead?.id)" class="admin-only text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-1">
+          <i class="far fa-trash-alt"></i> Delete Lead
+        </button>
+        <button onclick="app.closeLeadDetails()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded-lg transition">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. ADD / EDIT LEAD MODAL -->
+  <div id="modal-lead-form" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden modal-container">
+      
+      <!-- Header -->
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <h3 id="modal-lead-title" class="font-bold text-base">Add New Fundraising Lead</h3>
+        <button onclick="app.closeLeadModal()" class="text-slate-400 hover:text-white p-1 text-lg">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Form Body -->
+      <form id="lead-edit-form" onsubmit="app.handleSaveLeadForm(event)" class="p-5 overflow-y-auto space-y-4 flex-1 text-xs">
+        <input type="hidden" id="modal-lead-id">
+
+        <!-- Core Donor Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Donor / Contact Name *</label>
+            <input type="text" id="modal-lead-name" required placeholder="e.g. Dr. Arthur Vance" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Organization / Church Name</label>
+            <input type="text" id="modal-lead-org" placeholder="e.g. Grace Fellowship / Vance Foundation" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Donor Type</label>
+            <select id="modal-lead-type" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <option value="Individual Donor">Individual Donor</option>
+              <option value="Major Donor">Major Donor</option>
+              <option value="Church Partner">Church Partner</option>
+              <option value="Corporate / Business">Corporate / Business</option>
+              <option value="Trust & Foundation">Trust & Foundation</option>
+              <option value="Community Group">Community Group</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Email</label>
+            <input type="email" id="modal-lead-email" placeholder="donor@example.org" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Phone / WhatsApp</label>
+            <input type="text" id="modal-lead-phone" placeholder="+1 (555) 000-0000" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">City</label>
+            <input type="text" id="modal-lead-city" placeholder="Dallas" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Country</label>
+            <input type="text" id="modal-lead-country" placeholder="USA" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Preferred Contact</label>
+            <select id="modal-lead-contact-pref" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <option value="Email">Email</option>
+              <option value="Phone">Phone Call</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="In-Person">In-Person</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Financial & Campaign Details -->
+        <div class="border-t border-slate-200 pt-3">
+          <h4 class="font-bold text-slate-900 mb-2 uppercase tracking-wider text-[11px] text-amber-700">Financial & Stewardship Plan</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Target / Pledged Amount</label>
+              <input type="number" id="modal-lead-amount" placeholder="5000" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Already Received</label>
+              <input type="number" id="modal-lead-received" placeholder="0" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Giving Frequency</label>
+              <select id="modal-lead-freq" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+                <option value="One-off">One-off Gift</option>
+                <option value="Monthly">Monthly Supporter</option>
+                <option value="Quarterly">Quarterly</option>
+                <option value="Annual">Annual Supporter</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stage, Campaign, Assignee -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Pipeline Stage *</label>
+            <select id="modal-lead-stage" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <option value="new">New / Identified</option>
+              <option value="contacted">Contacted</option>
+              <option value="meeting_scheduled">Meeting / Pitch</option>
+              <option value="proposal_sent">Proposal Sent</option>
+              <option value="committed">Committed Partner</option>
+              <option value="stalled">Deferred / Follow-up</option>
+              <option value="declined">Declined</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Target Mission Campaign</label>
+            <select id="modal-lead-campaign" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Assigned Team Member</label>
+            <select id="modal-lead-assigned" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <!-- Dynamically populated from Firebase cfm_users -->
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Priority</label>
+            <select id="modal-lead-priority" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+              <option value="High">High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Normal">Normal Priority</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Probability (%)</label>
+            <input type="number" id="modal-lead-prob" min="10" max="100" placeholder="50" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Follow-up Date</label>
+            <input type="date" id="modal-lead-followup" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+          </div>
+        </div>
+
+        <!-- 5-Level Viral Multiplying Lineage Settings -->
+        <div class="p-3.5 bg-gradient-to-r from-amber-50/80 to-blue-50/40 border border-amber-200/90 rounded-xl space-y-2.5">
+          <div class="font-bold text-slate-900 text-xs flex items-center justify-between">
+            <span class="flex items-center gap-1.5 text-amber-900">
+              <i class="fas fa-sitemap text-amber-600"></i> 5-Level Scaling Role & Lineage (Who is Under Who)
+            </span>
+            <span class="text-[10px] text-amber-700 font-semibold bg-amber-100/80 px-2 py-0.5 rounded border border-amber-300">10x Viral Multiplier</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Scaling Role / Stage</label>
+              <select id="modal-lead-network-tier" onchange="app.handleTierChangeInForm(this.value)" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white font-medium">
+                <option value="">None / General Donor</option>
+                <option value="stage-1">Stage 1: Core Leader (Root Founder Team)</option>
+                <option value="stage-2">Stage 2: Team Champion (10x Multiplier)</option>
+                <option value="stage-3">Stage 3: Active Distributor</option>
+                <option value="stage-4">Stage 4: Brand Ambassador & Builder</option>
+                <option value="stage-5">Stage 5: Active Supporter</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Recruited Under / Parent Leader (Upline)</label>
+              <select id="modal-lead-parent" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white font-medium">
+                <option value="">None (Root Core Leader)</option>
+                <!-- Populated dynamically -->
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1">Identifies who this leader reports to and counts toward their 10-member level quota.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prayer Request (Christian Mission Focus) -->
+        <div>
+          <label class="block font-semibold text-indigo-900 mb-1 flex items-center gap-1.5">
+            <i class="fas fa-pray text-indigo-600"></i> Pastoral Prayer Request / Spiritual Context
+          </label>
+          <input type="text" id="modal-lead-prayer" placeholder="e.g. Pray for family health, upcoming church building, son's graduation..." class="w-full p-2 border border-indigo-200 bg-indigo-50/40 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Stewardship Notes & Background</label>
+          <textarea id="modal-lead-notes" rows="2" placeholder="Discussion points, personal interests in the mission, background history..." class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex justify-end space-x-2">
+          <button type="button" onclick="app.closeLeadModal()" class="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition">
+            Save Lead
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ROLE SWITCHER & ACCESS CONTROL MODAL -->
+  <div id="modal-role-switcher" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden modal-container text-xs">
+      
+      <!-- Header -->
+      <div class="p-4 bg-gradient-to-r from-indigo-900 to-[#181A3A] text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-xl">🛡️</span>
+          <div>
+            <h3 class="font-bold text-sm">Security & Access Control</h3>
+            <p class="text-[11px] text-slate-300">Switch workspace user role</p>
+          </div>
+        </div>
+        <button onclick="app.closeRoleModal()" class="text-slate-300 hover:text-white p-1 text-base">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 space-y-4">
+        <p class="text-slate-600 text-[11px] leading-relaxed">
+          Select your access level. In <strong>CRM Mode</strong>, field fundraisers manage donors and prayer requests, while Firebase credentials and cloud infrastructure are strictly protected and hidden.
+        </p>
+
+        <!-- Role Options -->
+        <div class="space-y-2.5">
+          <!-- Option 1: Admin -->
+          <div onclick="app.selectRoleOption('admin')" id="role-option-admin" class="p-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50/50 cursor-pointer transition flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+              👑
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-900 text-xs">Administrator / IT Lead</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">Full Access</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                Manage Firebase credentials, Firestore sync, project keys, delete leads, create campaigns, and manage team users.
+              </p>
+            </div>
+          </div>
+
+          <!-- Option 2: CRM -->
+          <div onclick="app.selectRoleOption('crm')" id="role-option-crm" class="p-3.5 rounded-xl border border-slate-200 hover:border-amber-400 bg-white cursor-pointer transition flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5">
+              👤
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-900 text-xs">CRM Staff / Fundraiser</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Protected</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                Manage pipeline leads, log touchpoints, record pledges. <strong>Firebase settings, lead deletion & campaigns creation are guarded.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIN section for switching to Admin -->
+        <div id="admin-pin-container" class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <label class="block font-semibold text-slate-700 text-[11px]">
+            <i class="fas fa-lock text-amber-600 mr-1"></i> Admin Security PIN (Required to switch to Admin)
+          </label>
+          <div class="flex gap-2">
+            <input type="password" id="admin-pin-input" placeholder="Enter PIN (Default: 7777)" maxlength="8" class="flex-1 p-2 rounded-lg border border-slate-300 font-mono text-center tracking-widest text-xs focus:ring-1 focus:ring-indigo-500">
+            <button type="button" onclick="document.getElementById('admin-pin-input').value = '7777'" class="px-2.5 py-1 text-[10px] font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg">
+              Quick PIN: 7777
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+          <button type="button" onclick="app.closeRoleModal()" class="px-3.5 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="button" onclick="app.applyRoleChange()" class="px-4 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-lg shadow-sm transition">
+            Apply Role Switch
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3. FIREBASE SETUP & CLOUD SYNC MODAL -->
+  <div id="modal-firebase-settings" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden modal-container text-xs">
+      
+      <!-- Header -->
+      <div class="p-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-xl">
+            <i class="fas fa-fire"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Google Firebase Cloud Firestore Setup</h3>
+            <p class="text-xs text-amber-100">Connect Christ Focus Mission Leads Tracker to live cloud database</p>
+          </div>
+        </div>
+        <button onclick="app.closeFirebaseModal()" class="text-amber-200 hover:text-white p-1 text-lg">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-5 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- Live status -->
+        <div id="fb-modal-status-text">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Quick instructions accordion -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <i class="fas fa-info-circle text-blue-600"></i> How to connect your Firebase Project in 2 minutes:
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-600 leading-relaxed text-[11px]">
+            <li>Open <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 font-bold underline">Firebase Console</a> and click <strong>Create a project</strong> (or choose an existing one).</li>
+            <li>In the left sidebar, click <strong>Build &rarr; Firestore Database</strong> &rarr; <strong>Create Database</strong>. Choose <em>Start in test mode</em> (or allow read/write).</li>
+            <li>Go to <strong>Project Settings (Gear icon) &rarr; General &rarr; Your apps &rarr; Web (&lt;/&gt;)</strong>. Copy the <code>firebaseConfig</code> object and paste it below!</li>
+          </ol>
+        </div>
+
+        <!-- Auto-Paste Snippet Helper -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">
+            <i class="fas fa-paste text-amber-600 mr-1"></i> Quick Paste: Paste full Firebase config snippet here
+          </label>
+          <textarea oninput="app.handlePasteFirebaseConfig(this.value)" rows="3" placeholder="const firebaseConfig = { apiKey: 'AIza...', authDomain: '...', projectId: '...' };" class="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500"></textarea>
+          <span class="text-[10px] text-slate-400">Pasting automatically populates the individual fields below.</span>
+        </div>
+
+        <!-- Individual Config Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">API Key *</label>
+            <input type="text" id="fb-api-key" placeholder="AIzaSy..." class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Project ID *</label>
+            <input type="text" id="fb-project-id" placeholder="christ-focus-mission" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Auth Domain</label>
+            <input type="text" id="fb-auth-domain" placeholder="project-id.firebaseapp.com" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Storage Bucket</label>
+            <input type="text" id="fb-storage-bucket" placeholder="project-id.appspot.com" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Messaging Sender ID</label>
+            <input type="text" id="fb-sender-id" placeholder="1234567890" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">App ID</label>
+            <input type="text" id="fb-app-id" placeholder="1:123456:web:abcd" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+          </div>
+        </div>
+
+        <!-- Sync Local Data to Firestore Button -->
+        <div class="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div>
+            <button type="button" onclick="app.handlePushLocalToFirebase()" class="text-xs bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 transition">
+              <i class="fas fa-cloud-upload-alt"></i> Push Local Data to Firestore
+            </button>
+            <span class="text-[10px] text-slate-400 block mt-0.5">Uploads sample/local leads to your Cloud database</span>
+          </div>
+
+          <button type="button" id="btn-test-fb" onclick="app.handleTestFirebaseConnection()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3 py-2 rounded-lg border border-slate-300 flex items-center gap-1.5 transition">
+            <i class="fas fa-plug"></i> Test Connection
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+        <button type="button" onclick="app.handleDisconnectFirebase()" class="text-rose-600 hover:text-rose-800 font-semibold">
+          Reset to Demo Mode
+        </button>
+        <div class="flex space-x-2">
+          <button type="button" onclick="app.closeFirebaseModal()" class="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="button" onclick="app.handleSaveFirebaseConfig()" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition">
+            Save & Connect
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. ADD NEW CAMPAIGN MODAL -->
+  <div id="modal-campaign-form" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden modal-container text-xs">
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <h3 class="font-bold text-sm">New Mission Campaign Fund</h3>
+        <button onclick="app.closeCampaignModal()" class="text-slate-400 hover:text-white p-1 text-base">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form id="campaign-edit-form" onsubmit="app.handleSaveCampaignForm(event)" class="p-5 space-y-3.5">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Campaign Fund Name *</label>
+          <input type="text" id="modal-camp-name" required placeholder="e.g. 2026 Gospel Outreach to Hills" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Fund Code</label>
+            <input type="text" id="modal-camp-code" placeholder="HILLS-2026" class="w-full p-2 border border-slate-300 rounded-lg uppercase focus:ring-1 focus:ring-amber-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Target Goal Amount</label>
+            <input type="number" id="modal-camp-target" placeholder="25000" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Mission Description</label>
+          <textarea id="modal-camp-desc" rows="3" placeholder="Explain the focus, beneficiaries, and milestones of this initiative..." class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+          <button type="button" onclick="app.closeCampaignModal()" class="px-3.5 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition">
+            Create Campaign
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. USER & STAFF MANAGEMENT MODAL (ADMIN ONLY) -->
+  <div id="modal-user-management" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden modal-container text-xs">
+      
+      <!-- Modal Header -->
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-cyan-400 flex items-center justify-center border border-indigo-500/30">
+            <i class="fas fa-users-cog text-sm"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm">User & Staff Management (Admin)</h3>
+            <p class="text-[11px] text-slate-400">Users created here are saved to Google Firebase Cloud Firestore (<code>cfm_users</code>)</p>
+          </div>
+        </div>
+        <button onclick="app.closeUserModal()" class="text-slate-400 hover:text-white p-1 text-base">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <!-- New User Form -->
+        <form id="new-user-form" onsubmit="app.handleSaveUserForm(event)" class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h4 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+              <i class="fas fa-user-plus text-amber-600"></i> Create New Team Member
+            </h4>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-semibold">
+              <i class="fas fa-cloud-arrow-up mr-1"></i> Syncs with Firebase
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Full Name *</label>
+              <input type="text" id="modal-user-name" required placeholder="e.g. Rachel Adams" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Email Address *</label>
+              <input type="email" id="modal-user-email" required placeholder="rachel@christfocusmission.org" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Workspace Role *</label>
+              <select id="modal-user-role" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+                <option value="crm">CRM Staff (No Firebase Settings)</option>
+                <option value="admin">Administrator (Full Access)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Title / Designation</label>
+              <input type="text" id="modal-user-title" placeholder="e.g. Field Liaison" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Department</label>
+              <input type="text" id="modal-user-department" placeholder="e.g. Donor Relations" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="px-4 py-2 bg-indigo-900 hover:bg-indigo-800 text-white font-bold rounded-lg shadow-sm flex items-center gap-2 transition">
+              <i class="fas fa-save text-cyan-400"></i> Save User to Firebase
+            </button>
+          </div>
+        </form>
+
+        <!-- Directory of Existing Users -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-bold text-slate-900 text-xs">Directory of Team Members</h4>
+            <span id="user-count-badge" class="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-full"></span>
+          </div>
+          <div id="users-directory-list" class="space-y-2 max-h-60 overflow-y-auto">
+            <!-- Dynamically populated by app.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
+        <button type="button" onclick="app.closeUserModal()" class="px-4 py-1.5 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- APPLICATION JAVASCRIPT FILES -->
+  <script src="js/sample-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
