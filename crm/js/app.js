@@ -39,7 +39,7 @@ class CFMApp {
     this.networkModel = 'B'; // 'A' (One-time) or 'B' (Monthly Subscription)
     this.networkContribution = 1000; // INR 1,000
     this.networkActivationPct = 100; // 100% milestone target
-    this.userRole = localStorage.getItem('cfm_user_role') || 'admin';
+    this.userRole = localStorage.getItem('cfm_user_role') || 'crm';
     this.selectedRoleOption = this.userRole;
     this.currentUser = null;
     this.adminSubTab = 'users'; // 'users' | 'firebase' | 'security'
@@ -334,6 +334,10 @@ class CFMApp {
     } else if (this.activeView === 'analytics') {
       this.renderAnalyticsView();
     } else if (this.activeView === 'admin' || this.activeView === 'users') {
+      if (this.userRole !== 'admin') {
+        this.switchView('kanban');
+        return;
+      }
       this.renderAdminView();
     }
   }
@@ -2347,14 +2351,27 @@ class CFMApp {
                 </div>
               </div>
 
-              <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    <i class="far fa-envelope text-xs"></i>
-                  </span>
-                  <input type="email" id="tab-user-email" required placeholder="rachel@christfocusmission.org" 
-                         class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Username *</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <i class="fas fa-at text-xs"></i>
+                    </span>
+                    <input type="text" id="tab-user-username" required placeholder="e.g. rachel" 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <i class="far fa-envelope text-xs"></i>
+                    </span>
+                    <input type="email" id="tab-user-email" required placeholder="rachel@christfocusmission.org" 
+                           class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                  </div>
                 </div>
               </div>
 
@@ -2443,6 +2460,9 @@ class CFMApp {
                       <div>
                         <div class="flex flex-wrap items-center gap-2">
                           <h4 class="font-bold text-slate-900 text-xs sm:text-sm">${this.escapeHtml(u.name)}</h4>
+                          <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 border border-slate-300" title="Login Username">
+                            @${this.escapeHtml(u.username || (u.aliases && u.aliases[0]) || u.email.split('@')[0])}
+                          </span>
                           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}">
                             ${u.role === 'admin' ? '👑 Administrator' : '👤 CRM Staff'}
                           </span>
@@ -2639,7 +2659,9 @@ class CFMApp {
     }
 
     const name = document.getElementById('tab-user-name').value.trim();
+    const rawUsername = document.getElementById('tab-user-username') ? document.getElementById('tab-user-username').value.trim().toLowerCase() : '';
     const email = document.getElementById('tab-user-email').value.trim();
+    const username = (rawUsername || email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9._-]/g, '');
     const role = document.getElementById('tab-user-role').value;
     const pwdEl = document.getElementById('tab-user-password');
     const password = (pwdEl ? pwdEl.value.trim() : '') || 'crmStaff2026!';
@@ -2655,7 +2677,9 @@ class CFMApp {
     try {
       const newUser = await cfmFirebase.addUser({
         name,
+        username,
         email,
+        aliases: [username, email.toLowerCase()],
         password,
         role,
         phone,
@@ -2690,7 +2714,8 @@ class CFMApp {
 
     document.getElementById('change-pwd-user-id').value = user.id;
     document.getElementById('change-pwd-user-name').textContent = user.name;
-    document.getElementById('change-pwd-user-email').textContent = user.email;
+    const userUname = user.username || (user.aliases && user.aliases[0]) || user.email.split('@')[0];
+    document.getElementById('change-pwd-user-email').textContent = `@${userUname} • ${user.email}`;
     document.getElementById('change-pwd-input').value = '';
     document.getElementById('change-pwd-confirm').value = '';
 
@@ -3496,7 +3521,9 @@ class CFMApp {
     }
 
     const name = document.getElementById('modal-user-name').value.trim();
+    const rawUsername = document.getElementById('modal-user-username') ? document.getElementById('modal-user-username').value.trim().toLowerCase() : '';
     const email = document.getElementById('modal-user-email').value.trim();
+    const username = (rawUsername || email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9._-]/g, '');
     const role = document.getElementById('modal-user-role').value;
     const pwdEl = document.getElementById('modal-user-password');
     const password = (pwdEl ? pwdEl.value.trim() : '') || 'crmStaff2026!';
@@ -3511,7 +3538,9 @@ class CFMApp {
     try {
       const newUser = await cfmFirebase.addUser({
         name,
+        username,
         email,
+        aliases: [username, email.toLowerCase()],
         password,
         role,
         title,
@@ -3571,9 +3600,10 @@ class CFMApp {
     }
 
     const loginScreen = document.getElementById('login-screen');
-    if (sessionUser && sessionUser.email) {
+    if (sessionUser && (sessionUser.email || sessionUser.username)) {
       this.currentUser = sessionUser;
-      this.applyUserRole(sessionUser.role || 'admin', false);
+      const role = sessionUser.role === 'admin' ? 'admin' : 'crm';
+      this.applyUserRole(role, false);
       this.updateHeaderUserProfile();
       if (loginScreen) {
         loginScreen.classList.add('hidden');
@@ -3581,6 +3611,7 @@ class CFMApp {
       return true;
     } else {
       this.currentUser = null;
+      this.applyUserRole('crm', false);
       if (loginScreen) {
         loginScreen.classList.remove('hidden');
       }
@@ -3590,47 +3621,52 @@ class CFMApp {
 
   async handleLoginSubmit(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    const emailInput = document.getElementById('login-email');
+    const loginInput = document.getElementById('login-email');
     const pwdInput = document.getElementById('login-password');
     const rememberMeInput = document.getElementById('login-remember-me');
     const errorAlert = document.getElementById('login-error-alert');
     const errorMsg = document.getElementById('login-error-message');
 
-    const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+    const input = loginInput ? loginInput.value.trim().toLowerCase() : '';
     const password = pwdInput ? pwdInput.value : '';
     const rememberMe = rememberMeInput ? rememberMeInput.checked : true;
 
-    if (!email || !password) {
+    if (!input || !password) {
       if (errorAlert) {
-        errorMsg.textContent = "Please enter both your email address and password.";
+        errorMsg.textContent = "Please enter both your username or email address and password.";
         errorAlert.classList.remove('hidden');
       }
       return;
     }
 
-    // Try Firebase Auth if live
+    // Try Firebase Auth if live (using input as email if it contains '@')
     const auth = cfmFirebase.getAuth ? cfmFirebase.getAuth() : null;
-    if (auth && cfmFirebase.isLive) {
+    if (auth && cfmFirebase.isLive && input.includes('@')) {
       try {
-        await auth.signInWithEmailAndPassword(email, password);
+        await auth.signInWithEmailAndPassword(input, password);
       } catch (fbErr) {
         console.warn("Firebase Auth sign in notice:", fbErr.message);
       }
     }
 
-    // Look up user in local/cached directory
+    // Look up user in local/cached directory by username, email, or alias
     const allUsers = cfmFirebase.getLocalUsers();
     const matchedUser = allUsers.find(u => {
-      const emailMatch = (u.email && u.email.toLowerCase() === email) ||
-                         (Array.isArray(u.aliases) && u.aliases.some(a => a.toLowerCase() === email));
+      const uName = (u.username || '').toLowerCase().trim();
+      const uEmail = (u.email || '').toLowerCase().trim();
+      const isAliasMatch = Array.isArray(u.aliases) && u.aliases.some(a => (a || '').toLowerCase().trim() === input);
+      const isUsernameOrEmail = (uName && uName === input) || (uEmail && uEmail === input) || isAliasMatch;
       const pwdMatch = u.password === password || password === '7777';
-      return emailMatch && pwdMatch;
+      return isUsernameOrEmail && pwdMatch;
     });
 
     if (matchedUser) {
       if (errorAlert) errorAlert.classList.add('hidden');
       
       this.currentUser = matchedUser;
+      const userRole = matchedUser.role === 'admin' ? 'admin' : 'crm';
+      matchedUser.role = userRole;
+
       const sessionData = JSON.stringify(matchedUser);
       if (rememberMe) {
         localStorage.setItem('cfm_auth_session', sessionData);
@@ -3638,21 +3674,23 @@ class CFMApp {
         sessionStorage.setItem('cfm_auth_session', sessionData);
       }
 
-      this.applyUserRole(matchedUser.role || 'crm', false);
+      this.applyUserRole(userRole, false);
       this.updateHeaderUserProfile();
 
       const loginScreen = document.getElementById('login-screen');
       if (loginScreen) loginScreen.classList.add('hidden');
 
-      this.showToast(`Welcome back, ${matchedUser.name}! (${matchedUser.role === 'admin' ? 'Administrator' : 'CRM Staff'})`, 'success');
+      this.showToast(`Welcome back, ${matchedUser.name}! (${userRole === 'admin' ? 'Administrator' : 'CRM Staff'})`, 'success');
       
-      // If user was on users view and is not admin, switch to kanban
-      if (matchedUser.role !== 'admin' && this.activeView === 'users') {
-        this.switchView('kanban');
+      // If user is not admin and was on admin view or users view, switch to kanban
+      if (userRole !== 'admin') {
+        if (this.activeView === 'admin' || this.activeView === 'users' || !this.activeView) {
+          this.switchView('kanban');
+        }
       }
     } else {
       if (errorAlert) {
-        errorMsg.textContent = "Invalid email or password. Please verify your credentials and try again.";
+        errorMsg.textContent = "Invalid username/email or password. Please verify your credentials and try again.";
         errorAlert.classList.remove('hidden');
       }
     }
@@ -3689,6 +3727,7 @@ class CFMApp {
     try {
       localStorage.removeItem('cfm_auth_session');
       sessionStorage.removeItem('cfm_auth_session');
+      localStorage.removeItem('cfm_user_role');
     } catch (e) {}
 
     const auth = cfmFirebase.getAuth ? cfmFirebase.getAuth() : null;
@@ -3697,6 +3736,15 @@ class CFMApp {
     }
 
     this.currentUser = null;
+    this.userRole = 'crm';
+    localStorage.setItem('cfm_user_role', 'crm');
+    document.body.classList.remove('role-admin');
+    document.body.classList.add('role-crm');
+
+    // Reset view immediately to kanban so admin panels are never exposed
+    this.activeView = 'kanban';
+    this.switchView('kanban');
+
     const loginScreen = document.getElementById('login-screen');
     if (loginScreen) {
       loginScreen.classList.remove('hidden');
@@ -3710,12 +3758,14 @@ class CFMApp {
     const errorAlert = document.getElementById('login-error-alert');
     if (errorAlert) errorAlert.classList.add('hidden');
 
+    this.updateHeaderUserProfile();
     this.showToast("You have been signed out successfully.", "info");
   }
 
   updateHeaderUserProfile() {
     const user = this.currentUser || {
-      name: this.userRole === 'admin' ? 'Pastor David' : 'CRM Staff',
+      name: this.userRole === 'admin' ? 'Pastor David' : 'Team Member',
+      username: this.userRole === 'admin' ? 'admin' : 'member',
       role: this.userRole,
       title: this.userRole === 'admin' ? 'Administrator' : 'CRM Staff'
     };
@@ -3725,10 +3775,14 @@ class CFMApp {
     const avatarEl = document.getElementById('header-user-avatar');
     const profilePill = document.getElementById('header-user-profile');
 
+    const usernameTag = user.username ? `@${user.username}` : (user.email ? `@${user.email.split('@')[0]}` : '');
     if (nameEl) nameEl.textContent = user.name || 'User';
-    if (titleEl) titleEl.textContent = user.title || (user.role === 'admin' ? 'Administrator' : 'CRM Staff');
+    if (titleEl) {
+      const baseRole = user.role === 'admin' ? 'Administrator' : (user.title || 'CRM Staff');
+      titleEl.textContent = usernameTag ? `${baseRole} • ${usernameTag}` : baseRole;
+    }
     if (avatarEl) {
-      const initial = (user.name || 'U').trim().charAt(0).toUpperCase();
+      const initial = (user.name || user.username || 'U').trim().charAt(0).toUpperCase();
       avatarEl.textContent = initial;
     }
     if (profilePill) {
@@ -3739,13 +3793,14 @@ class CFMApp {
 
   // ===================== RBAC ROLE MANAGEMENT =====================
   applyUserRole(role, showToast = true) {
-    this.userRole = role;
-    localStorage.setItem('cfm_user_role', role);
+    const validatedRole = role === 'admin' ? 'admin' : 'crm';
+    this.userRole = validatedRole;
+    localStorage.setItem('cfm_user_role', validatedRole);
     if (this.currentUser) {
-      this.currentUser.role = role;
+      this.currentUser.role = validatedRole;
     }
 
-    if (role === 'admin') {
+    if (validatedRole === 'admin') {
       document.body.classList.add('role-admin');
       document.body.classList.remove('role-crm');
       const icon = document.getElementById('role-badge-icon');
@@ -3760,14 +3815,15 @@ class CFMApp {
       const text = document.getElementById('role-badge-text');
       if (icon) icon.textContent = '👤';
       if (text) text.textContent = 'CRM Staff';
-      if (showToast) this.showToast("Switched to CRM Mode (Firebase & Admin features hidden)", "info");
-      if (this.activeView === 'users') {
+      if (showToast) this.showToast("Switched to CRM Mode (Admin features protected)", "info");
+      if (this.activeView === 'admin' || this.activeView === 'users') {
         this.switchView('kanban');
       }
     }
 
     this.updateFirebaseBadge();
     this.updateHeaderUserProfile();
+    this.renderMainContent();
   }
 
   openRoleModal() {

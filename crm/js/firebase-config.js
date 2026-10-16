@@ -326,7 +326,23 @@ class FirebaseService {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed.some(u => u.password)) {
-          return parsed;
+          let updated = false;
+          const normalized = parsed.map(u => {
+            if (!u.username) {
+              const fallbackUname = (Array.isArray(u.aliases) && u.aliases[0]) || (u.email ? u.email.split('@')[0] : 'user');
+              updated = true;
+              return { 
+                ...u, 
+                username: fallbackUname.toLowerCase(),
+                aliases: Array.isArray(u.aliases) ? u.aliases : [fallbackUname.toLowerCase()]
+              };
+            }
+            return u;
+          });
+          if (updated) {
+            this.saveLocalUsers(normalized, false);
+          }
+          return normalized;
         }
       }
     } catch (e) {
@@ -548,8 +564,16 @@ class FirebaseService {
 
   // ===================== CRUD FOR USERS =====================
   async addUser(userData) {
+    const rawUsername = (userData.username || (userData.email ? userData.email.split('@')[0] : 'user')).toLowerCase().trim();
+    const cleanUsername = rawUsername.replace(/[^a-zA-Z0-9._-]/g, '') || 'user';
+    const aliases = Array.isArray(userData.aliases) && userData.aliases.length > 0 
+      ? userData.aliases 
+      : [cleanUsername, userData.email ? userData.email.toLowerCase() : cleanUsername];
+
     const payload = {
       ...userData,
+      username: cleanUsername,
+      aliases,
       createdAt: userData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       active: true

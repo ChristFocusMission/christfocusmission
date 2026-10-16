@@ -1411,8 +1411,9 @@ const CFM_INITIAL_USERS = [
   {
     id: "user-1",
     name: "Pastor David",
+    username: "admin",
     email: "admin@christfocusmission.org",
-    aliases: ["david@christfocusmission.org", "admin"],
+    aliases: ["admin", "david", "david@christfocusmission.org"],
     password: "cfmAdmin2026!",
     role: "admin",
     title: "Ministry Director & Founder",
@@ -1424,8 +1425,9 @@ const CFM_INITIAL_USERS = [
   {
     id: "user-2",
     name: "Sarah Jenkins",
+    username: "sarah",
     email: "sarah@christfocusmission.org",
-    aliases: ["sarah"],
+    aliases: ["sarah", "sarah@christfocusmission.org"],
     password: "crmStaff2026!",
     role: "crm",
     title: "Senior Donor Relations Officer",
@@ -1437,8 +1439,9 @@ const CFM_INITIAL_USERS = [
   {
     id: "user-3",
     name: "Mark Thompson",
+    username: "mark",
     email: "mark@christfocusmission.org",
-    aliases: ["mark"],
+    aliases: ["mark", "mark@christfocusmission.org"],
     password: "crmStaff2026!",
     role: "crm",
     title: "Field Liaison & Church Partnerships",
@@ -1450,8 +1453,9 @@ const CFM_INITIAL_USERS = [
   {
     id: "user-4",
     name: "Grace Mathew",
+    username: "grace",
     email: "grace@christfocusmission.org",
-    aliases: ["grace"],
+    aliases: ["grace", "grace@christfocusmission.org"],
     password: "crmStaff2026!",
     role: "crm",
     title: "Network Outreach Coordinator",
