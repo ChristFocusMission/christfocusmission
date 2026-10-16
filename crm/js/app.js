@@ -59,21 +59,40 @@ class CFMApp {
   }
 
   async init() {
-    // One-time purge of legacy mock sample leads and sample campaigns from localStorage
-    if (!localStorage.getItem('cfm_sample_data_purged_v2')) {
-      localStorage.removeItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
-      localStorage.removeItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
-      try {
-        const rawUsers = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_USERS);
-        if (rawUsers) {
-          const u = JSON.parse(rawUsers);
-          if (Array.isArray(u)) {
-            const cleanUsers = u.filter(x => x.id !== 'user-2' && x.id !== 'user-3' && x.id !== 'user-4');
+    // Purge legacy mock sample leads and sample campaigns from localStorage while strictly preserving real user leads
+    try {
+      const rawLeads = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
+      if (rawLeads) {
+        const parsed = JSON.parse(rawLeads);
+        if (Array.isArray(parsed)) {
+          const cleanLeads = parsed.filter(l => !cfmFirebase.isSampleLead(l));
+          if (cleanLeads.length !== parsed.length) {
+            localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_LEADS, JSON.stringify(cleanLeads));
+          }
+        }
+      }
+      const rawCamps = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
+      if (rawCamps) {
+        const parsed = JSON.parse(rawCamps);
+        if (Array.isArray(parsed)) {
+          const cleanCamps = parsed.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
+          if (cleanCamps.length !== parsed.length) {
+            localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(cleanCamps));
+          }
+        }
+      }
+      const rawUsers = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_USERS);
+      if (rawUsers) {
+        const u = JSON.parse(rawUsers);
+        if (Array.isArray(u)) {
+          const cleanUsers = u.filter(x => x.id !== 'user-2' && x.id !== 'user-3' && x.id !== 'user-4');
+          if (cleanUsers.length !== u.length) {
             localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(cleanUsers));
           }
         }
-      } catch(e) {}
-      localStorage.setItem('cfm_sample_data_purged_v2', 'true');
+      }
+    } catch(e) {
+      console.warn("Storage init cleanup error:", e);
     }
 
     this.checkAuthStatus();

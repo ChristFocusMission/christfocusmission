@@ -177,10 +177,11 @@ class FirebaseService {
               const mockLeadsToDelete = [];
               snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (doc.id.match(/^lead-\d+$/) && (data.organization?.includes('Grace Foundation') || data.city === 'Dallas' || data.name?.includes('Arthur') || data.notes?.includes('Core Leader who mobilized'))) {
+                const leadObj = { id: doc.id, ...data };
+                if (this.isSampleLead(leadObj)) {
                   mockLeadsToDelete.push(doc.id);
                 } else {
-                  leads.push({ id: doc.id, ...data });
+                  leads.push(leadObj);
                 }
               });
               if (mockLeadsToDelete.length > 0 && this.db) {
@@ -396,13 +397,25 @@ class FirebaseService {
     }
   }
 
+  isSampleLead(l) {
+    if (!l || !l.id) return false;
+    // Exactly matches legacy sample IDs (lead-1 through lead-42)
+    if (/^lead-([1-9]|[1-3][0-9]|4[0-2])$/.test(l.id)) return true;
+    if (typeof l.id === 'string' && l.id.startsWith('lead-')) {
+      if (l.notes && l.notes.includes('Core Leader who mobilized')) return true;
+      if (l.organization && (l.organization.includes('Grace Family Healthcare') || l.organization.includes('Grace Foundation') || l.organization.includes('Sterling Global Ventures'))) return true;
+      if (l.city === 'Dallas' && l.country === 'USA' && l.name && l.name.includes('Arthur')) return true;
+    }
+    return false;
+  }
+
   getLocalLeads() {
     try {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
       if (stored !== null) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(l => !l.id || !l.id.match(/^lead-\d+$/));
+          const filtered = parsed.filter(l => !this.isSampleLead(l));
           if (filtered.length !== parsed.length) {
             this.saveLocalLeads(filtered, false);
           }
@@ -474,7 +487,7 @@ class FirebaseService {
     } else {
       const leads = this.getLocalLeads();
       const newLead = {
-        id: 'lead-' + Date.now(),
+        id: 'donor-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
         ...payload
       };
       leads.unshift(newLead);
@@ -577,7 +590,7 @@ class FirebaseService {
     } else {
       const campaigns = this.getLocalCampaigns();
       const newCamp = {
-        id: 'camp-' + Date.now(),
+        id: 'campaign-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
         ...payload
       };
       campaigns.push(newCamp);
@@ -630,20 +643,9 @@ class FirebaseService {
     }
   }
 
-  // Seed remote Firestore with default campaigns if empty
+  // Seed remote Firestore with default campaigns if empty (Disabled in clean mode)
   async seedInitialRemoteCampaigns() {
-    if (!this.isLive || !this.db) return;
-    try {
-      const batch = this.db.batch();
-      for (const camp of CFM_INITIAL_CAMPAIGNS) {
-        const ref = this.db.collection(this.campaignsCollection).doc(camp.id);
-        batch.set(ref, camp);
-      }
-      await batch.commit();
-      console.log("Seeded initial campaigns to Cloud Firestore.");
-    } catch (e) {
-      console.warn("Could not seed campaigns to Firestore:", e);
-    }
+    return;
   }
 
   // ===================== CRUD FOR USERS =====================
@@ -747,9 +749,9 @@ class FirebaseService {
       throw new Error("Firebase is not connected. Please connect your Firebase project first.");
     }
 
-    const localLeads = this.getLocalLeads();
-    const localCampaigns = this.getLocalCampaigns();
-    const localUsers = this.getLocalUsers();
+    const localLeads = this.getLocalLeads().filter(l => !this.isSampleLead(l));
+    const localCampaigns = this.getLocalCampaigns().filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
+    const localUsers = this.getLocalUsers().filter(u => u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
 
     let uploadedLeads = 0;
     let uploadedCampaigns = 0;
