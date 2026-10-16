@@ -46,11 +46,102 @@
   <!-- Firebase Compat Web SDK (Loads in browser when connected to network) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
   <!-- Custom Styles -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-admin">
+
+  <!-- DEDICATED CFM AUTHENTICATION / LOGIN SCREEN -->
+  <div id="login-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-[#0B0D1B] via-[#141632] to-[#212455] text-white flex items-center justify-center p-4 overflow-y-auto">
+    <div class="max-w-md w-full bg-slate-900/85 backdrop-blur-xl border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-slate-100">
+      
+      <!-- Top Brand Header -->
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-white/10 p-2.5 flex items-center justify-center border border-white/20 shadow-inner mb-3">
+          <img src="assets/cfm-icon.svg" alt="Christ Focus Mission" class="w-full h-full object-contain">
+        </div>
+        <h2 class="text-2xl font-bold font-heading text-white tracking-tight">Christ Focus Mission</h2>
+        <p class="text-xs text-[#1BA3CC] font-semibold uppercase tracking-wider mt-0.5">Stewardship CRM & Donor Pipeline</p>
+        <p class="text-xs text-slate-300 mt-2">Sign in to access your partner network and fundraising pipeline</p>
+      </div>
+
+      <!-- Error / Notice Alert (hidden by default) -->
+      <div id="login-error-alert" class="hidden mb-4 p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs flex items-center gap-2">
+        <i class="fas fa-exclamation-circle text-rose-400 text-sm flex-shrink-0"></i>
+        <span id="login-error-message">Invalid credentials.</span>
+      </div>
+
+      <!-- Login Form -->
+      <form id="crm-login-form" onsubmit="app.handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-200 mb-1.5">Email Address or Username</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i class="fas fa-envelope text-xs"></i>
+            </span>
+            <input type="text" id="login-email" required autocomplete="username" placeholder="admin@christfocusmission.org" class="w-full pl-9 pr-3 py-2.5 bg-slate-950/70 border border-white/20 rounded-xl text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#1BA3CC] focus:border-transparent transition">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-semibold text-slate-200">Password</label>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i class="fas fa-lock text-xs"></i>
+            </span>
+            <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••••••" class="w-full pl-9 pr-10 py-2.5 bg-slate-950/70 border border-white/20 rounded-xl text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#1BA3CC] focus:border-transparent transition">
+            <button type="button" onclick="app.toggleLoginPasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition">
+              <i id="login-pwd-toggle-icon" class="fas fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-white select-none">
+            <input type="checkbox" id="login-remember-me" checked class="w-3.5 h-3.5 rounded border-white/20 bg-slate-900 text-amber-500 focus:ring-0 cursor-pointer">
+            <span>Remember this device</span>
+          </label>
+          <span class="text-[11px] text-slate-400">Security PIN: 7777</span>
+        </div>
+
+        <button type="submit" id="btn-login-submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-xs cursor-pointer">
+          <i class="fas fa-sign-in-alt"></i>
+          <span>Sign In to CRM</span>
+        </button>
+      </form>
+
+      <!-- Quick-Fill Credential Helper for Easy 1-Click Login -->
+      <div class="mt-6 pt-5 border-t border-white/10 text-center">
+        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-2.5">1-Click Sign-In Credentials</p>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button type="button" onclick="app.quickFillLogin('admin@christfocusmission.org', 'cfmAdmin2026!')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition flex items-center gap-2 cursor-pointer">
+            <span class="text-base">👑</span>
+            <div class="truncate">
+              <div class="font-bold text-amber-300 text-[11px] truncate">Admin Login</div>
+              <div class="text-[10px] text-slate-400 truncate">cfmAdmin2026!</div>
+            </div>
+          </button>
+          <button type="button" onclick="app.quickFillLogin('sarah@christfocusmission.org', 'crmStaff2026!')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition flex items-center gap-2 cursor-pointer">
+            <span class="text-base">👤</span>
+            <div class="truncate">
+              <div class="font-bold text-cyan-300 text-[11px] truncate">Staff Login</div>
+              <div class="text-[10px] text-slate-400 truncate">crmStaff2026!</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="mt-5 text-center text-[10px] text-slate-400">
+        Connected to Christ Focus Mission • Ministry Partner Network
+      </div>
+
+    </div>
+  </div>
 
   <!-- TOP HEADER / BRANDING BAR -->
   <header class="bg-[#181A3A] text-white sticky top-0 z-40 shadow-lg border-b border-indigo-950">
@@ -120,6 +211,23 @@
           <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-3.5 py-2 rounded-lg shadow-md flex items-center gap-1.5 transition">
             <i class="fas fa-plus text-slate-950"></i>
             <span>New Lead</span>
+          </button>
+
+          <!-- Active Logged In User Profile Pill -->
+          <div id="header-user-profile" class="hidden sm:flex items-center gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-2.5 py-1 text-xs">
+            <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px] border border-amber-500/30 shadow-inner">
+              <span id="header-user-avatar">D</span>
+            </div>
+            <div class="text-left leading-tight hidden lg:block">
+              <div id="header-user-name" class="font-bold text-slate-200 text-[11px] truncate max-w-[100px]">Pastor David</div>
+              <div id="header-user-title" class="text-[9px] text-amber-300/80 truncate max-w-[100px]">Administrator</div>
+            </div>
+          </div>
+
+          <!-- Sign Out / Logout Button -->
+          <button id="btn-logout" onclick="app.logout()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-white text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-800/60 flex items-center gap-1.5 transition" title="Sign Out of CRM">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="hidden md:inline">Sign Out</span>
           </button>
         </div>
 
@@ -941,13 +1049,17 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Workspace Role *</label>
               <select id="modal-user-role" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
                 <option value="crm">CRM Staff (No Firebase Settings)</option>
                 <option value="admin">Administrator (Full Access)</option>
               </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Login Password</label>
+              <input type="text" id="modal-user-password" placeholder="Default: crmStaff2026!" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Title / Designation</label>

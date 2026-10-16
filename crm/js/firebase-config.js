@@ -92,6 +92,9 @@ class FirebaseService {
           this.app = firebase.app();
         }
         this.db = firebase.firestore();
+        if (typeof firebase.auth === 'function') {
+          this.auth = firebase.auth();
+        }
         this.isLive = true;
         this.statusMessage = `Connected to Firebase Project: ${config.projectId}`;
         console.log("Firebase Live Mode initialized successfully:", config.projectId);
@@ -107,6 +110,20 @@ class FirebaseService {
       this.statusMessage = 'Running in Local / Demo Mode (Ready to link Firebase)';
       return { success: true, mode: 'local' };
     }
+  }
+
+  // Get Firebase Auth instance if initialized
+  getAuth() {
+    if (this.auth) return this.auth;
+    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function' && firebase.apps.length) {
+      try {
+        this.auth = firebase.auth();
+        return this.auth;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   // Test custom configuration before saving
@@ -306,7 +323,12 @@ class FirebaseService {
   getLocalUsers() {
     try {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_USERS);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed.some(u => u.password)) {
+          return parsed;
+        }
+      }
     } catch (e) {
       console.warn("Error reading local users:", e);
     }

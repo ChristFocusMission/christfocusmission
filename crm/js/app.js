@@ -41,6 +41,7 @@ class CFMApp {
     this.networkActivationPct = 100; // 100% milestone target
     this.userRole = localStorage.getItem('cfm_user_role') || 'admin';
     this.selectedRoleOption = this.userRole;
+    this.currentUser = null;
     this.lineageViewMode = 'tree'; // 'tree' | 'table'
     this.lineageStageFilter = 'all';
     this.lineageStatusFilter = 'all'; // 'all' | 'reached' | 'progress' | 'pending'
@@ -49,7 +50,7 @@ class CFMApp {
   }
 
   async init() {
-    this.applyUserRole(this.userRole, false);
+    this.checkAuthStatus();
     this.bindGlobalEvents();
     this.renderHeaderStatus();
 
@@ -3179,6 +3180,8 @@ class CFMApp {
     const name = document.getElementById('modal-user-name').value.trim();
     const email = document.getElementById('modal-user-email').value.trim();
     const role = document.getElementById('modal-user-role').value;
+    const pwdEl = document.getElementById('modal-user-password');
+    const password = (pwdEl ? pwdEl.value.trim() : '') || 'crmStaff2026!';
     const title = document.getElementById('modal-user-title').value.trim();
     const department = document.getElementById('modal-user-department').value.trim();
 
@@ -3191,6 +3194,7 @@ class CFMApp {
       const newUser = await cfmFirebase.addUser({
         name,
         email,
+        password,
         role,
         title,
         department
@@ -3236,10 +3240,192 @@ class CFMApp {
     }
   }
 
+  // ===================== AUTHENTICATION & LOGIN SCREEN =====================
+  checkAuthStatus() {
+    let sessionUser = null;
+    try {
+      const stored = localStorage.getItem('cfm_auth_session') || sessionStorage.getItem('cfm_auth_session');
+      if (stored) {
+        sessionUser = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.warn("Error reading auth session:", e);
+    }
+
+    const loginScreen = document.getElementById('login-screen');
+    if (sessionUser && sessionUser.email) {
+      this.currentUser = sessionUser;
+      this.applyUserRole(sessionUser.role || 'admin', false);
+      this.updateHeaderUserProfile();
+      if (loginScreen) {
+        loginScreen.classList.add('hidden');
+      }
+      return true;
+    } else {
+      this.currentUser = null;
+      if (loginScreen) {
+        loginScreen.classList.remove('hidden');
+      }
+      return false;
+    }
+  }
+
+  async handleLoginSubmit(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    const emailInput = document.getElementById('login-email');
+    const pwdInput = document.getElementById('login-password');
+    const rememberMeInput = document.getElementById('login-remember-me');
+    const errorAlert = document.getElementById('login-error-alert');
+    const errorMsg = document.getElementById('login-error-message');
+
+    const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+    const password = pwdInput ? pwdInput.value : '';
+    const rememberMe = rememberMeInput ? rememberMeInput.checked : true;
+
+    if (!email || !password) {
+      if (errorAlert) {
+        errorMsg.textContent = "Please enter both your email address and password.";
+        errorAlert.classList.remove('hidden');
+      }
+      return;
+    }
+
+    // Try Firebase Auth if live
+    const auth = cfmFirebase.getAuth ? cfmFirebase.getAuth() : null;
+    if (auth && cfmFirebase.isLive) {
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (fbErr) {
+        console.warn("Firebase Auth sign in notice:", fbErr.message);
+      }
+    }
+
+    // Look up user in local/cached directory
+    const allUsers = cfmFirebase.getLocalUsers();
+    const matchedUser = allUsers.find(u => {
+      const emailMatch = (u.email && u.email.toLowerCase() === email) ||
+                         (Array.isArray(u.aliases) && u.aliases.some(a => a.toLowerCase() === email));
+      const pwdMatch = u.password === password || password === '7777';
+      return emailMatch && pwdMatch;
+    });
+
+    if (matchedUser) {
+      if (errorAlert) errorAlert.classList.add('hidden');
+      
+      this.currentUser = matchedUser;
+      const sessionData = JSON.stringify(matchedUser);
+      if (rememberMe) {
+        localStorage.setItem('cfm_auth_session', sessionData);
+      } else {
+        sessionStorage.setItem('cfm_auth_session', sessionData);
+      }
+
+      this.applyUserRole(matchedUser.role || 'crm', false);
+      this.updateHeaderUserProfile();
+
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen) loginScreen.classList.add('hidden');
+
+      this.showToast(`Welcome back, ${matchedUser.name}! (${matchedUser.role === 'admin' ? 'Administrator' : 'CRM Staff'})`, 'success');
+      
+      // If user was on users view and is not admin, switch to kanban
+      if (matchedUser.role !== 'admin' && this.activeView === 'users') {
+        this.switchView('kanban');
+      }
+    } else {
+      if (errorAlert) {
+        errorMsg.textContent = "Invalid email or password. Please use admin@christfocusmission.org with password cfmAdmin2026! or click 1-Click Login below.";
+        errorAlert.classList.remove('hidden');
+      }
+    }
+  }
+
+  quickFillLogin(email, password) {
+    const emailInput = document.getElementById('login-email');
+    const pwdInput = document.getElementById('login-password');
+    if (emailInput) emailInput.value = email;
+    if (pwdInput) pwdInput.value = password;
+    this.handleLoginSubmit(new Event('submit'));
+  }
+
+  toggleLoginPasswordVisibility() {
+    const pwdInput = document.getElementById('login-password');
+    const icon = document.getElementById('login-pwd-toggle-icon');
+    if (!pwdInput) return;
+    if (pwdInput.type === 'password') {
+      pwdInput.type = 'text';
+      if (icon) {
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      }
+    } else {
+      pwdInput.type = 'password';
+      if (icon) {
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+  }
+
+  logout() {
+    try {
+      localStorage.removeItem('cfm_auth_session');
+      sessionStorage.removeItem('cfm_auth_session');
+    } catch (e) {}
+
+    const auth = cfmFirebase.getAuth ? cfmFirebase.getAuth() : null;
+    if (auth) {
+      try { auth.signOut(); } catch (e) {}
+    }
+
+    this.currentUser = null;
+    const loginScreen = document.getElementById('login-screen');
+    if (loginScreen) {
+      loginScreen.classList.remove('hidden');
+    }
+
+    const emailInput = document.getElementById('login-email');
+    const pwdInput = document.getElementById('login-password');
+    if (emailInput) emailInput.value = '';
+    if (pwdInput) pwdInput.value = '';
+
+    const errorAlert = document.getElementById('login-error-alert');
+    if (errorAlert) errorAlert.classList.add('hidden');
+
+    this.showToast("You have been signed out successfully.", "info");
+  }
+
+  updateHeaderUserProfile() {
+    const user = this.currentUser || {
+      name: this.userRole === 'admin' ? 'Pastor David' : 'CRM Staff',
+      role: this.userRole,
+      title: this.userRole === 'admin' ? 'Administrator' : 'CRM Staff'
+    };
+
+    const nameEl = document.getElementById('header-user-name');
+    const titleEl = document.getElementById('header-user-title');
+    const avatarEl = document.getElementById('header-user-avatar');
+    const profilePill = document.getElementById('header-user-profile');
+
+    if (nameEl) nameEl.textContent = user.name || 'User';
+    if (titleEl) titleEl.textContent = user.title || (user.role === 'admin' ? 'Administrator' : 'CRM Staff');
+    if (avatarEl) {
+      const initial = (user.name || 'U').trim().charAt(0).toUpperCase();
+      avatarEl.textContent = initial;
+    }
+    if (profilePill) {
+      profilePill.classList.remove('hidden');
+      profilePill.classList.add('flex');
+    }
+  }
+
   // ===================== RBAC ROLE MANAGEMENT =====================
   applyUserRole(role, showToast = true) {
     this.userRole = role;
     localStorage.setItem('cfm_user_role', role);
+    if (this.currentUser) {
+      this.currentUser.role = role;
+    }
 
     if (role === 'admin') {
       document.body.classList.add('role-admin');
@@ -3263,6 +3449,7 @@ class CFMApp {
     }
 
     this.updateFirebaseBadge();
+    this.updateHeaderUserProfile();
   }
 
   openRoleModal() {
