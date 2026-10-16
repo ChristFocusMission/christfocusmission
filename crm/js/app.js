@@ -63,8 +63,8 @@ class CFMApp {
     cfmFirebase.subscribeToUsers((users, mode) => {
       this.users = users;
       this.populateAssignedUserDropdowns();
-      if (this.activeView === 'users') {
-        this.renderUsersView();
+      if (this.activeView === 'users' || this.activeView === 'admin') {
+        this.renderAdminView();
       }
       const userModal = document.getElementById('modal-user-management');
       if (userModal && !userModal.classList.contains('hidden')) {
@@ -2497,19 +2497,19 @@ class CFMApp {
 
                     <div class="flex items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200">
                       <!-- Edit User Details Button -->
-                      <button type="button" onclick="app.openEditUserModal('${u.id}')" title="Edit user details for ${this.escapeHtml(u.name)}" class="px-2.5 py-1.5 text-[11px] font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1.5 transition shadow-sm">
-                        <i class="fas fa-user-pen text-indigo-600 text-xs"></i>
-                        <span>Edit</span>
+                      <button type="button" onclick="app.openEditUserModal('${u.id}')" title="Edit user profile and role for ${this.escapeHtml(u.name)}" class="px-3 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg flex items-center gap-1.5 transition shadow-sm cursor-pointer border border-amber-400">
+                        <i class="fas fa-user-pen text-xs"></i>
+                        <span>Edit User</span>
                       </button>
 
                       <!-- Set / Change Password Button -->
-                      <button type="button" onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password for ${this.escapeHtml(u.name)}" class="px-2.5 py-1.5 text-[11px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1.5 transition">
+                      <button type="button" onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password for ${this.escapeHtml(u.name)}" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
                         <i class="fas fa-key text-amber-500 text-xs"></i>
                         <span>Set Password</span>
                       </button>
 
                       ${this.users.length > 1 ? `
-                        <button type="button" onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+                        <button type="button" onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer">
                           <i class="far fa-trash-alt text-xs"></i>
                         </button>
                       ` : ''}
@@ -3800,8 +3800,11 @@ class CFMApp {
             ${u.name ? u.name.charAt(0).toUpperCase() : 'U'}
           </div>
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <span class="font-bold text-slate-900">${this.escapeHtml(u.name)}</span>
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200" title="Login Username">
+                @${this.escapeHtml(u.username || (u.aliases && u.aliases[0]) || u.email.split('@')[0])}
+              </span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
                 ${u.role === 'admin' ? '👑 Admin' : '👤 CRM Staff'}
               </span>
@@ -3814,17 +3817,17 @@ class CFMApp {
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <button onclick="app.openEditUserModal('${u.id}')" title="Edit User Details" class="px-2 py-1 text-[10px] font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1 transition">
-            <i class="fas fa-user-pen text-[10px] text-indigo-600"></i> Edit
+          <button onclick="app.openEditUserModal('${u.id}')" title="Edit User Details" class="px-2.5 py-1 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg flex items-center gap-1.5 transition shadow-sm cursor-pointer border border-amber-400">
+            <i class="fas fa-user-pen text-[11px]"></i> Edit User
           </button>
-          <button onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password" class="px-2.5 py-1 text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1 transition">
-            <i class="fas fa-key text-[10px] text-amber-500"></i> Password
+          <button onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password" class="px-2.5 py-1 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+            <i class="fas fa-key text-[11px] text-amber-500"></i> Set Password
           </button>
           <span class="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Synced
           </span>
           ${this.users.length > 1 ? `
-            <button onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100 transition">
+            <button onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer">
               <i class="far fa-trash-alt text-xs"></i>
             </button>
           ` : ''}
