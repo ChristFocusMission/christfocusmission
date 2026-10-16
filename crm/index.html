@@ -105,7 +105,6 @@
             <input type="checkbox" id="login-remember-me" checked class="w-3.5 h-3.5 rounded border-white/20 bg-slate-900 text-amber-500 focus:ring-0 cursor-pointer">
             <span>Remember this device</span>
           </label>
-          <span class="text-[11px] text-slate-400">Security PIN: 7777</span>
         </div>
 
         <button type="submit" id="btn-login-submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-xs cursor-pointer">
@@ -113,27 +112,6 @@
           <span>Sign In to CRM</span>
         </button>
       </form>
-
-      <!-- Quick-Fill Credential Helper for Easy 1-Click Login -->
-      <div class="mt-6 pt-5 border-t border-white/10 text-center">
-        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold mb-2.5">1-Click Sign-In Credentials</p>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <button type="button" onclick="app.quickFillLogin('admin@christfocusmission.org', 'cfmAdmin2026!')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition flex items-center gap-2 cursor-pointer">
-            <span class="text-base">👑</span>
-            <div class="truncate">
-              <div class="font-bold text-amber-300 text-[11px] truncate">Admin Login</div>
-              <div class="text-[10px] text-slate-400 truncate">cfmAdmin2026!</div>
-            </div>
-          </button>
-          <button type="button" onclick="app.quickFillLogin('sarah@christfocusmission.org', 'crmStaff2026!')" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-left transition flex items-center gap-2 cursor-pointer">
-            <span class="text-base">👤</span>
-            <div class="truncate">
-              <div class="font-bold text-cyan-300 text-[11px] truncate">Staff Login</div>
-              <div class="text-[10px] text-slate-400 truncate">crmStaff2026!</div>
-            </div>
-          </button>
-        </div>
-      </div>
 
       <!-- Footer Info -->
       <div class="mt-5 text-center text-[10px] text-slate-400">
@@ -830,11 +808,8 @@
           <label class="block font-semibold text-slate-700 text-[11px]">
             <i class="fas fa-lock text-amber-600 mr-1"></i> Admin Security PIN (Required to switch to Admin)
           </label>
-          <div class="flex gap-2">
-            <input type="password" id="admin-pin-input" placeholder="Enter PIN (Default: 7777)" maxlength="8" class="flex-1 p-2 rounded-lg border border-slate-300 font-mono text-center tracking-widest text-xs focus:ring-1 focus:ring-indigo-500">
-            <button type="button" onclick="document.getElementById('admin-pin-input').value = '7777'" class="px-2.5 py-1 text-[10px] font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg">
-              Quick PIN: 7777
-            </button>
+          <div>
+            <input type="password" id="admin-pin-input" placeholder="Enter Admin Security PIN" maxlength="8" class="w-full p-2 rounded-lg border border-slate-300 font-mono text-center tracking-widest text-xs focus:ring-1 focus:ring-indigo-500">
           </div>
         </div>
 
@@ -1059,7 +1034,7 @@
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Login Password</label>
-              <input type="text" id="modal-user-password" placeholder="Default: crmStaff2026!" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
+              <input type="password" id="modal-user-password" placeholder="Enter user password" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white">
             </div>
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Title / Designation</label>

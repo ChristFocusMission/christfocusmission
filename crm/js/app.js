@@ -3334,7 +3334,7 @@ class CFMApp {
       }
     } else {
       if (errorAlert) {
-        errorMsg.textContent = "Invalid email or password. Please use admin@christfocusmission.org with password cfmAdmin2026! or click 1-Click Login below.";
+        errorMsg.textContent = "Invalid email or password. Please verify your credentials and try again.";
         errorAlert.classList.remove('hidden');
       }
     }
@@ -3506,7 +3506,7 @@ class CFMApp {
       const pinInput = document.getElementById('admin-pin-input');
       const pin = pinInput ? pinInput.value.trim() : '';
       if (this.userRole !== 'admin' && pin !== '7777') {
-        alert("Incorrect Admin Security PIN. (Default PIN: 7777)");
+        alert("Incorrect Admin Security PIN. Please enter the valid administrator PIN.");
         return;
       }
       this.applyUserRole('admin');
