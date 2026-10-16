@@ -3,15 +3,13 @@
  * Main Application Logic & User Interface Controller
  */
 
-// Stage definitions with meta information
+// Streamlined 5-Stage Donor Progression Pipeline
 const CFM_STAGES = [
   { id: 'new', label: 'New / Identified', color: 'slate', icon: 'fa-user-plus' },
   { id: 'contacted', label: 'Contacted', color: 'blue', icon: 'fa-paper-plane' },
-  { id: 'meeting_scheduled', label: 'Meeting / Pitch', color: 'purple', icon: 'fa-calendar-check' },
-  { id: 'proposal_sent', label: 'Proposal Sent', color: 'amber', icon: 'fa-file-invoice-dollar' },
+  { id: 'in_discussion', label: 'Meeting & Proposal', color: 'purple', icon: 'fa-comments' },
   { id: 'committed', label: 'Committed Partner', color: 'emerald', icon: 'fa-heart' },
-  { id: 'stalled', label: 'Deferred / Follow-up', color: 'orange', icon: 'fa-clock' },
-  { id: 'declined', label: 'Declined', color: 'gray', icon: 'fa-times-circle' }
+  { id: 'closed', label: 'Deferred / Closed', color: 'gray', icon: 'fa-box-archive' }
 ];
 
 const CURRENCY_SYMBOLS = {
@@ -240,6 +238,10 @@ class CFMApp {
       b.classList.toggle('text-white', isTarget);
       b.classList.toggle('text-slate-200', !isTarget);
       b.classList.toggle('hover:bg-slate-800', !isTarget);
+      if (isTarget) {
+        // Auto-center the clicked header in mobile horizontal scroll view
+        b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
     });
 
     // Hide or show filters toolbar based on view
@@ -282,8 +284,8 @@ class CFMApp {
   // Filter leads based on current search & filter state
   getFilteredLeads() {
     return this.leads.filter(lead => {
-      // Stage filter
-      if (this.stageFilter !== 'all' && lead.stage !== this.stageFilter) return false;
+      // Stage filter (with backward-compatible stage normalization)
+      if (this.stageFilter !== 'all' && this.normalizeStage(lead.stage) !== this.stageFilter) return false;
 
       // Campaign filter
       if (this.campaignFilter !== 'all' && lead.campaignId !== this.campaignFilter) return false;
@@ -326,18 +328,21 @@ class CFMApp {
     // Total Pipeline Potential
     const totalPipeline = allLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
     // Total Committed / Won
-    const totalCommitted = allLeads.filter(l => l.stage === 'committed')
+    const totalCommitted = allLeads.filter(l => this.normalizeStage(l.stage) === 'committed')
       .reduce((sum, l) => sum + (Number(l.receivedAmount) || Number(l.expectedAmount) || 0), 0);
-    // Active Leads (in progress stages)
-    const activeLeads = allLeads.filter(l => ['new', 'contacted', 'meeting_scheduled', 'proposal_sent'].includes(l.stage)).length;
+    // Active Leads (in progress stages: new, contacted, in_discussion)
+    const activeLeads = allLeads.filter(l => ['new', 'contacted', 'in_discussion'].includes(this.normalizeStage(l.stage))).length;
     // Conversion rate
-    const closedCount = allLeads.filter(l => ['committed', 'declined'].includes(l.stage)).length;
-    const wonCount = allLeads.filter(l => l.stage === 'committed').length;
+    const closedCount = allLeads.filter(l => ['committed', 'closed'].includes(this.normalizeStage(l.stage))).length;
+    const wonCount = allLeads.filter(l => this.normalizeStage(l.stage) === 'committed').length;
     const conversionRate = closedCount > 0 ? Math.round((wonCount / closedCount) * 100) : 0;
 
     // Overdue or Today follow-ups
     const todayStr = new Date().toISOString().split('T')[0];
-    const followUpsDue = allLeads.filter(l => l.nextFollowUp && l.nextFollowUp <= todayStr && l.stage !== 'committed' && l.stage !== 'declined').length;
+    const followUpsDue = allLeads.filter(l => {
+      const norm = this.normalizeStage(l.stage);
+      return l.nextFollowUp && l.nextFollowUp <= todayStr && norm !== 'committed' && norm !== 'closed';
+    }).length;
 
     // Update DOM elements
     const format = (amt) => this.formatCurrency(amt);
@@ -398,9 +403,9 @@ class CFMApp {
         <div class="flex items-center gap-1.5 text-xs font-bold min-w-max">
           <span class="text-slate-400 text-[10px] uppercase font-bold mr-0.5">Jump to:</span>
           ${CFM_STAGES.map(s => {
-            const count = filteredLeads.filter(l => l.stage === s.id).length;
+            const count = filteredLeads.filter(l => this.normalizeStage(l.stage) === s.id).length;
             return `
-              <button onclick="app.scrollToStageColumn('${s.id}')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xs flex items-center gap-1.5 shrink-0 text-[11px] active:scale-95 transition">
+              <button onclick="app.scrollToStageColumn('${s.id}', this)" class="stage-jump-pill px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xs flex items-center gap-1.5 shrink-0 text-[11px] active:scale-95 transition">
                 <span class="w-2 h-2 rounded-full bg-${s.color}-500"></span>
                 <span>${s.label}</span>
                 <span class="text-[10px] text-slate-400 font-semibold">(${count})</span>
@@ -415,7 +420,7 @@ class CFMApp {
     `;
 
     CFM_STAGES.forEach(stage => {
-      const stageLeads = filteredLeads.filter(l => l.stage === stage.id);
+      const stageLeads = filteredLeads.filter(l => this.normalizeStage(l.stage) === stage.id);
       const stageTotal = stageLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
 
       html += `
@@ -463,7 +468,7 @@ class CFMApp {
   renderKanbanCard(lead) {
     const campaign = this.campaigns.find(c => c.id === lead.campaignId);
     const campaignName = campaign ? campaign.name : 'General Fund';
-    const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && lead.stage !== 'committed' && lead.stage !== 'declined';
+    const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && this.normalizeStage(lead.stage) !== 'committed' && this.normalizeStage(lead.stage) !== 'closed';
     const isToday = lead.nextFollowUp && lead.nextFollowUp === new Date().toISOString().split('T')[0];
 
     const priorityClass = lead.priority === 'High' ? 'priority-high' : lead.priority === 'Medium' ? 'priority-medium' : 'priority-normal';
@@ -576,7 +581,7 @@ class CFMApp {
           <span class="text-[10px] text-slate-400 font-semibold">Move Stage:</span>
           <select onchange="app.handleStageChangeDirect('${lead.id}', this.value)" class="text-[11px] font-bold py-1 px-2 rounded-md bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
             ${CFM_STAGES.map(s => `
-              <option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.label}</option>
+              <option value="${s.id}" ${this.normalizeStage(lead.stage) === s.id ? 'selected' : ''}>${s.label}</option>
             `).join('')}
           </select>
         </div>
@@ -584,7 +589,17 @@ class CFMApp {
     `;
   }
 
-  scrollToStageColumn(stageId) {
+  scrollToStageColumn(stageId, btnElement) {
+    if (btnElement) {
+      document.querySelectorAll('.stage-jump-pill').forEach(el => {
+        el.classList.remove('ring-2', 'ring-amber-500', 'bg-amber-50', 'border-amber-400', 'text-amber-900');
+        el.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+      });
+      btnElement.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+      btnElement.classList.add('ring-2', 'ring-amber-500', 'bg-amber-50', 'border-amber-400', 'text-amber-900');
+      // Auto-center clicked pill in mobile horizontal stage jump bar
+      btnElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
     const col = document.querySelector(`[data-stage-column="${stageId}"]`);
     if (col) {
       col.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -700,8 +715,8 @@ class CFMApp {
             </div>
           ` : filteredLeads.map(lead => {
             const campaign = this.campaigns.find(c => c.id === lead.campaignId);
-            const stageObj = CFM_STAGES.find(s => s.id === lead.stage) || CFM_STAGES[0];
-            const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && lead.stage !== 'committed';
+            const stageObj = CFM_STAGES.find(s => s.id === this.normalizeStage(lead.stage)) || CFM_STAGES[0];
+            const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && this.normalizeStage(lead.stage) !== 'committed' && this.normalizeStage(lead.stage) !== 'closed';
             const priorityBorder = lead.priority === 'High' ? 'border-l-4 border-l-red-500' : lead.priority === 'Medium' ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-cyan-500';
 
             return `
@@ -796,7 +811,7 @@ class CFMApp {
                 </tr>
               ` : filteredLeads.map(lead => {
                 const campaign = this.campaigns.find(c => c.id === lead.campaignId);
-                const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && lead.stage !== 'committed';
+                const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && this.normalizeStage(lead.stage) !== 'committed' && this.normalizeStage(lead.stage) !== 'closed';
                 
                 return `
                   <tr class="hover:bg-amber-50/30 transition cursor-pointer" onclick="app.openLeadDetails('${lead.id}')">
@@ -847,7 +862,7 @@ class CFMApp {
                       <select onchange="app.quickUpdateStage('${lead.id}', this.value)" 
                               class="text-xs font-semibold rounded-lg px-2 py-1 border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500">
                         ${CFM_STAGES.map(s => `
-                          <option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.label}</option>
+                          <option value="${s.id}" ${this.normalizeStage(lead.stage) === s.id ? 'selected' : ''}>${s.label}</option>
                         `).join('')}
                       </select>
                     </td>
@@ -952,7 +967,7 @@ class CFMApp {
       const totalRaised = linkedLeads.reduce((sum, l) => {
         const rec = Number(l.receivedAmount) || 0;
         if (rec > 0) return sum + rec;
-        if (l.stage === 'committed') return sum + (Number(l.expectedAmount) || 0);
+        if (this.normalizeStage(l.stage) === 'committed') return sum + (Number(l.expectedAmount) || 0);
         return sum;
       }, 0);
       const target = Number(camp.target) || 1;
@@ -2194,7 +2209,7 @@ class CFMApp {
     const container = document.getElementById('main-view-container');
     const todayStr = new Date().toISOString().split('T')[0];
 
-    const leadsWithFollowup = this.leads.filter(l => l.nextFollowUp && l.stage !== 'committed' && l.stage !== 'declined');
+    const leadsWithFollowup = this.leads.filter(l => l.nextFollowUp && this.normalizeStage(l.stage) !== 'committed' && this.normalizeStage(l.stage) !== 'closed');
 
     const overdue = leadsWithFollowup.filter(l => l.nextFollowUp < todayStr);
     const today = leadsWithFollowup.filter(l => l.nextFollowUp === todayStr);
@@ -2357,9 +2372,10 @@ class CFMApp {
     });
 
     this.leads.forEach(l => {
-      if (stageCounts[l.stage] !== undefined) {
-        stageCounts[l.stage]++;
-        stageAmounts[l.stage] += (Number(l.expectedAmount) || 0);
+      const norm = this.normalizeStage(l.stage);
+      if (stageCounts[norm] !== undefined) {
+        stageCounts[norm]++;
+        stageAmounts[norm] += (Number(l.expectedAmount) || 0);
       }
     });
 
@@ -2450,6 +2466,13 @@ class CFMApp {
   switchAdminSubTab(subTab) {
     this.adminSubTab = subTab;
     this.renderAdminView();
+    // Auto-center the active admin subtab button in mobile horizontal scroll view
+    setTimeout(() => {
+      const activeBtn = document.querySelector(`[data-admin-subtab="${subTab}"]`);
+      if (activeBtn) {
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }, 50);
   }
 
   renderUsersView() {
@@ -2513,25 +2536,25 @@ class CFMApp {
 
         <!-- Admin Sub-Navigation Tabs Bar (Touch scrollable, single row) -->
         <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold no-scrollbar">
-          <button onclick="app.switchAdminSubTab('users')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'users' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button data-admin-subtab="users" onclick="app.switchAdminSubTab('users')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'users' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-users-gear ${currentSubTab === 'users' ? 'text-cyan-400' : 'text-slate-500'}"></i>
             <span>Team Users & Passwords</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.users.length}</span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('campaigns')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'campaigns' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button data-admin-subtab="campaigns" onclick="app.switchAdminSubTab('campaigns')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'campaigns' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-bullseye ${currentSubTab === 'campaigns' ? 'text-amber-400' : 'text-slate-500'}"></i>
             <span>Campaign Funds</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'campaigns' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.campaigns.length}</span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('firebase')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button data-admin-subtab="firebase" onclick="app.switchAdminSubTab('firebase')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-cloud ${currentSubTab === 'firebase' ? 'text-amber-400' : 'text-slate-500'}"></i>
             <span>Firebase Cloud Sync</span>
             <span class="w-2.5 h-2.5 rounded-full ${isLive ? 'bg-emerald-500 shadow-sm shadow-emerald-400/50' : 'bg-amber-400'}"></span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('security')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'security' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button data-admin-subtab="security" onclick="app.switchAdminSubTab('security')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'security' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-lock ${currentSubTab === 'security' ? 'text-emerald-400' : 'text-slate-500'}"></i>
             <span>Role & Security PIN</span>
           </button>
@@ -2753,7 +2776,7 @@ class CFMApp {
               const totalRaised = linkedLeads.reduce((sum, l) => {
                 const rec = Number(l.receivedAmount) || 0;
                 if (rec > 0) return sum + rec;
-                if (l.stage === 'committed') return sum + (Number(l.expectedAmount) || 0);
+                if (this.normalizeStage(l.stage) === 'committed') return sum + (Number(l.expectedAmount) || 0);
                 return sum;
               }, 0);
               const pct = Math.min(100, Math.round((totalRaised / target) * 100));
@@ -3459,7 +3482,7 @@ class CFMApp {
     // Stage Selector in Modal
     const stageSelect = document.getElementById('detail-lead-stage-select');
     if (stageSelect) {
-      stageSelect.value = lead.stage;
+      stageSelect.value = this.normalizeStage(lead.stage);
     }
 
     // Timeline Activities
@@ -3631,7 +3654,7 @@ class CFMApp {
       document.getElementById('modal-lead-city').value = lead.city || '';
       document.getElementById('modal-lead-country').value = lead.country || '';
       document.getElementById('modal-lead-contact-pref').value = lead.preferredContact || 'Email';
-      document.getElementById('modal-lead-stage').value = lead.stage || 'new';
+      document.getElementById('modal-lead-stage').value = this.normalizeStage(lead.stage) || 'new';
       document.getElementById('modal-lead-amount').value = lead.expectedAmount || '';
       document.getElementById('modal-lead-received').value = lead.receivedAmount || 0;
       document.getElementById('modal-lead-freq').value = lead.frequency || 'Annual';
@@ -3707,7 +3730,7 @@ class CFMApp {
       city: document.getElementById('modal-lead-city').value.trim(),
       country: document.getElementById('modal-lead-country').value.trim(),
       preferredContact: document.getElementById('modal-lead-contact-pref').value,
-      stage: document.getElementById('modal-lead-stage').value,
+      stage: this.normalizeStage(document.getElementById('modal-lead-stage').value),
       expectedAmount: Number(document.getElementById('modal-lead-amount').value) || 0,
       receivedAmount: Number(document.getElementById('modal-lead-received').value) || 0,
       frequency: document.getElementById('modal-lead-freq').value,
@@ -4761,13 +4784,26 @@ class CFMApp {
     }
   }
 
+  normalizeStage(stageId) {
+    if (!stageId) return 'new';
+    const s = String(stageId).trim().toLowerCase();
+    if (s === 'meeting_scheduled' || s === 'proposal_sent' || s === 'in_discussion') return 'in_discussion';
+    if (s === 'stalled' || s === 'declined' || s === 'closed') return 'closed';
+    if (s === 'contacted') return 'contacted';
+    if (s === 'committed') return 'committed';
+    if (s === 'new') return 'new';
+    return 'new';
+  }
+
   getStageLabel(stageId) {
-    const s = CFM_STAGES.find(item => item.id === stageId);
-    return s ? s.label : stageId;
+    const norm = this.normalizeStage(stageId);
+    const s = CFM_STAGES.find(item => item.id === norm);
+    return s ? s.label : (stageId || 'New');
   }
 
   getStageBadgeClass(stageId) {
-    return `badge-stage-${stageId}`;
+    const norm = this.normalizeStage(stageId);
+    return `badge-stage-${norm}`;
   }
 
   escapeHtml(str) {

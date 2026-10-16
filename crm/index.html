@@ -48,8 +48,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Custom Styles (cache-busted v2.7.0) -->
-  <link rel="stylesheet" href="css/styles.css?v=2.7.0">
+  <!-- Custom Styles (cache-busted v2.8.0) -->
+  <link rel="stylesheet" href="css/styles.css?v=2.8.0">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-crm">
 
@@ -167,7 +167,7 @@
           </button>
 
           <!-- Active Logged In User Profile Pill -->
-          <div id="header-user-profile" class="flex items-center gap-1.5 sm:gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-1.5 py-1 sm:px-2.5 text-xs shrink-0" title="Logged in user">
+          <div id="header-user-profile" class="hidden xs:flex items-center gap-1.5 sm:gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-1.5 py-1 sm:px-2.5 text-xs shrink-0" title="Logged in user">
             <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px] sm:text-[11px] border border-amber-500/30 shadow-inner">
               <span id="header-user-avatar">U</span>
             </div>
@@ -190,7 +190,7 @@
     <!-- NAVIGATION TABS -->
     <div class="border-t border-slate-700/60 bg-slate-900/60 backdrop-blur-md">
       <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-        <nav class="flex space-x-1.5 sm:space-x-2 py-2 overflow-x-auto text-xs font-semibold no-scrollbar">
+        <nav id="main-nav-tabs" class="flex space-x-1.5 sm:space-x-2 py-2 overflow-x-auto text-xs font-semibold no-scrollbar">
           <button data-view-target="kanban" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-amber-600 text-white flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-columns"></i>
             <span>Pipeline Kanban</span>
@@ -295,11 +295,9 @@
           <option value="all">All Stages</option>
           <option value="new">New / Identified</option>
           <option value="contacted">Contacted</option>
-          <option value="meeting_scheduled">Meeting / Pitch</option>
-          <option value="proposal_sent">Proposal Sent</option>
+          <option value="in_discussion">Meeting & Proposal</option>
           <option value="committed">Committed Partner</option>
-          <option value="stalled">Deferred / Follow-up</option>
-          <option value="declined">Declined</option>
+          <option value="closed">Deferred / Closed</option>
         </select>
 
         <!-- Priority Filter -->
@@ -409,11 +407,9 @@
           <select id="detail-lead-stage-select" onchange="app.handleStageChangeFromModal(this.value)" class="font-semibold text-xs rounded-lg px-3 py-1.5 bg-white border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
             <option value="new">New / Identified</option>
             <option value="contacted">Contacted</option>
-            <option value="meeting_scheduled">Meeting / Pitch</option>
-            <option value="proposal_sent">Proposal Sent</option>
+            <option value="in_discussion">Meeting & Proposal</option>
             <option value="committed">Committed Partner</option>
-            <option value="stalled">Deferred / Follow-up</option>
-            <option value="declined">Declined</option>
+            <option value="closed">Deferred / Closed</option>
           </select>
         </div>
 
@@ -616,11 +612,9 @@
             <select id="modal-lead-stage" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
               <option value="new">New / Identified</option>
               <option value="contacted">Contacted</option>
-              <option value="meeting_scheduled">Meeting / Pitch</option>
-              <option value="proposal_sent">Proposal Sent</option>
+              <option value="in_discussion">Meeting & Proposal</option>
               <option value="committed">Committed Partner</option>
-              <option value="stalled">Deferred / Follow-up</option>
-              <option value="declined">Declined</option>
+              <option value="closed">Deferred / Closed</option>
             </select>
           </div>
           <div>
@@ -1220,9 +1214,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.7.0) -->
-  <script src="js/sample-data.js?v=2.7.0"></script>
-  <script src="js/firebase-config.js?v=2.7.0"></script>
-  <script src="js/app.js?v=2.7.0"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.0) -->
+  <script src="js/sample-data.js?v=2.8.0"></script>
+  <script src="js/firebase-config.js?v=2.8.0"></script>
+  <script src="js/app.js?v=2.8.0"></script>
 </body>
 </html>
