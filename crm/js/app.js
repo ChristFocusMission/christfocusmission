@@ -15,8 +15,8 @@ const CFM_STAGES = [
 ];
 
 const CURRENCY_SYMBOLS = {
-  USD: '$',
   INR: '₹',
+  USD: '$',
   GBP: '£',
   EUR: '€'
 };
@@ -32,7 +32,15 @@ class CFMApp {
     this.campaignFilter = 'all';
     this.priorityFilter = 'all';
     this.assignedFilter = 'all';
-    this.currency = localStorage.getItem(CFM_STORAGE_KEYS.ACTIVE_CURRENCY) || 'USD';
+    // Default currency: INR (Indian Rupee ₹)
+    const savedCurrency = localStorage.getItem(CFM_STORAGE_KEYS.ACTIVE_CURRENCY);
+    const explicitlySet = localStorage.getItem('cfm_currency_explicitly_set');
+    if (!savedCurrency || !explicitlySet) {
+      this.currency = 'INR';
+      localStorage.setItem(CFM_STORAGE_KEYS.ACTIVE_CURRENCY, 'INR');
+    } else {
+      this.currency = savedCurrency;
+    }
     this.selectedLead = null;
     this.draggedLeadId = null;
     this.analyticsChartInstance = null;
@@ -146,6 +154,7 @@ class CFMApp {
       currencySelect.addEventListener('change', (e) => {
         this.currency = e.target.value;
         localStorage.setItem(CFM_STORAGE_KEYS.ACTIVE_CURRENCY, this.currency);
+        localStorage.setItem('cfm_currency_explicitly_set', 'true');
         this.render();
       });
     }
@@ -4526,9 +4535,10 @@ class CFMApp {
 
   // ===================== HELPERS =====================
   formatCurrency(amount) {
-    const symbol = CURRENCY_SYMBOLS[this.currency] || '$';
+    const symbol = CURRENCY_SYMBOLS[this.currency] || '₹';
     const num = Number(amount) || 0;
-    return `${symbol}${num.toLocaleString()}`;
+    const locale = this.currency === 'INR' ? 'en-IN' : 'en-US';
+    return `${symbol}${num.toLocaleString(locale)}`;
   }
 
   formatDate(dateStr) {
