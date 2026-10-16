@@ -42,6 +42,7 @@ class CFMApp {
     this.userRole = localStorage.getItem('cfm_user_role') || 'admin';
     this.selectedRoleOption = this.userRole;
     this.currentUser = null;
+    this.adminSubTab = 'users'; // 'users' | 'firebase' | 'security'
     this.lineageViewMode = 'tree'; // 'tree' | 'table'
     this.lineageStageFilter = 'all';
     this.lineageStatusFilter = 'all'; // 'all' | 'reached' | 'progress' | 'pending'
@@ -180,15 +181,16 @@ class CFMApp {
   }
 
   switchView(view) {
-    if (view === 'users' && this.userRole !== 'admin') {
-      alert("Permission Denied: Team User Management is restricted to Administrators only.");
+    if ((view === 'admin' || view === 'users') && this.userRole !== 'admin') {
+      alert("Permission Denied: Administrator Control Center is restricted to Administrators only.");
       this.switchView('kanban');
       return;
     }
 
     this.activeView = view;
     document.querySelectorAll('[data-view-target]').forEach(b => {
-      const isTarget = b.getAttribute('data-view-target') === view;
+      const target = b.getAttribute('data-view-target');
+      const isTarget = target === view || (view === 'admin' && target === 'admin') || (view === 'users' && target === 'admin');
       b.classList.toggle('bg-amber-600', isTarget);
       b.classList.toggle('text-white', isTarget);
       b.classList.toggle('text-slate-200', !isTarget);
@@ -198,7 +200,7 @@ class CFMApp {
     // Hide or show filters toolbar based on view
     const filterToolbar = document.getElementById('leads-filter-toolbar');
     if (filterToolbar) {
-      filterToolbar.classList.toggle('hidden', view === 'campaigns' || view === 'analytics' || view === 'network' || view === 'users');
+      filterToolbar.classList.toggle('hidden', view === 'campaigns' || view === 'analytics' || view === 'network' || view === 'users' || view === 'admin');
     }
 
     this.renderMainContent();
@@ -331,8 +333,8 @@ class CFMApp {
       this.renderFollowupsView();
     } else if (this.activeView === 'analytics') {
       this.renderAnalyticsView();
-    } else if (this.activeView === 'users') {
-      this.renderUsersView();
+    } else if (this.activeView === 'admin' || this.activeView === 'users') {
+      this.renderAdminView();
     }
   }
 
@@ -2227,14 +2229,31 @@ class CFMApp {
     }, 0);
   }
 
-  // ===================== TEAM USERS & ACCESS TAB VIEW =====================
+  // ===================== ADMIN CENTER TAB VIEW =====================
+  switchAdminSubTab(subTab) {
+    this.adminSubTab = subTab;
+    this.renderAdminView();
+  }
+
   renderUsersView() {
+    this.renderAdminView();
+  }
+
+  renderAdminView() {
     const container = document.getElementById('main-view-container');
     if (!container) return;
+
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Administrator Control Center is restricted to Administrators only.");
+      this.switchView('kanban');
+      return;
+    }
 
     const adminCount = this.users.filter(u => u.role === 'admin').length;
     const crmCount = this.users.filter(u => u.role === 'crm').length;
     const isLive = cfmFirebase.isLive;
+    const savedConfig = cfmFirebase.getSavedConfig();
+    const currentSubTab = this.adminSubTab || 'users';
 
     let html = `
       <div class="space-y-6">
@@ -2242,25 +2261,26 @@ class CFMApp {
         <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#181A3A] text-white p-6 rounded-2xl shadow-md border border-indigo-900/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
-                👑 Admin Workspace
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-widest">
+                👑 Administrator Center
               </span>
               <span class="text-xs text-slate-300">
-                • Google Cloud Firestore (<code>cfm_users</code>)
+                • ${isLive ? `<span class="text-emerald-400 font-semibold"><i class="fas fa-check-circle mr-1"></i>Cloud Firestore (${this.escapeHtml(savedConfig?.projectId || 'Connected')})</span>` : '<span class="text-amber-400 font-semibold"><i class="fas fa-database mr-1"></i>Local Storage Mode</span>'}
               </span>
             </div>
             <h2 class="text-xl font-bold font-heading text-white flex items-center gap-2">
-              <i class="fas fa-users-gear text-cyan-400"></i>
-              <span>Team Users & Staff Access Directory</span>
+              <i class="fas fa-shield-halved text-amber-400"></i>
+              <span>Administration & System Settings</span>
             </h2>
             <p class="text-xs text-slate-300 max-w-2xl">
-              Create and manage ministry staff, pastoral liaisons, and administrators. All users created here are synced directly with Google Firebase Cloud Firestore and appear immediately across lead assignment dropdowns.
+              Manage team members & passwords, configure Google Firebase Cloud Firestore, test connections, and manage permissions.
             </p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3">
+          <!-- Quick Metric Chips -->
+          <div class="flex flex-wrap items-center gap-2.5">
             <div class="px-3.5 py-2 rounded-xl bg-white/10 border border-white/10 text-center min-w-[70px]">
-              <div class="text-[10px] font-bold text-slate-300 uppercase">Total</div>
+              <div class="text-[10px] font-bold text-slate-300 uppercase">Users</div>
               <div class="text-lg font-black text-white">${this.users.length}</div>
             </div>
             <div class="px-3.5 py-2 rounded-xl bg-indigo-500/20 border border-indigo-400/30 text-center min-w-[70px]">
@@ -2274,7 +2294,30 @@ class CFMApp {
           </div>
         </div>
 
-        <!-- Main Content: Add User Form + Directory -->
+        <!-- Admin Sub-Navigation Tabs Bar -->
+        <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold">
+          <button onclick="app.switchAdminSubTab('users')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'users' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+            <i class="fas fa-users-gear ${currentSubTab === 'users' ? 'text-cyan-400' : 'text-slate-500'}"></i>
+            <span>Team Users & Passwords</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.users.length}</span>
+          </button>
+
+          <button onclick="app.switchAdminSubTab('firebase')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+            <i class="fas fa-cloud ${currentSubTab === 'firebase' ? 'text-amber-400' : 'text-slate-500'}"></i>
+            <span>Firebase Cloud Database & Sync</span>
+            <span class="w-2.5 h-2.5 rounded-full ${isLive ? 'bg-emerald-500 shadow-sm shadow-emerald-400/50' : 'bg-amber-400'}"></span>
+          </button>
+
+          <button onclick="app.switchAdminSubTab('security')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'security' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+            <i class="fas fa-lock ${currentSubTab === 'security' ? 'text-emerald-400' : 'text-slate-500'}"></i>
+            <span>Role Switcher & Security PIN</span>
+          </button>
+        </div>
+    `;
+
+    if (currentSubTab === 'users') {
+      html += `
+        <!-- Main Users Section: Add User Form + Directory -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           <!-- LEFT: Create User Form Card -->
@@ -2283,12 +2326,12 @@ class CFMApp {
               <div>
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <i class="fas fa-user-plus text-amber-600"></i>
-                  <span>Add New Team User</span>
+                  <span>Create Team Member</span>
                 </h3>
                 <p class="text-[11px] text-slate-500">Saves directly to Firebase Firestore</p>
               </div>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isLive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600'}">
-                <i class="fas fa-bolt text-emerald-500 mr-1"></i>${isLive ? 'Live Cloud' : 'Local + Sync'}
+                <i class="fas fa-bolt text-emerald-500 mr-1"></i>${isLive ? 'Cloud Synced' : 'Local + Sync'}
               </span>
             </div>
 
@@ -2312,6 +2355,21 @@ class CFMApp {
                   </span>
                   <input type="email" id="tab-user-email" required placeholder="rachel@christfocusmission.org" 
                          class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                </div>
+              </div>
+
+              <!-- Password Input Field -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Login Password *</label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fas fa-key text-xs"></i>
+                  </span>
+                  <input type="password" id="tab-user-password" required minlength="6" placeholder="Set initial login password" 
+                         class="w-full pl-9 pr-10 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                  <button type="button" onclick="app.togglePwdFieldVisibility('tab-user-password', 'tab-pwd-toggle-icon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                    <i id="tab-pwd-toggle-icon" class="fas fa-eye text-xs"></i>
+                  </button>
                 </div>
               </div>
 
@@ -2352,13 +2410,13 @@ class CFMApp {
             </form>
           </div>
 
-          <!-- RIGHT: Users Directory List -->
+          <!-- RIGHT: Users Directory List with Change Password Actions -->
           <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
             <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
               <div>
                 <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <i class="fas fa-address-book text-indigo-600"></i>
-                  <span>Active Team Members Directory</span>
+                  <span>Team Directory & Password Management</span>
                 </h3>
                 <p class="text-[11px] text-slate-500">Live roster saved in Firestore <code>cfm_users</code></p>
               </div>
@@ -2377,8 +2435,8 @@ class CFMApp {
               ` : this.users.map(u => {
                 const assignedLeadsCount = this.leads.filter(l => l.assignedTo && l.assignedTo.toLowerCase() === (u.name || '').toLowerCase()).length;
                 return `
-                  <div class="p-4 bg-slate-50/70 hover:bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-start sm:items-center space-x-3.5">
+                  <div class="p-4 bg-slate-50/70 hover:bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 transition flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="flex items-start md:items-center space-x-3.5">
                       <div class="w-10 h-10 rounded-xl ${u.role === 'admin' ? 'bg-indigo-600 text-white' : 'bg-amber-500 text-slate-950'} flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
                         ${u.name ? u.name.charAt(0).toUpperCase() : 'U'}
                       </div>
@@ -2398,18 +2456,15 @@ class CFMApp {
                       </div>
                     </div>
 
-                    <div class="flex items-center justify-between sm:justify-end gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200">
-                      <div class="text-right">
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 block sm:inline-block">
-                          <i class="fas fa-user-tag text-[9px] mr-1"></i>${assignedLeadsCount} ${assignedLeadsCount === 1 ? 'Lead' : 'Leads'}
-                        </span>
-                        <div class="text-[9px] text-emerald-600 font-semibold mt-0.5 flex items-center justify-end gap-1">
-                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Synced
-                        </div>
-                      </div>
+                    <div class="flex items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200">
+                      <!-- Set / Change Password Button -->
+                      <button type="button" onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password for ${this.escapeHtml(u.name)}" class="px-2.5 py-1.5 text-[11px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1.5 transition">
+                        <i class="fas fa-key text-amber-500 text-xs"></i>
+                        <span>Set Password</span>
+                      </button>
 
                       ${this.users.length > 1 ? `
-                        <button onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-2 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
+                        <button type="button" onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition">
                           <i class="far fa-trash-alt text-xs"></i>
                         </button>
                       ` : ''}
@@ -2421,9 +2476,158 @@ class CFMApp {
           </div>
 
         </div>
-      </div>
-    `;
+      `;
+    } else if (currentSubTab === 'firebase') {
+      html += `
+        <!-- Firebase Cloud Database Subtab -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                <i class="fas fa-fire text-amber-600"></i>
+                <span>Google Firebase Cloud Firestore Connection</span>
+              </h3>
+              <p class="text-xs text-slate-500">Live multi-user cloud synchronization for leads, campaigns, and team members</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${isLive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                <span class="w-2 h-2 rounded-full ${isLive ? 'bg-emerald-500' : 'bg-amber-500'}"></span>
+                <span>${isLive ? 'Connected to Cloud' : 'Local Storage Mode'}</span>
+              </span>
+            </div>
+          </div>
 
+          <!-- Quick instructions accordion -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <i class="fas fa-info-circle text-blue-600"></i> How to connect your Firebase Project in 2 minutes:
+            </div>
+            <ol class="list-decimal list-inside space-y-1 text-slate-600 leading-relaxed text-[11px]">
+              <li>Open <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 font-bold underline">Firebase Console</a> and click <strong>Create a project</strong> (or choose an existing one).</li>
+              <li>In the left sidebar, click <strong>Build &rarr; Firestore Database</strong> &rarr; <strong>Create Database</strong>. Choose <em>Start in test mode</em>.</li>
+              <li>Go to <strong>Project Settings (Gear icon) &rarr; General &rarr; Your apps &rarr; Web (&lt;/&gt;)</strong>. Copy the <code>firebaseConfig</code> object and paste it below!</li>
+            </ol>
+          </div>
+
+          <!-- Auto-Paste Snippet Helper -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1 text-xs">
+              <i class="fas fa-paste text-amber-600 mr-1"></i> Quick Paste: Paste full Firebase config snippet here
+            </label>
+            <textarea oninput="app.handlePasteFirebaseConfig(this.value)" rows="3" placeholder="const firebaseConfig = { apiKey: 'AIza...', authDomain: '...', projectId: '...' };" class="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500"></textarea>
+            <span class="text-[10px] text-slate-400">Pasting automatically populates the individual fields below.</span>
+          </div>
+
+          <!-- Individual Config Inputs -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">API Key *</label>
+              <input type="text" id="fb-api-key" value="${this.escapeHtml(savedConfig?.apiKey || '')}" placeholder="AIzaSy..." class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">Project ID *</label>
+              <input type="text" id="fb-project-id" value="${this.escapeHtml(savedConfig?.projectId || '')}" placeholder="christ-focus-mission" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">Auth Domain</label>
+              <input type="text" id="fb-auth-domain" value="${this.escapeHtml(savedConfig?.authDomain || '')}" placeholder="project.firebaseapp.com" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">Storage Bucket</label>
+              <input type="text" id="fb-storage-bucket" value="${this.escapeHtml(savedConfig?.storageBucket || '')}" placeholder="project.appspot.com" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">Messaging Sender ID</label>
+              <input type="text" id="fb-sender-id" value="${this.escapeHtml(savedConfig?.messagingSenderId || '')}" placeholder="1234567890" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 text-xs">App ID</label>
+              <input type="text" id="fb-app-id" value="${this.escapeHtml(savedConfig?.appId || '')}" placeholder="1:123456:web:abcd" class="w-full p-2 border border-slate-300 rounded-lg font-mono text-xs focus:ring-1 focus:ring-amber-500">
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="app.handleTestFirebaseConnection()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl border border-slate-300 flex items-center gap-1.5 transition text-xs">
+                <i class="fas fa-plug text-indigo-600"></i> Test Connection
+              </button>
+              <button type="button" onclick="app.handleSaveFirebaseConfig()" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition text-xs">
+                <i class="fas fa-save"></i> Save & Connect Cloud
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="app.handlePushLocalToFirebase()" class="px-4 py-2 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl flex items-center gap-1.5 transition text-xs">
+                <i class="fas fa-cloud-upload-alt text-indigo-600"></i> Push Local Data to Firestore
+              </button>
+              <button type="button" onclick="app.handleDisconnectFirebase()" class="px-4 py-2 text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl font-bold transition text-xs">
+                Reset to Demo Mode
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (currentSubTab === 'security') {
+      html += `
+        <!-- Role & System Security Subtab -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 max-w-3xl">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+              <i class="fas fa-user-shield text-amber-600"></i>
+              <span>Role-Based Access Control & System Security</span>
+            </h3>
+            <p class="text-xs text-slate-500">Preview CRM mode as operational staff or full administrator</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Option: Admin -->
+            <div onclick="app.selectRoleOption('admin')" class="p-4 rounded-xl border-2 cursor-pointer transition ${this.userRole === 'admin' ? 'border-indigo-600 bg-indigo-50/40 shadow-sm' : 'border-slate-200 hover:border-slate-300'}">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👑</span>
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm">Administrator Mode</h4>
+                  <span class="text-[10px] text-indigo-700 font-semibold">Active: Full Unrestricted Access</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                Full authority over database sync, lead deletions, campaign creation, user creation, and password resets.
+              </p>
+            </div>
+
+            <!-- Option: CRM Staff -->
+            <div onclick="app.selectRoleOption('crm')" class="p-4 rounded-xl border-2 cursor-pointer transition ${this.userRole === 'crm' ? 'border-amber-600 bg-amber-50/40 shadow-sm' : 'border-slate-200 hover:border-slate-300'}">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👤</span>
+                <div>
+                  <h4 class="font-bold text-slate-900 text-sm">CRM Staff Preview</h4>
+                  <span class="text-[10px] text-amber-700 font-semibold">Protected Operational Mode</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                Operational fundraising mode: manage pipeline leads, activities, and follow-ups. Database settings and deletions are hidden.
+              </p>
+            </div>
+          </div>
+
+          <!-- PIN section -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <label class="block font-semibold text-slate-700 text-xs">
+              <i class="fas fa-lock text-amber-600 mr-1"></i> Admin Security PIN (Required to switch back to Admin)
+            </label>
+            <input type="password" id="admin-pin-input" placeholder="Enter Security PIN" maxlength="8" class="w-full sm:w-64 p-2 rounded-lg border border-slate-300 font-mono text-center tracking-widest text-xs focus:ring-1 focus:ring-indigo-500 bg-white">
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 flex justify-end">
+            <button type="button" onclick="app.applyRoleChange()" class="px-5 py-2.5 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-xl shadow-md transition text-xs flex items-center gap-2">
+              <i class="fas fa-check"></i> Apply Role Mode
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
     container.innerHTML = html;
   }
 
@@ -2437,6 +2641,8 @@ class CFMApp {
     const name = document.getElementById('tab-user-name').value.trim();
     const email = document.getElementById('tab-user-email').value.trim();
     const role = document.getElementById('tab-user-role').value;
+    const pwdEl = document.getElementById('tab-user-password');
+    const password = (pwdEl ? pwdEl.value.trim() : '') || 'crmStaff2026!';
     const phone = document.getElementById('tab-user-phone').value.trim();
     const title = document.getElementById('tab-user-title').value.trim();
     const department = document.getElementById('tab-user-dept').value.trim();
@@ -2450,6 +2656,7 @@ class CFMApp {
       const newUser = await cfmFirebase.addUser({
         name,
         email,
+        password,
         role,
         phone,
         title,
@@ -2461,11 +2668,119 @@ class CFMApp {
       }
 
       this.populateAssignedUserDropdowns();
-      this.renderUsersView();
+      this.renderAdminView();
 
-      this.showToast(`User "${name}" created and saved to Firebase Firestore!`, 'success');
+      this.showToast(`User "${name}" created with password and saved to Firebase Firestore!`, 'success');
     } catch (err) {
       alert("Error saving user to Firebase: " + err.message);
+    }
+  }
+
+  // ===================== USER PASSWORD MANAGEMENT =====================
+  openChangePasswordModal(userId) {
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Only administrators can change user passwords.");
+      return;
+    }
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return;
+
+    const modal = document.getElementById('modal-change-password');
+    if (!modal) return;
+
+    document.getElementById('change-pwd-user-id').value = user.id;
+    document.getElementById('change-pwd-user-name').textContent = user.name;
+    document.getElementById('change-pwd-user-email').textContent = user.email;
+    document.getElementById('change-pwd-input').value = '';
+    document.getElementById('change-pwd-confirm').value = '';
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  closeChangePasswordModal() {
+    const modal = document.getElementById('modal-change-password');
+    if (modal) modal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  async handleSaveNewPassword(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Only administrators can update user passwords.");
+      return;
+    }
+
+    const userId = document.getElementById('change-pwd-user-id').value;
+    const newPwd = document.getElementById('change-pwd-input').value;
+    const confirmPwd = document.getElementById('change-pwd-confirm').value;
+
+    if (!newPwd || newPwd.length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      alert("Passwords do not match. Please re-enter.");
+      return;
+    }
+
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return;
+
+    try {
+      await cfmFirebase.updateUser(userId, { password: newPwd });
+      user.password = newPwd;
+
+      // If updating currently logged in user, update session
+      if (this.currentUser && (this.currentUser.id === userId || this.currentUser.email === user.email)) {
+        this.currentUser.password = newPwd;
+        if (localStorage.getItem('cfm_auth_session')) {
+          localStorage.setItem('cfm_auth_session', JSON.stringify(this.currentUser));
+        } else if (sessionStorage.getItem('cfm_auth_session')) {
+          sessionStorage.setItem('cfm_auth_session', JSON.stringify(this.currentUser));
+        }
+      }
+
+      this.closeChangePasswordModal();
+      this.showToast(`Password successfully updated for ${user.name}!`, 'success');
+      if (this.activeView === 'admin' || this.activeView === 'users') {
+        this.renderAdminView();
+      }
+    } catch (err) {
+      alert("Error updating password: " + err.message);
+    }
+  }
+
+  generateRandomPasswordForChange() {
+    const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%";
+    let pwd = "Cfm" + new Date().getFullYear() + "!";
+    for (let i = 0; i < 4; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const input = document.getElementById('change-pwd-input');
+    const confirm = document.getElementById('change-pwd-confirm');
+    if (input) input.value = pwd;
+    if (confirm) confirm.value = pwd;
+    this.showToast(`Generated secure password: ${pwd}`, 'info');
+  }
+
+  togglePwdFieldVisibility(fieldId, iconId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(iconId);
+    if (!field) return;
+    if (field.type === 'password') {
+      field.type = 'text';
+      if (icon) {
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      }
+    } else {
+      field.type = 'password';
+      if (icon) {
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
     }
   }
 
@@ -3157,8 +3472,11 @@ class CFMApp {
           </div>
         </div>
         <div class="flex items-center space-x-2">
+          <button onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password" class="px-2.5 py-1 text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1 transition">
+            <i class="fas fa-key text-[10px] text-amber-500"></i> Password
+          </button>
           <span class="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Firebase Synced
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Synced
           </span>
           ${this.users.length > 1 ? `
             <button onclick="app.confirmDeleteUser('${u.id}')" title="Delete User" class="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100 transition">
