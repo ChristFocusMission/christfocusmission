@@ -391,3 +391,89 @@ body.role-crm .admin-only {
   border-left: 4px solid #10b981;
 }
 
+/* ============================================================
+   MOBILE OPTIMIZATIONS & RESPONSIVE DESIGN SYSTEM
+   Eliminates iOS input zoom, uneven wrapping, and touch issues
+   ============================================================ */
+
+/* Utility: Hide scrollbars while preserving touch scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Touch enhancements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+nav, .kanban-wrapper, .modal-container, .table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari Input Zoom Fix:
+   Font-size must be at least 16px on mobile viewports so iOS
+   does NOT automatically zoom in when user taps an input/select/textarea. */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="search"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile Kanban Layout & Native Carousel Snap */
+@media (max-width: 768px) {
+  .kanban-wrapper {
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kanban-column {
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    width: 86vw !important;
+    min-width: 86vw !important;
+    max-width: 86vw !important;
+    min-height: calc(100vh - 340px);
+    margin-right: 4px;
+  }
+
+  .kanban-column:first-child {
+    margin-left: 2px;
+  }
+}
+
+/* Mobile Lineage Hierarchy Indentation Adjustment */
+@media (max-width: 640px) {
+  .lineage-child-node {
+    margin-left: 14px !important;
+  }
+
+  .lineage-child-node::before {
+    left: -10px !important;
+    width: 8px !important;
+  }
+
+  .lineage-branch-connector {
+    left: 14px !important;
+  }
+}
+
+/* Mobile Modal Comfort & Floating Action Handling */
+@media (max-width: 640px) {
+  .modal-container {
+    max-height: 94vh !important;
+    border-radius: 1.25rem !important;
+  }
+}
+

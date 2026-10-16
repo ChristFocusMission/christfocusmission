@@ -393,8 +393,25 @@ class CFMApp {
     const filteredLeads = this.getFilteredLeads();
 
     let html = `
-      <div class="kanban-wrapper w-full overflow-x-auto pb-8 pt-1">
-        <div class="flex items-start gap-4 min-w-max">
+      <!-- Mobile Stage Switcher Jump Bar (Touch-friendly jump to any stage) -->
+      <div class="block md:hidden mb-2.5 overflow-x-auto no-scrollbar pb-1">
+        <div class="flex items-center gap-1.5 text-xs font-bold min-w-max">
+          <span class="text-slate-400 text-[10px] uppercase font-bold mr-0.5">Jump to:</span>
+          ${CFM_STAGES.map(s => {
+            const count = filteredLeads.filter(l => l.stage === s.id).length;
+            return `
+              <button onclick="app.scrollToStageColumn('${s.id}')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xs flex items-center gap-1.5 shrink-0 text-[11px] active:scale-95 transition">
+                <span class="w-2 h-2 rounded-full bg-${s.color}-500"></span>
+                <span>${s.label}</span>
+                <span class="text-[10px] text-slate-400 font-semibold">(${count})</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="kanban-wrapper w-full overflow-x-auto pb-8 pt-1 no-scrollbar">
+        <div class="flex items-start gap-3 sm:gap-4 min-w-max">
     `;
 
     CFM_STAGES.forEach(stage => {
@@ -402,7 +419,7 @@ class CFMApp {
       const stageTotal = stageLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
 
       html += `
-        <div class="flex flex-col w-[300px] min-w-[300px] max-w-[300px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
+        <div class="flex flex-col w-[86vw] sm:w-[300px] min-w-[86vw] sm:min-w-[300px] max-w-[86vw] sm:max-w-[300px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
              data-stage-column="${stage.id}"
              ondragover="app.handleDragOver(event)"
              ondragleave="app.handleDragLeave(event)"
@@ -553,8 +570,49 @@ class CFMApp {
             <span class="truncate text-[10px]">Has prayer request</span>
           </div>
         ` : ''}
+
+        <!-- Mobile Stage Changer (Touch device friendly) -->
+        <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-1 text-[11px] sm:hidden" onclick="event.stopPropagation()">
+          <span class="text-[10px] text-slate-400 font-semibold">Move Stage:</span>
+          <select onchange="app.handleStageChangeDirect('${lead.id}', this.value)" class="text-[11px] font-bold py-1 px-2 rounded-md bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            ${CFM_STAGES.map(s => `
+              <option value="${s.id}" ${lead.stage === s.id ? 'selected' : ''}>${s.label}</option>
+            `).join('')}
+          </select>
+        </div>
       </div>
     `;
+  }
+
+  scrollToStageColumn(stageId) {
+    const col = document.querySelector(`[data-stage-column="${stageId}"]`);
+    if (col) {
+      col.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
+
+  async handleStageChangeDirect(leadId, targetStage) {
+    const lead = this.leads.find(l => l.id === leadId);
+    if (!lead || lead.stage === targetStage) return;
+
+    lead.stage = targetStage;
+    this.render();
+
+    if (targetStage === 'committed') {
+      this.celebrateSuccess();
+      this.showToast(`Praise God! ${lead.name} marked as Committed Partner!`, 'success');
+    } else {
+      this.showToast(`Updated stage for ${lead.name}`, 'info');
+    }
+
+    try {
+      await cfmFirebase.updateLead(leadId, {
+        stage: targetStage,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Error updating stage:", err);
+    }
   }
 
   // Drag and Drop handlers for Kanban
@@ -633,7 +691,87 @@ class CFMApp {
           </button>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Mobile Card Stack (Visible on mobile screens < 768px) -->
+        <div class="block md:hidden divide-y divide-slate-100">
+          ${filteredLeads.length === 0 ? `
+            <div class="py-12 text-center text-slate-400 p-4">
+              <i class="fas fa-search text-3xl mb-2 text-slate-300"></i>
+              <p class="text-xs">No fundraising leads match your current search and filters.</p>
+            </div>
+          ` : filteredLeads.map(lead => {
+            const campaign = this.campaigns.find(c => c.id === lead.campaignId);
+            const stageObj = CFM_STAGES.find(s => s.id === lead.stage) || CFM_STAGES[0];
+            const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && lead.stage !== 'committed';
+            const priorityBorder = lead.priority === 'High' ? 'border-l-4 border-l-red-500' : lead.priority === 'Medium' ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-cyan-500';
+
+            return `
+              <div class="p-3.5 hover:bg-slate-50 transition cursor-pointer bg-white ${priorityBorder}" onclick="app.openLeadDetails('${lead.id}')">
+                <div class="flex items-start justify-between gap-2 mb-1.5">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <h4 class="font-bold text-slate-900 text-sm leading-tight">${this.escapeHtml(lead.name)}</h4>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-slate-100 text-slate-600">
+                        ${lead.leadType || 'Individual'}
+                      </span>
+                    </div>
+                    ${lead.organization ? `
+                      <div class="text-xs text-slate-500 truncate mt-0.5">${this.escapeHtml(lead.organization)}</div>
+                    ` : ''}
+                  </div>
+                  
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-${stageObj.color}-100 text-${stageObj.color}-800 border border-${stageObj.color}-200 shrink-0">
+                    ${stageObj.label}
+                  </span>
+                </div>
+
+                <!-- Financial Progress -->
+                <div class="grid grid-cols-2 gap-2 my-2 py-2 border-y border-slate-100 text-xs">
+                  <div>
+                    <span class="text-[10px] text-slate-400 block uppercase font-semibold">Target</span>
+                    <span class="font-bold text-slate-900">${this.formatCurrency(lead.expectedAmount)}</span>
+                    <span class="text-[10px] text-slate-400">/${lead.frequency || 'one-off'}</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-emerald-600 block uppercase font-semibold">Received</span>
+                    <span class="font-bold text-emerald-700">${Number(lead.receivedAmount) > 0 ? this.formatCurrency(lead.receivedAmount) : '₹0'}</span>
+                  </div>
+                </div>
+
+                <!-- Meta & Action row -->
+                <div class="flex items-center justify-between text-[11px] text-slate-500">
+                  <div class="flex items-center gap-1 truncate">
+                    <span class="truncate max-w-[140px] text-slate-600 font-medium">
+                      <i class="fas fa-cross text-[9px] text-amber-600 mr-1"></i>${this.escapeHtml(campaign ? campaign.name : 'General Mission')}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+                    <button onclick="app.openLeadModal('${lead.id}')" title="Edit Form" class="p-1.5 text-slate-500 hover:text-blue-600 rounded bg-slate-100 active:scale-95 transition">
+                      <i class="far fa-edit text-xs"></i>
+                    </button>
+                    ${this.userRole === 'admin' ? `
+                      <button onclick="app.confirmDeleteLead('${lead.id}')" title="Delete" class="p-1.5 text-slate-400 hover:text-rose-600 rounded bg-slate-100 active:scale-95 transition">
+                        <i class="far fa-trash-alt text-xs"></i>
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+
+                ${lead.nextFollowUp ? `
+                  <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-dashed border-slate-100">
+                    <span>Assigned: <strong class="text-slate-600">${lead.assignedTo || 'Unassigned'}</strong></span>
+                    <span class="px-1.5 py-0.5 rounded font-medium ${isOverdue ? 'badge-overdue' : 'text-slate-600 bg-slate-100'}">
+                      <i class="far fa-clock mr-0.5"></i> ${this.formatShortDate(lead.nextFollowUp)}
+                    </span>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Desktop Full Table (Visible on md: screens >= 768px) -->
+        <div class="hidden md:block overflow-x-auto">
           <table class="w-full text-left border-collapse text-sm">
             <thead>
               <tr class="bg-slate-100/70 border-b border-slate-200 text-xs uppercase font-semibold text-slate-600">
@@ -1498,17 +1636,17 @@ class CFMApp {
     let html = `
       <div class="space-y-6">
         <!-- Top Banner with Model Switcher & Headline -->
-        <div class="bg-gradient-to-r from-slate-900 via-cfm-navy to-indigo-950 text-white p-6 sm:p-7 rounded-2xl shadow-xl border border-white/10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5">
-          <div class="space-y-2 max-w-3xl">
+        <div class="bg-gradient-to-r from-slate-900 via-cfm-navy to-indigo-950 text-white p-4 sm:p-7 rounded-2xl shadow-xl border border-white/10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 sm:gap-5">
+          <div class="space-y-1.5 sm:space-y-2 max-w-3xl">
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-amber-500 text-slate-950">
                 Strategic Scaling Blueprint
               </span>
               <span class="text-xs text-amber-300 font-semibold flex items-center gap-1">
-                <i class="fas fa-network-wired"></i> 10x Viral Multiplying Mechanism
+                <i class="fas fa-network-wired"></i> 10x Viral Mechanism
               </span>
             </div>
-            <h2 class="text-2xl sm:text-3xl font-extrabold font-serif-title tracking-tight text-white">
+            <h2 class="text-xl sm:text-3xl font-extrabold font-serif-title tracking-tight text-white">
               Rapid 5-Level Network Scaling Portal
             </h2>
             <p class="text-xs text-slate-300 leading-relaxed">
@@ -1518,15 +1656,15 @@ class CFMApp {
           </div>
 
           <!-- Model Switcher CTA & CSV Export -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-            <!-- Model Switcher Pills -->
-            <div class="bg-slate-800/90 p-1 rounded-xl border border-slate-700 flex items-center shadow-inner">
-              <button onclick="app.setNetworkModel('A')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isModelA ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-300 hover:text-white'}">
-                <i class="fas fa-hand-holding-usd"></i>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+            <!-- Model Switcher Pills (50/50 split on mobile) -->
+            <div class="bg-slate-800/90 p-1 rounded-xl border border-slate-700 flex items-center shadow-inner w-full sm:w-auto">
+              <button onclick="app.setNetworkModel('A')" class="flex-1 sm:flex-initial px-3 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${isModelA ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-300 hover:text-white'}">
+                <i class="fas fa-hand-holding-usd text-xs"></i>
                 <span>Model A (One-Time)</span>
               </button>
-              <button onclick="app.setNetworkModel('B')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${!isModelA ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-300 hover:text-white'}">
-                <i class="fas fa-redo-alt"></i>
+              <button onclick="app.setNetworkModel('B')" class="flex-1 sm:flex-initial px-3 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 whitespace-nowrap ${!isModelA ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-300 hover:text-white'}">
+                <i class="fas fa-redo-alt text-xs"></i>
                 <span>Model B (Monthly)</span>
               </button>
             </div>
@@ -1540,11 +1678,11 @@ class CFMApp {
         </div>
 
         <!-- 4 Key Stat Metric Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           <!-- Total Member Cap -->
-          <div class="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unique Member Target</div>
-            <div class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">1,00,000</div>
+          <div class="bg-white p-3.5 sm:p-4.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unique Member Target</div>
+            <div class="text-xl sm:text-3xl font-black text-slate-900 mt-1">1,00,000</div>
             <div class="text-[11px] text-slate-500 mt-2 flex items-center justify-between">
               <span>Capped milestone</span>
               <span class="text-amber-700 font-bold">5 Stages</span>
@@ -2373,29 +2511,29 @@ class CFMApp {
           </div>
         </div>
 
-        <!-- Admin Sub-Navigation Tabs Bar -->
-        <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold">
-          <button onclick="app.switchAdminSubTab('users')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'users' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+        <!-- Admin Sub-Navigation Tabs Bar (Touch scrollable, single row) -->
+        <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold no-scrollbar">
+          <button onclick="app.switchAdminSubTab('users')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'users' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-users-gear ${currentSubTab === 'users' ? 'text-cyan-400' : 'text-slate-500'}"></i>
             <span>Team Users & Passwords</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.users.length}</span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('campaigns')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'campaigns' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button onclick="app.switchAdminSubTab('campaigns')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'campaigns' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-bullseye ${currentSubTab === 'campaigns' ? 'text-amber-400' : 'text-slate-500'}"></i>
             <span>Campaign Funds</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'campaigns' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.campaigns.length}</span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('firebase')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button onclick="app.switchAdminSubTab('firebase')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-cloud ${currentSubTab === 'firebase' ? 'text-amber-400' : 'text-slate-500'}"></i>
-            <span>Firebase Cloud Database & Sync</span>
+            <span>Firebase Cloud Sync</span>
             <span class="w-2.5 h-2.5 rounded-full ${isLive ? 'bg-emerald-500 shadow-sm shadow-emerald-400/50' : 'bg-amber-400'}"></span>
           </button>
 
-          <button onclick="app.switchAdminSubTab('security')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'security' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button onclick="app.switchAdminSubTab('security')" class="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition flex items-center gap-2 whitespace-nowrap shrink-0 ${currentSubTab === 'security' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-lock ${currentSubTab === 'security' ? 'text-emerald-400' : 'text-slate-500'}"></i>
-            <span>Role Switcher & Security PIN</span>
+            <span>Role & Security PIN</span>
           </button>
         </div>
     `;

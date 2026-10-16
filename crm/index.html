@@ -48,8 +48,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Custom Styles -->
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Custom Styles (cache-busted v2.7.0) -->
+  <link rel="stylesheet" href="css/styles.css?v=2.7.0">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-crm">
 
@@ -123,36 +123,35 @@
 
   <!-- TOP HEADER / BRANDING BAR -->
   <header class="bg-[#181A3A] text-white sticky top-0 z-40 shadow-lg border-b border-indigo-950">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-2">
         
         <!-- Official Logo & Organization Name from christfocusmission.org -->
-        <div class="flex items-center space-x-3.5 cursor-pointer" onclick="app.switchView('kanban')">
-          <div class="w-12 h-12 rounded-xl bg-white/10 p-1.5 flex items-center justify-center border border-white/15 shadow-inner">
+        <div class="flex items-center space-x-2 sm:space-x-3.5 cursor-pointer shrink-0" onclick="app.switchView('kanban')">
+          <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-white/10 p-1 sm:p-1.5 flex items-center justify-center border border-white/15 shadow-inner shrink-0">
             <img src="assets/cfm-icon.svg" alt="Christ Focus Mission" class="w-full h-full object-contain">
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-xl font-bold tracking-tight text-white font-heading">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <h1 class="text-sm sm:text-xl font-bold tracking-tight text-white font-heading truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
                 Christ Focus Mission
               </h1>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest">
-                Stewardship CRM
+              <span class="hidden xs:inline-block text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest shrink-0">
+                CRM
               </span>
             </div>
-            <p class="text-xs text-slate-300 hidden sm:block">
+            <p class="text-xs text-slate-300 hidden md:block">
               Harnessing Data for a Higher Purpose • Partner Pipeline
             </p>
           </div>
         </div>
 
-        <!-- Right Side: Role Switcher, Firebase Badge & Actions -->
         <!-- Right Side: Clean Uncluttered Header Controls -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
           
-          <!-- Currency Selector -->
-          <div class="relative hidden sm:block">
-            <select id="currency-selector" class="bg-slate-800/90 text-amber-300 text-xs font-bold rounded-lg border border-slate-700 py-1.5 px-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+          <!-- Currency Selector (Visible on both mobile & desktop) -->
+          <div class="relative block">
+            <select id="currency-selector" class="bg-slate-800/90 text-amber-300 text-[11px] sm:text-xs font-bold rounded-lg border border-slate-700 py-1 px-1.5 sm:py-1.5 sm:px-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
               <option value="INR" selected>INR (₹)</option>
               <option value="USD">USD ($)</option>
               <option value="GBP">GBP (£)</option>
@@ -161,14 +160,15 @@
           </div>
 
           <!-- Add New Lead Button -->
-          <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-3.5 py-2 rounded-lg shadow-md flex items-center gap-1.5 transition">
-            <i class="fas fa-plus text-slate-950"></i>
-            <span>New Lead</span>
+          <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg shadow-md flex items-center gap-1 sm:gap-1.5 transition shrink-0" title="Add New Lead">
+            <i class="fas fa-plus text-slate-950 text-xs"></i>
+            <span class="hidden xs:inline">New Lead</span>
+            <span class="xs:hidden">Lead</span>
           </button>
 
           <!-- Active Logged In User Profile Pill -->
-          <div id="header-user-profile" class="hidden sm:flex items-center gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-2.5 py-1 text-xs">
-            <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[11px] border border-amber-500/30 shadow-inner">
+          <div id="header-user-profile" class="flex items-center gap-1.5 sm:gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-1.5 py-1 sm:px-2.5 text-xs shrink-0" title="Logged in user">
+            <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px] sm:text-[11px] border border-amber-500/30 shadow-inner">
               <span id="header-user-avatar">U</span>
             </div>
             <div class="text-left leading-tight hidden lg:block">
@@ -178,8 +178,8 @@
           </div>
 
           <!-- Sign Out / Logout Button -->
-          <button id="btn-logout" onclick="app.logout()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-white text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-800/60 flex items-center gap-1.5 transition" title="Sign Out of CRM">
-            <i class="fas fa-sign-out-alt"></i>
+          <button id="btn-logout" onclick="app.logout()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-white text-xs font-semibold p-1.5 sm:px-2.5 sm:py-2 rounded-lg border border-rose-800/60 flex items-center gap-1.5 transition shrink-0" title="Sign Out of CRM">
+            <i class="fas fa-sign-out-alt text-xs"></i>
             <span class="hidden md:inline">Sign Out</span>
           </button>
         </div>
@@ -189,33 +189,33 @@
 
     <!-- NAVIGATION TABS -->
     <div class="border-t border-slate-700/60 bg-slate-900/60 backdrop-blur-md">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto text-xs font-semibold">
-          <button data-view-target="kanban" class="px-3.5 py-2 rounded-lg bg-amber-600 text-white flex items-center gap-2 transition">
+      <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <nav class="flex space-x-1.5 sm:space-x-2 py-2 overflow-x-auto text-xs font-semibold no-scrollbar">
+          <button data-view-target="kanban" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-amber-600 text-white flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-columns"></i>
             <span>Pipeline Kanban</span>
           </button>
-          <button data-view-target="table" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+          <button data-view-target="table" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-table-list"></i>
             <span>All Leads (Table)</span>
           </button>
-          <button data-view-target="campaigns" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+          <button data-view-target="campaigns" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-bullseye"></i>
             <span>Mission Funds & Campaigns</span>
           </button>
-          <button data-view-target="network" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+          <button data-view-target="network" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-sitemap text-amber-400"></i>
             <span>Rapid 5-Level Scaling</span>
           </button>
-          <button data-view-target="followups" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+          <button data-view-target="followups" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-pray"></i>
             <span>Follow-ups & Prayer</span>
           </button>
-          <button data-view-target="analytics" class="px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition">
+          <button data-view-target="analytics" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition whitespace-nowrap shrink-0">
             <i class="fas fa-chart-pie"></i>
             <span>Analytics & Forecast</span>
           </button>
-          <button data-view-target="admin" class="admin-only px-3.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-2 transition border border-indigo-500/40 bg-indigo-950/40" title="Administrator Control Center (Users, Passwords, Firebase, Security)">
+          <button data-view-target="admin" class="admin-only px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-slate-200 hover:bg-slate-800 flex items-center gap-1.5 sm:gap-2 transition border border-indigo-500/40 bg-indigo-950/40 whitespace-nowrap shrink-0" title="Administrator Control Center (Users, Passwords, Firebase, Security)">
             <i class="fas fa-shield-halved text-amber-400"></i>
             <span>Admin Center</span>
           </button>
@@ -225,58 +225,58 @@
   </header>
 
   <!-- MAIN WRAPPER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
     <!-- METRICS OVERVIEW CARDS -->
-    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
       <!-- Total Pipeline -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Potential</div>
-        <div id="metric-total-pipeline" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">₹0</div>
-        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+      <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Potential</div>
+        <div id="metric-total-pipeline" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">₹0</div>
+        <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-stream text-amber-500"></i> All active stages
         </div>
       </div>
 
       <!-- Committed / Won -->
-      <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
-        <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Committed / Raised</div>
-        <div id="metric-total-committed" class="text-xl sm:text-2xl font-black text-emerald-700 mt-1">₹0</div>
-        <div class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+      <div class="bg-white p-3 sm:p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
+        <div class="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider truncate">Committed / Raised</div>
+        <div id="metric-total-committed" class="text-lg sm:text-2xl font-black text-emerald-700 mt-1 truncate">₹0</div>
+        <div class="text-[10px] sm:text-[11px] text-emerald-600 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-check-double"></i> Confirmed partners
         </div>
       </div>
 
       <!-- Active Prospects -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Prospects</div>
-        <div id="metric-active-leads" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0</div>
-        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+      <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Prospects</div>
+        <div id="metric-active-leads" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0</div>
+        <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-user-clock text-blue-500"></i> In discussions
         </div>
       </div>
 
       <!-- Conversion Rate -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
-        <div id="metric-conversion-rate" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0%</div>
-        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+      <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
+        <div id="metric-conversion-rate" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0%</div>
+        <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-chart-line text-indigo-500"></i> Closed won ratio
         </div>
       </div>
 
       <!-- Follow-ups Due -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
-        <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Follow-ups Due</div>
-        <div id="metric-followups-due" class="text-xl sm:text-2xl font-black text-slate-900 mt-1">0</div>
-        <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+      <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Follow-ups Due</div>
+        <div id="metric-followups-due" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0</div>
+        <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="far fa-bell text-rose-500"></i> Due today or past
         </div>
       </div>
     </section>
 
     <!-- SEARCH & FILTER TOOLBAR (For Kanban & Table views) -->
-    <section id="leads-filter-toolbar" class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-3">
+    <section id="leads-filter-toolbar" class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-2.5 sm:gap-3">
       
       <!-- Search Input -->
       <div class="relative w-full lg:w-96">
@@ -287,11 +287,11 @@
                class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
       </div>
 
-      <!-- Filters & Actions -->
-      <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+      <!-- Filters & Actions (Clean 2x2 grid on mobile, horizontal row on desktop) -->
+      <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
         
         <!-- Stage Filter -->
-        <select id="filter-stage" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+        <select id="filter-stage" class="w-full sm:w-auto text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
           <option value="all">All Stages</option>
           <option value="new">New / Identified</option>
           <option value="contacted">Contacted</option>
@@ -302,23 +302,23 @@
           <option value="declined">Declined</option>
         </select>
 
-        <!-- Campaign Filter -->
-        <select id="filter-campaign" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500 max-w-[170px] truncate">
-          <option value="all">All Campaigns</option>
-        </select>
-
         <!-- Priority Filter -->
-        <select id="filter-priority" class="text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
+        <select id="filter-priority" class="w-full sm:w-auto text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
           <option value="all">All Priorities</option>
           <option value="High">High Priority</option>
           <option value="Medium">Medium Priority</option>
           <option value="Normal">Normal Priority</option>
         </select>
 
+        <!-- Campaign Filter -->
+        <select id="filter-campaign" class="w-full sm:w-auto text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500 max-w-full sm:max-w-[170px] truncate">
+          <option value="all">All Campaigns</option>
+        </select>
+
         <!-- Export CSV Button -->
-        <button id="btn-export-csv" class="text-xs bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition" title="Export current leads to CSV file">
+        <button id="btn-export-csv" class="w-full sm:w-auto text-xs bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition shadow-xs" title="Export current leads to CSV file">
           <i class="fas fa-download text-emerald-600"></i>
-          <span class="hidden sm:inline">Export CSV</span>
+          <span>Export CSV</span>
         </button>
 
       </div>
@@ -1220,9 +1220,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.6.0) -->
-  <script src="js/sample-data.js?v=2.6.0"></script>
-  <script src="js/firebase-config.js?v=2.6.0"></script>
-  <script src="js/app.js?v=2.6.0"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.7.0) -->
+  <script src="js/sample-data.js?v=2.7.0"></script>
+  <script src="js/firebase-config.js?v=2.7.0"></script>
+  <script src="js/app.js?v=2.7.0"></script>
 </body>
 </html>
