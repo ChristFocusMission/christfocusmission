@@ -60,7 +60,7 @@ const CFM_INITIAL_CAMPAIGNS = [
     name: "General Mission & Operations Fund",
     code: "GEN-2026",
     target: 50000,
-    raised: 28400,
+    raised: 0,
     description: "Supports day-to-day missionary operations, travel, local outreach, and staff logistics.",
     color: "emerald"
   },
@@ -69,7 +69,7 @@ const CFM_INITIAL_CAMPAIGNS = [
     name: "Rural Church Planting Initiative",
     code: "PLANT-2026",
     target: 75000,
-    raised: 42000,
+    raised: 0,
     description: "Equipping local pastors and funding 12 new church plants in unreached rural districts.",
     color: "blue"
   },
@@ -78,7 +78,7 @@ const CFM_INITIAL_CAMPAIGNS = [
     name: "Youth & Discipleship Camp 2026",
     code: "YOUTH-2026",
     target: 25000,
-    raised: 18500,
+    raised: 0,
     description: "Subsidizing registrations and study materials for 350 youth leaders in discipleship training.",
     color: "purple"
   },
@@ -87,7 +87,7 @@ const CFM_INITIAL_CAMPAIGNS = [
     name: "Community Medical & Relief Outreach",
     code: "MED-2026",
     target: 40000,
-    raised: 31200,
+    raised: 0,
     description: "Free medical clinics, hygiene kits, and emergency food supplies distributed in underprivileged zones.",
     color: "amber"
   },
@@ -96,7 +96,7 @@ const CFM_INITIAL_CAMPAIGNS = [
     name: "Mission Training Center Expansion",
     code: "BLDG-2026",
     target: 120000,
-    raised: 65000,
+    raised: 0,
     description: "Building 4 new classrooms, dorm rooms, and library for ministry trainees.",
     color: "rose"
   }

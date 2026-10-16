@@ -758,13 +758,15 @@ class CFMApp {
     `;
 
     this.campaigns.forEach(camp => {
-      // Calculate live stats from leads linked to this campaign
+      // Calculate live stats strictly dynamically from real leads linked to this campaign
       const linkedLeads = this.leads.filter(l => l.campaignId === camp.id);
       const leadsTarget = linkedLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
-      const leadsCommitted = linkedLeads.filter(l => l.stage === 'committed')
-        .reduce((sum, l) => sum + (Number(l.receivedAmount) || Number(l.expectedAmount) || 0), 0);
-
-      const totalRaised = (Number(camp.raised) || 0) + leadsCommitted;
+      const totalRaised = linkedLeads.reduce((sum, l) => {
+        const rec = Number(l.receivedAmount) || 0;
+        if (rec > 0) return sum + rec;
+        if (l.stage === 'committed') return sum + (Number(l.expectedAmount) || 0);
+        return sum;
+      }, 0);
       const target = Number(camp.target) || 1;
       const pct = Math.min(100, Math.round((totalRaised / target) * 100));
 
@@ -808,7 +810,7 @@ class CFMApp {
           <!-- Bottom Footer Details -->
           <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
             <span class="text-slate-500">Pipeline in Progress:</span>
-            <span class="font-bold text-slate-800">${this.formatCurrency(leadsTarget - leadsCommitted)}</span>
+            <span class="font-bold text-slate-800">${this.formatCurrency(Math.max(0, leadsTarget - totalRaised))}</span>
           </div>
 
           <button onclick="app.filterByCampaign('${camp.id}')" class="mt-4 w-full py-2 bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 font-semibold text-xs rounded-lg border border-slate-200 transition text-center block">
@@ -2553,9 +2555,12 @@ class CFMApp {
             ${this.campaigns.map(camp => {
               const linkedLeads = this.leads.filter(l => l.campaignId === camp.id);
               const target = Number(camp.target) || 1;
-              const leadsCommitted = linkedLeads.filter(l => l.stage === 'committed')
-                .reduce((sum, l) => sum + (Number(l.receivedAmount) || Number(l.expectedAmount) || 0), 0);
-              const totalRaised = (Number(camp.raised) || 0) + leadsCommitted;
+              const totalRaised = linkedLeads.reduce((sum, l) => {
+                const rec = Number(l.receivedAmount) || 0;
+                if (rec > 0) return sum + rec;
+                if (l.stage === 'committed') return sum + (Number(l.expectedAmount) || 0);
+                return sum;
+              }, 0);
               const pct = Math.min(100, Math.round((totalRaised / target) * 100));
 
               return `
