@@ -546,6 +546,50 @@ class FirebaseService {
     }
   }
 
+  // Update existing campaign
+  async updateCampaign(campaignId, updates) {
+    const payload = {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (this.isLive && this.db) {
+      await this.db.collection(this.campaignsCollection).doc(campaignId).update(payload);
+      const campaigns = this.getLocalCampaigns();
+      const idx = campaigns.findIndex(c => c.id === campaignId);
+      if (idx !== -1) {
+        campaigns[idx] = { ...campaigns[idx], ...payload };
+        this.saveLocalCampaigns(campaigns);
+      }
+      return { id: campaignId, ...payload };
+    } else {
+      const campaigns = this.getLocalCampaigns();
+      const idx = campaigns.findIndex(c => c.id === campaignId);
+      if (idx !== -1) {
+        campaigns[idx] = { ...campaigns[idx], ...payload };
+        this.saveLocalCampaigns(campaigns);
+        return campaigns[idx];
+      }
+      throw new Error(`Campaign with id ${campaignId} not found locally.`);
+    }
+  }
+
+  // Delete campaign
+  async deleteCampaign(campaignId) {
+    if (this.isLive && this.db) {
+      await this.db.collection(this.campaignsCollection).doc(campaignId).delete();
+      let campaigns = this.getLocalCampaigns();
+      campaigns = campaigns.filter(c => c.id !== campaignId);
+      this.saveLocalCampaigns(campaigns);
+      return true;
+    } else {
+      let campaigns = this.getLocalCampaigns();
+      campaigns = campaigns.filter(c => c.id !== campaignId);
+      this.saveLocalCampaigns(campaigns);
+      return true;
+    }
+  }
+
   // Seed remote Firestore with default campaigns if empty
   async seedInitialRemoteCampaigns() {
     if (!this.isLive || !this.db) return;

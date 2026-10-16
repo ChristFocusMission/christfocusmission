@@ -916,13 +916,14 @@
   <div id="modal-campaign-form" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden modal-container text-xs">
       <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
-        <h3 class="font-bold text-sm">New Mission Campaign Fund</h3>
+        <h3 id="modal-camp-title" class="font-bold text-sm">New Mission Campaign Fund</h3>
         <button onclick="app.closeCampaignModal()" class="text-slate-400 hover:text-white p-1 text-base">
           <i class="fas fa-times"></i>
         </button>
       </div>
 
       <form id="campaign-edit-form" onsubmit="app.handleSaveCampaignForm(event)" class="p-5 space-y-3.5">
+        <input type="hidden" id="modal-camp-id">
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Campaign Fund Name *</label>
           <input type="text" id="modal-camp-name" required placeholder="e.g. 2026 Gospel Outreach to Hills" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500">
@@ -948,7 +949,7 @@
           <button type="button" onclick="app.closeCampaignModal()" class="px-3.5 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
             Cancel
           </button>
-          <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition">
+          <button type="submit" id="modal-camp-submit-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition">
             Create Campaign
           </button>
         </div>

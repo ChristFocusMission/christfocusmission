@@ -765,7 +765,20 @@ class CFMApp {
             <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
               ${camp.code || 'FUND'}
             </span>
-            <span class="text-xs font-bold text-slate-500">${linkedLeads.length} Leads</span>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-500">${linkedLeads.length} Leads</span>
+              ${this.userRole === 'admin' ? `
+                <div class="flex items-center space-x-1 pl-1.5 border-l border-slate-200">
+                  <button type="button" onclick="app.openCampaignModal('${camp.id}')" title="Edit Campaign" class="px-2 py-0.5 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition flex items-center gap-1 shadow-xs">
+                    <i class="fas fa-pen-to-square text-[10px]"></i>
+                    <span>Edit</span>
+                  </button>
+                  <button type="button" onclick="app.confirmDeleteCampaign('${camp.id}')" title="Delete Campaign" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 border border-transparent hover:border-rose-200 transition">
+                    <i class="far fa-trash-alt text-xs"></i>
+                  </button>
+                </div>
+              ` : ''}
+            </div>
           </div>
 
           <h3 class="font-bold text-base text-slate-900 mb-1 leading-snug">${this.escapeHtml(camp.name)}</h3>
@@ -2306,6 +2319,12 @@ class CFMApp {
             <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'users' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.users.length}</span>
           </button>
 
+          <button onclick="app.switchAdminSubTab('campaigns')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'campaigns' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+            <i class="fas fa-bullseye ${currentSubTab === 'campaigns' ? 'text-amber-400' : 'text-slate-500'}"></i>
+            <span>Campaign Funds</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] ${currentSubTab === 'campaigns' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}">${this.campaigns.length}</span>
+          </button>
+
           <button onclick="app.switchAdminSubTab('firebase')" class="px-4 py-2.5 rounded-xl transition flex items-center gap-2 ${currentSubTab === 'firebase' ? 'bg-indigo-900 text-white shadow-md' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
             <i class="fas fa-cloud ${currentSubTab === 'firebase' ? 'text-amber-400' : 'text-slate-500'}"></i>
             <span>Firebase Cloud Database & Sync</span>
@@ -2501,6 +2520,75 @@ class CFMApp {
             </div>
           </div>
 
+        </div>
+      `;
+    } else if (currentSubTab === 'campaigns') {
+      html += `
+        <!-- Campaigns Management Subtab in Admin Center -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                <i class="fas fa-bullseye text-amber-600"></i>
+                <span>Mission Campaign Funds & Priorities</span>
+              </h3>
+              <p class="text-xs text-slate-500">Create, edit, or delete strategic fundraising campaign funds for Christ Focus Mission</p>
+            </div>
+            <button type="button" onclick="app.openCampaignModal()" class="cfm-btn-cta text-slate-950 font-bold text-xs py-2 px-3.5 rounded-xl shadow-sm flex items-center gap-1.5 transition cursor-pointer">
+              <i class="fas fa-plus text-slate-950"></i>
+              <span>New Campaign Fund</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${this.campaigns.map(camp => {
+              const linkedLeads = this.leads.filter(l => l.campaignId === camp.id);
+              const target = Number(camp.target) || 1;
+              const leadsCommitted = linkedLeads.filter(l => l.stage === 'committed')
+                .reduce((sum, l) => sum + (Number(l.receivedAmount) || Number(l.expectedAmount) || 0), 0);
+              const totalRaised = (Number(camp.raised) || 0) + leadsCommitted;
+              const pct = Math.min(100, Math.round((totalRaised / target) * 100));
+
+              return `
+                <div class="p-4 bg-slate-50/70 rounded-xl border border-slate-200 hover:border-slate-300 transition space-y-3">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">
+                          ${camp.code || 'FUND'}
+                        </span>
+                        <h4 class="font-bold text-slate-900 text-sm">${this.escapeHtml(camp.name)}</h4>
+                      </div>
+                      <p class="text-xs text-slate-500 mt-1 line-clamp-2">${this.escapeHtml(camp.description || 'No description provided.')}</p>
+                    </div>
+                  </div>
+
+                  <!-- Goal & Progress -->
+                  <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-semibold">
+                      <span class="text-emerald-700">${this.formatCurrency(totalRaised)} raised</span>
+                      <span class="text-slate-500">Goal: ${this.formatCurrency(target)}</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div class="bg-emerald-600 h-2 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-500 font-medium">${linkedLeads.length} Linked Leads</span>
+                    <div class="flex items-center gap-2">
+                      <button type="button" onclick="app.openCampaignModal('${camp.id}')" title="Edit Campaign" class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg flex items-center gap-1 transition shadow-xs cursor-pointer">
+                        <i class="fas fa-pen-to-square text-[10px]"></i> Edit
+                      </button>
+                      <button type="button" onclick="app.confirmDeleteCampaign('${camp.id}')" title="Delete Campaign" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition cursor-pointer">
+                        <i class="far fa-trash-alt text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>
       `;
     } else if (currentSubTab === 'firebase') {
@@ -3492,16 +3580,41 @@ class CFMApp {
     }
   }
 
-  // ===================== CAMPAIGN MODAL =====================
-  openCampaignModal() {
+  // ===================== CAMPAIGN MODAL & MANAGEMENT (ADMIN ONLY) =====================
+  openCampaignModal(campaignId = null) {
     if (this.userRole !== 'admin') {
-      alert("Permission Denied: Creating campaigns is restricted to Administrators only.");
+      alert("Permission Denied: Managing campaigns is restricted to Administrators only.");
       return;
     }
     const modal = document.getElementById('modal-campaign-form');
     if (!modal) return;
     const form = document.getElementById('campaign-edit-form');
     if (form) form.reset();
+
+    const titleEl = document.getElementById('modal-camp-title');
+    const idEl = document.getElementById('modal-camp-id');
+    const nameEl = document.getElementById('modal-camp-name');
+    const codeEl = document.getElementById('modal-camp-code');
+    const targetEl = document.getElementById('modal-camp-target');
+    const descEl = document.getElementById('modal-camp-desc');
+    const submitBtn = document.getElementById('modal-camp-submit-btn');
+
+    if (campaignId) {
+      const camp = this.campaigns.find(c => c.id === campaignId);
+      if (!camp) return;
+      if (titleEl) titleEl.textContent = "Edit Mission Campaign Fund";
+      if (idEl) idEl.value = camp.id;
+      if (nameEl) nameEl.value = camp.name || '';
+      if (codeEl) codeEl.value = camp.code || '';
+      if (targetEl) targetEl.value = camp.target || '';
+      if (descEl) descEl.value = camp.description || '';
+      if (submitBtn) submitBtn.textContent = "Save Changes";
+    } else {
+      if (titleEl) titleEl.textContent = "New Mission Campaign Fund";
+      if (idEl) idEl.value = "";
+      if (submitBtn) submitBtn.textContent = "Create Campaign";
+    }
+
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
   }
@@ -3515,11 +3628,12 @@ class CFMApp {
   async handleSaveCampaignForm(e) {
     e.preventDefault();
     if (this.userRole !== 'admin') {
-      alert("Permission Denied: Only administrators can create campaigns.");
+      alert("Permission Denied: Only administrators can create or edit campaigns.");
       return;
     }
+    const campaignId = document.getElementById('modal-camp-id') ? document.getElementById('modal-camp-id').value : '';
     const name = document.getElementById('modal-camp-name').value.trim();
-    const code = document.getElementById('modal-camp-code').value.trim() || 'FUND';
+    const code = (document.getElementById('modal-camp-code').value.trim() || 'FUND').toUpperCase();
     const target = Number(document.getElementById('modal-camp-target').value) || 10000;
     const description = document.getElementById('modal-camp-desc').value.trim();
 
@@ -3529,27 +3643,97 @@ class CFMApp {
     }
 
     try {
-      const newCamp = await cfmFirebase.addCampaign({
-        name,
-        code: code.toUpperCase(),
-        target,
-        raised: 0,
-        description,
-        color: 'amber'
-      });
+      if (campaignId) {
+        // Edit existing campaign
+        const existingCamp = this.campaigns.find(c => c.id === campaignId);
+        const updates = {
+          name,
+          code,
+          target,
+          description
+        };
+        await cfmFirebase.updateCampaign(campaignId, updates);
+        if (existingCamp) {
+          Object.assign(existingCamp, updates);
+        }
+        this.showToast(`Campaign "${name}" updated successfully!`, 'success');
+      } else {
+        // Create new campaign
+        const newCamp = await cfmFirebase.addCampaign({
+          name,
+          code,
+          target,
+          raised: 0,
+          description,
+          color: 'amber'
+        });
 
-      if (newCamp && !this.campaigns.some(c => c.id === newCamp.id)) {
-        this.campaigns.push(newCamp);
+        if (newCamp && !this.campaigns.some(c => c.id === newCamp.id)) {
+          this.campaigns.push(newCamp);
+        }
+        this.showToast(`Created new campaign: ${name}`, 'success');
       }
+
       this.populateCampaignFilters();
       if (this.activeView === 'campaigns') this.renderCampaignsView();
       if (this.activeView === 'analytics') this.renderAnalyticsView();
+      if (this.activeView === 'admin' && this.adminSubTab === 'campaigns') this.renderAdminView();
       this.render();
-
-      this.showToast(`Created new campaign: ${name}`, 'success');
       this.closeCampaignModal();
     } catch (err) {
-      alert("Error adding campaign: " + err.message);
+      alert("Error saving campaign: " + err.message);
+    }
+  }
+
+  async confirmDeleteCampaign(campaignId) {
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Only administrators can delete campaigns.");
+      return;
+    }
+
+    const camp = this.campaigns.find(c => c.id === campaignId);
+    if (!camp) return;
+
+    if (this.campaigns.length <= 1) {
+      alert("At least one active campaign fund is required for the stewardship pipeline.");
+      return;
+    }
+
+    const linkedLeads = this.leads.filter(l => l.campaignId === campaignId);
+    const fallbackCamp = this.campaigns.find(c => c.id !== campaignId);
+    const fallbackName = fallbackCamp ? fallbackCamp.name : 'General Fund';
+
+    const confirmMsg = linkedLeads.length > 0
+      ? `Are you sure you want to delete campaign "${camp.name}"?\n\nThere are ${linkedLeads.length} leads currently linked to this campaign. They will be reassigned to "${fallbackName}".`
+      : `Are you sure you want to delete campaign "${camp.name}"? This action cannot be undone.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      // Reassign linked leads to fallback campaign so leads are never lost
+      if (linkedLeads.length > 0 && fallbackCamp) {
+        for (const lead of linkedLeads) {
+          lead.campaignId = fallbackCamp.id;
+          await cfmFirebase.updateLead(lead.id, { campaignId: fallbackCamp.id });
+        }
+      }
+
+      await cfmFirebase.deleteCampaign(campaignId);
+      this.campaigns = this.campaigns.filter(c => c.id !== campaignId);
+
+      if (this.campaignFilter === campaignId) {
+        this.campaignFilter = 'all';
+      }
+
+      this.populateCampaignFilters();
+      if (this.activeView === 'campaigns') this.renderCampaignsView();
+      if (this.activeView === 'analytics') this.renderAnalyticsView();
+      if (this.activeView === 'admin' && this.adminSubTab === 'campaigns') this.renderAdminView();
+      this.render();
+
+      this.showToast(`Campaign "${camp.name}" has been deleted.`, 'info');
+    } catch (err) {
+      alert("Error deleting campaign: " + err.message);
     }
   }
 
