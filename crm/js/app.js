@@ -55,10 +55,27 @@ class CFMApp {
     this.lineageStageFilter = 'all';
     this.lineageStatusFilter = 'all'; // 'all' | 'reached' | 'progress' | 'pending'
     this.lineageSearchTerm = '';
-    this.expandedLineageNodes = new Set(['lead-1', 'lead-2', 'lead-11', 'lead-3']);
+    this.expandedLineageNodes = new Set();
   }
 
   async init() {
+    // One-time purge of legacy mock sample leads and sample campaigns from localStorage
+    if (!localStorage.getItem('cfm_sample_data_purged_v2')) {
+      localStorage.removeItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
+      localStorage.removeItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
+      try {
+        const rawUsers = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_USERS);
+        if (rawUsers) {
+          const u = JSON.parse(rawUsers);
+          if (Array.isArray(u)) {
+            const cleanUsers = u.filter(x => x.id !== 'user-2' && x.id !== 'user-3' && x.id !== 'user-4');
+            localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(cleanUsers));
+          }
+        }
+      } catch(e) {}
+      localStorage.setItem('cfm_sample_data_purged_v2', 'true');
+    }
+
     this.checkAuthStatus();
     this.bindGlobalEvents();
     this.renderHeaderStatus();
@@ -757,7 +774,21 @@ class CFMApp {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     `;
 
-    this.campaigns.forEach(camp => {
+    if (this.campaigns.length === 0) {
+      html += `
+        <div class="col-span-full p-12 text-center text-slate-400 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+          <i class="fas fa-bullseye text-4xl mb-3 text-slate-300"></i>
+          <h4 class="font-bold text-slate-700 text-sm mb-1">No Active Mission Campaigns</h4>
+          <p class="text-xs text-slate-500 mb-4 max-w-md mx-auto">Create your first fundraising campaign fund to begin linking leads, tracking pledges, and measuring milestones.</p>
+          ${this.userRole === 'admin' ? `
+            <button onclick="app.openCampaignModal()" class="px-4 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-lg text-xs shadow-sm inline-flex items-center gap-2 transition cursor-pointer">
+              <i class="fas fa-plus text-amber-400"></i> Create First Campaign Fund
+            </button>
+          ` : ''}
+        </div>
+      `;
+    } else {
+      this.campaigns.forEach(camp => {
       // Calculate live stats strictly dynamically from real leads linked to this campaign
       const linkedLeads = this.leads.filter(l => l.campaignId === camp.id);
       const leadsTarget = linkedLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
@@ -819,6 +850,7 @@ class CFMApp {
         </div>
       `;
     });
+    }
 
     html += `
         </div>
@@ -2552,7 +2584,13 @@ class CFMApp {
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${this.campaigns.map(camp => {
+            ${this.campaigns.length === 0 ? `
+              <div class="col-span-full p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <i class="fas fa-bullseye text-3xl mb-2 text-slate-300"></i>
+                <p class="text-xs font-semibold text-slate-700">No mission campaign funds created yet.</p>
+                <p class="text-[11px] text-slate-500">Click "New Campaign Fund" above to add your first fund.</p>
+              </div>
+            ` : this.campaigns.map(camp => {
               const linkedLeads = this.leads.filter(l => l.campaignId === camp.id);
               const target = Number(camp.target) || 1;
               const totalRaised = linkedLeads.reduce((sum, l) => {

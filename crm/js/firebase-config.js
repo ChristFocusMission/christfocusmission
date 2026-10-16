@@ -174,9 +174,22 @@ class FirebaseService {
           .onSnapshot(
             (snapshot) => {
               const leads = [];
+              const mockLeadsToDelete = [];
               snapshot.forEach((doc) => {
-                leads.push({ id: doc.id, ...doc.data() });
+                const data = doc.data();
+                if (doc.id.match(/^lead-\d+$/) && (data.organization?.includes('Grace Foundation') || data.city === 'Dallas' || data.name?.includes('Arthur') || data.notes?.includes('Core Leader who mobilized'))) {
+                  mockLeadsToDelete.push(doc.id);
+                } else {
+                  leads.push({ id: doc.id, ...data });
+                }
               });
+              if (mockLeadsToDelete.length > 0 && this.db) {
+                const batch = this.db.batch();
+                mockLeadsToDelete.forEach(id => {
+                  batch.delete(this.db.collection(this.leadsCollection).doc(id));
+                });
+                batch.commit().catch(() => {});
+              }
               try {
                 localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_LEADS, JSON.stringify(leads));
               } catch (e) {}
@@ -229,14 +242,18 @@ class FirebaseService {
                 campaigns.push({ id: doc.id, ...doc.data() });
               });
               if (campaigns.length === 0) {
-                this.seedInitialRemoteCampaigns().then(() => {
-                  this.notifyCampaignSubscribers(this.getLocalCampaigns(), 'live-seeded');
-                });
+                this.notifyCampaignSubscribers([], 'live');
               } else {
+                const cleaned = campaigns.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
+                if (cleaned.length !== campaigns.length && this.db) {
+                  campaigns.filter(c => c.id && c.id.match(/^camp-[1-5]$/)).forEach(mockCamp => {
+                    this.db.collection(this.campaignsCollection).doc(mockCamp.id).delete().catch(() => {});
+                  });
+                }
                 try {
-                  localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(campaigns));
+                  localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(cleaned));
                 } catch (e) {}
-                this.notifyCampaignSubscribers(campaigns, 'live');
+                this.notifyCampaignSubscribers(cleaned, 'live');
               }
             },
             (error) => {
@@ -278,9 +295,19 @@ class FirebaseService {
           .onSnapshot(
             (snapshot) => {
               const users = [];
+              const mockUsersToDelete = [];
               snapshot.forEach((doc) => {
-                users.push({ id: doc.id, ...doc.data() });
+                if (doc.id === 'user-2' || doc.id === 'user-3' || doc.id === 'user-4') {
+                  mockUsersToDelete.push(doc.id);
+                } else {
+                  users.push({ id: doc.id, ...doc.data() });
+                }
               });
+              if (mockUsersToDelete.length > 0 && this.db) {
+                mockUsersToDelete.forEach(id => {
+                  this.db.collection(this.usersCollection).doc(id).delete().catch(() => {});
+                });
+              }
               if (users.length === 0) {
                 this.seedInitialRemoteUsers().then(() => {
                   this.notifyUserSubscribers(this.getLocalUsers(), 'live-seeded');
@@ -327,7 +354,12 @@ class FirebaseService {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed.some(u => u.password)) {
           let updated = false;
-          const normalized = parsed.map(u => {
+          // Filter out mock users Sarah (user-2), Mark (user-3), Rachel (user-4)
+          const filteredMock = parsed.filter(u => u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
+          if (filteredMock.length !== parsed.length) {
+            updated = true;
+          }
+          const normalized = filteredMock.map(u => {
             if (!u.username) {
               const fallbackUname = (Array.isArray(u.aliases) && u.aliases[0]) || (u.email ? u.email.split('@')[0] : 'user');
               updated = true;
@@ -363,23 +395,24 @@ class FirebaseService {
       console.error("Error saving local users:", e);
     }
   }
+
   getLocalLeads() {
     try {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        const hasLineage = Array.isArray(parsed) && parsed.some(l => l.parentLeadId !== undefined);
-        const hasEnrichedCount = Array.isArray(parsed) && parsed.length >= (typeof CFM_INITIAL_LEADS !== 'undefined' ? CFM_INITIAL_LEADS.length : 10);
-        if (hasLineage && hasEnrichedCount) {
-          return parsed;
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter(l => !l.id || !l.id.match(/^lead-\d+$/));
+          if (filtered.length !== parsed.length) {
+            this.saveLocalLeads(filtered, false);
+          }
+          return filtered;
         }
       }
     } catch (e) {
       console.warn("Error reading local leads:", e);
     }
-    const initial = typeof CFM_INITIAL_LEADS !== 'undefined' ? [...CFM_INITIAL_LEADS] : [];
-    this.saveLocalLeads(initial, false);
-    return initial;
+    return [];
   }
 
   saveLocalLeads(leads, notify = true) {
@@ -396,13 +429,20 @@ class FirebaseService {
   getLocalCampaigns() {
     try {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
-      if (stored) return JSON.parse(stored);
+      if (stored !== null) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const filtered = parsed.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
+          if (filtered.length !== parsed.length) {
+            this.saveLocalCampaigns(filtered, false);
+          }
+          return filtered;
+        }
+      }
     } catch (e) {
       console.warn("Error reading local campaigns:", e);
     }
-    const initial = typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' ? [...CFM_INITIAL_CAMPAIGNS] : [];
-    this.saveLocalCampaigns(initial, false);
-    return initial;
+    return [];
   }
 
   saveLocalCampaigns(campaigns, notify = true) {
