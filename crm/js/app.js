@@ -2477,6 +2477,12 @@ class CFMApp {
                     </div>
 
                     <div class="flex items-center justify-between md:justify-end gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200">
+                      <!-- Edit User Details Button -->
+                      <button type="button" onclick="app.openEditUserModal('${u.id}')" title="Edit user details for ${this.escapeHtml(u.name)}" class="px-2.5 py-1.5 text-[11px] font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+                        <i class="fas fa-user-pen text-indigo-600 text-xs"></i>
+                        <span>Edit</span>
+                      </button>
+
                       <!-- Set / Change Password Button -->
                       <button type="button" onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password for ${this.escapeHtml(u.name)}" class="px-2.5 py-1.5 text-[11px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1.5 transition">
                         <i class="fas fa-key text-amber-500 text-xs"></i>
@@ -2806,6 +2812,133 @@ class CFMApp {
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
       }
+    }
+  }
+
+  // ===================== USER DETAILS EDITING (ADMIN ONLY) =====================
+  openEditUserModal(userId) {
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Only administrators can edit user details.");
+      return;
+    }
+    const user = this.users.find(u => u.id === userId);
+    if (!user) return;
+
+    const modal = document.getElementById('modal-edit-user');
+    if (!modal) return;
+
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-name').value = user.name || '';
+    const uname = user.username || (user.aliases && user.aliases[0]) || (user.email ? user.email.split('@')[0] : '');
+    document.getElementById('edit-user-username').value = uname;
+    document.getElementById('edit-user-email').value = user.email || '';
+    document.getElementById('edit-user-role').value = user.role || 'crm';
+    document.getElementById('edit-user-phone').value = user.phone || '';
+    document.getElementById('edit-user-title').value = user.title || '';
+    document.getElementById('edit-user-dept').value = user.department || '';
+
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+  }
+
+  closeEditUserModal() {
+    const modal = document.getElementById('modal-edit-user');
+    if (modal) modal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+  }
+
+  async handleSaveEditUser(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (this.userRole !== 'admin') {
+      alert("Permission Denied: Only administrators can edit user details.");
+      return;
+    }
+
+    const userId = document.getElementById('edit-user-id').value;
+    const name = document.getElementById('edit-user-name').value.trim();
+    const rawUsername = document.getElementById('edit-user-username').value.trim().toLowerCase();
+    const email = document.getElementById('edit-user-email').value.trim().toLowerCase();
+    const username = (rawUsername || email.split('@')[0] || 'user').replace(/[^a-zA-Z0-9._-]/g, '');
+    const role = document.getElementById('edit-user-role').value;
+    const phone = document.getElementById('edit-user-phone').value.trim();
+    const title = document.getElementById('edit-user-title').value.trim();
+    const department = document.getElementById('edit-user-dept').value.trim();
+
+    if (!name || !email) {
+      alert("Name and email are required.");
+      return;
+    }
+
+    const existingUser = this.users.find(u => u.id === userId);
+    if (!existingUser) return;
+
+    // Check if another user has the same username or email
+    const duplicate = this.users.find(u => u.id !== userId && (
+      (u.username && u.username.toLowerCase() === username) || 
+      (u.email && u.email.toLowerCase() === email)
+    ));
+    if (duplicate) {
+      alert(`A user with username "${username}" or email "${email}" already exists (${duplicate.name}). Please use a unique username and email.`);
+      return;
+    }
+
+    const updates = {
+      name,
+      username,
+      email,
+      aliases: [username, email],
+      role,
+      phone,
+      title,
+      department
+    };
+
+    try {
+      await cfmFirebase.updateUser(userId, updates);
+
+      // Update in local users array
+      const oldName = existingUser.name;
+      Object.assign(existingUser, updates);
+
+      // If user name changed, update leads assigned to the old name so assignments stay intact
+      if (oldName && oldName !== name) {
+        this.leads.forEach(l => {
+          if (l.assignedTo === oldName) {
+            l.assignedTo = name;
+            cfmFirebase.updateLead(l.id, { assignedTo: name }).catch(() => {});
+          }
+        });
+      }
+
+      // If updating currently logged in user, refresh auth session and header
+      if (this.currentUser && (this.currentUser.id === userId || this.currentUser.email === existingUser.email || this.currentUser.email === email)) {
+        Object.assign(this.currentUser, updates);
+        const sessionData = JSON.stringify(this.currentUser);
+        if (localStorage.getItem('cfm_auth_session')) {
+          localStorage.setItem('cfm_auth_session', sessionData);
+        } else if (sessionStorage.getItem('cfm_auth_session')) {
+          sessionStorage.setItem('cfm_auth_session', sessionData);
+        }
+        if (role !== this.userRole) {
+          this.applyUserRole(role, false);
+        } else {
+          this.updateHeaderUserProfile();
+        }
+      }
+
+      this.closeEditUserModal();
+      this.populateAssignedUserDropdowns();
+      if (this.activeView === 'admin' || this.activeView === 'users') {
+        this.renderAdminView();
+      }
+      const userModal = document.getElementById('modal-user-management');
+      if (userModal && !userModal.classList.contains('hidden')) {
+        this.renderUsersModalContent();
+      }
+
+      this.showToast(`User "${name}" updated successfully!`, 'success');
+    } catch (err) {
+      alert("Error updating user details: " + err.message);
     }
   }
 
@@ -3497,6 +3630,9 @@ class CFMApp {
           </div>
         </div>
         <div class="flex items-center space-x-2">
+          <button onclick="app.openEditUserModal('${u.id}')" title="Edit User Details" class="px-2 py-1 text-[10px] font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg flex items-center gap-1 transition">
+            <i class="fas fa-user-pen text-[10px] text-indigo-600"></i> Edit
+          </button>
           <button onclick="app.openChangePasswordModal('${u.id}')" title="Set or Change Password" class="px-2.5 py-1 text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg flex items-center gap-1 transition">
             <i class="fas fa-key text-[10px] text-amber-500"></i> Password
           </button>

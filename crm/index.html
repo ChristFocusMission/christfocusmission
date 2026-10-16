@@ -1121,6 +1121,106 @@
     </div>
   </div>
 
+  <!-- 7. MODAL: EDIT USER DETAILS (ADMIN ONLY) -->
+  <div id="modal-edit-user" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden modal-container text-xs">
+      
+      <!-- Modal Header -->
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-cyan-400 flex items-center justify-center font-bold">
+            <i class="fas fa-user-pen"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm">Edit Team Member Details</h3>
+            <p class="text-[11px] text-slate-300">Update profile, role permissions, and contact details</p>
+          </div>
+        </div>
+        <button onclick="app.closeEditUserModal()" class="text-slate-400 hover:text-white p-1 text-base">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form id="edit-user-form" onsubmit="app.handleSaveEditUser(event)" class="p-5 space-y-4">
+        <input type="hidden" id="edit-user-id">
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Full Name *</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i class="far fa-user text-xs"></i>
+            </span>
+            <input type="text" id="edit-user-name" required placeholder="e.g. Rachel Adams" 
+                   class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Username *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i class="fas fa-at text-xs"></i>
+              </span>
+              <input type="text" id="edit-user-username" required placeholder="e.g. rachel" 
+                     class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white font-mono">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Email Address *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i class="far fa-envelope text-xs"></i>
+              </span>
+              <input type="email" id="edit-user-email" required placeholder="rachel@christfocusmission.org" 
+                     class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Workspace Role *</label>
+            <select id="edit-user-role" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white font-medium">
+              <option value="crm">👤 CRM Staff (Protected)</option>
+              <option value="admin">👑 Administrator (Full Access)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
+            <input type="text" id="edit-user-phone" placeholder="+91 98401 23456" 
+                   class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Title / Designation</label>
+            <input type="text" id="edit-user-title" placeholder="e.g. Senior Donor Relations Officer" 
+                   class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department</label>
+            <input type="text" id="edit-user-dept" placeholder="e.g. Partner Engagement" 
+                   class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 bg-white">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+          <button type="button" onclick="app.closeEditUserModal()" class="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-lg shadow-sm flex items-center gap-2 transition">
+            <i class="fas fa-save text-cyan-400"></i> Save Changes
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
