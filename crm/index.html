@@ -292,11 +292,14 @@
         <!-- Stage Filter -->
         <select id="filter-stage" class="w-full sm:w-auto text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
           <option value="all">All Stages</option>
-          <option value="new">New / Identified</option>
+          <option value="new">New Leads</option>
           <option value="contacted">Contacted</option>
-          <option value="in_discussion">Meeting & Proposal</option>
-          <option value="committed">Committed Partner</option>
-          <option value="closed">Deferred / Closed</option>
+          <option value="in_discussion">In Discussion</option>
+          <optgroup label="Closed (Outcome)">
+            <option value="closed">All Closed</option>
+            <option value="committed">Closed: Committed</option>
+            <option value="closed_not_interested">Closed: Not Interested</option>
+          </optgroup>
         </select>
 
         <!-- Priority Filter -->
@@ -404,11 +407,13 @@
         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-100/70 border border-slate-200">
           <span class="font-bold text-slate-700">Pipeline Stage:</span>
           <select id="detail-lead-stage-select" onchange="app.handleStageChangeFromModal(this.value)" class="font-semibold text-xs rounded-lg px-3 py-1.5 bg-white border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
-            <option value="new">New / Identified</option>
+            <option value="new">New Leads</option>
             <option value="contacted">Contacted</option>
-            <option value="in_discussion">Meeting & Proposal</option>
-            <option value="committed">Committed Partner</option>
-            <option value="closed">Deferred / Closed</option>
+            <option value="in_discussion">In Discussion</option>
+            <optgroup label="Closed (Outcome)">
+              <option value="committed">Closed: Committed</option>
+              <option value="closed">Closed: Not Interested</option>
+            </optgroup>
           </select>
         </div>
 
@@ -607,11 +612,13 @@
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Pipeline Stage *</label>
             <select id="modal-lead-stage" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
-              <option value="new">New / Identified</option>
+              <option value="new">New Leads</option>
               <option value="contacted">Contacted</option>
-              <option value="in_discussion">Meeting & Proposal</option>
-              <option value="committed">Committed Partner</option>
-              <option value="closed">Deferred / Closed</option>
+              <option value="in_discussion">In Discussion</option>
+              <optgroup label="Closed (Outcome)">
+                <option value="committed">Closed: Committed</option>
+                <option value="closed">Closed: Not Interested</option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -1213,9 +1220,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.7) -->
-  <script src="js/sample-data.js?v=2.8.7"></script>
-  <script src="js/firebase-config.js?v=2.8.7"></script>
-  <script src="js/app.js?v=2.8.7"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.8) -->
+  <script src="js/sample-data.js?v=2.8.8"></script>
+  <script src="js/firebase-config.js?v=2.8.8"></script>
+  <script src="js/app.js?v=2.8.8"></script>
 </body>
 </html>

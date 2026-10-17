@@ -3,13 +3,22 @@
  * Main Application Logic & User Interface Controller
  */
 
-// Streamlined 5-Stage Donor Progression Pipeline
+// Streamlined 4-Stage Donor Progression Pipeline
+// Stage 4 (Closed) includes two sub-outcomes: Committed Partner & Not Interested
 const CFM_STAGES = [
   { id: 'new', label: 'New Leads', color: 'slate', icon: 'fa-user-plus' },
   { id: 'contacted', label: 'Contacted', color: 'blue', icon: 'fa-paper-plane' },
   { id: 'in_discussion', label: 'In Discussion', color: 'purple', icon: 'fa-comments' },
-  { id: 'committed', label: 'Committed', color: 'emerald', icon: 'fa-heart' },
-  { id: 'closed', label: 'Closed', color: 'gray', icon: 'fa-box-archive' }
+  { 
+    id: 'closed', 
+    label: 'Closed', 
+    color: 'emerald', 
+    icon: 'fa-flag-checkered',
+    subStages: [
+      { id: 'committed', label: 'Committed', color: 'emerald', icon: 'fa-heart' },
+      { id: 'closed', label: 'Not Interested', color: 'slate', icon: 'fa-ban' }
+    ]
+  }
 ];
 
 const CURRENCY_SYMBOLS = {
@@ -53,6 +62,7 @@ class CFMApp {
     this.lineageStageFilter = 'all';
     this.lineageStatusFilter = 'all'; // 'all' | 'reached' | 'progress' | 'pending'
     this.lineageSearchTerm = '';
+    this.closedSubFilter = 'all'; // 'all' | 'committed' | 'not_interested'
     this.expandedLineageNodes = new Set();
   }
 
@@ -301,7 +311,18 @@ class CFMApp {
   getFilteredLeads() {
     return this.leads.filter(lead => {
       // Stage filter (with backward-compatible stage normalization)
-      if (this.stageFilter !== 'all' && this.normalizeStage(lead.stage) !== this.stageFilter) return false;
+      if (this.stageFilter !== 'all') {
+        const norm = this.normalizeStage(lead.stage);
+        if (this.stageFilter === 'closed') {
+          if (norm !== 'closed' && norm !== 'committed') return false;
+        } else if (this.stageFilter === 'closed_not_interested') {
+          if (norm !== 'closed') return false;
+        } else if (this.stageFilter === 'committed') {
+          if (norm !== 'committed') return false;
+        } else if (norm !== this.stageFilter) {
+          return false;
+        }
+      }
 
       // Campaign filter
       if (this.campaignFilter !== 'all' && lead.campaignId !== this.campaignFilter) return false;
@@ -419,7 +440,9 @@ class CFMApp {
         <div class="flex items-center gap-1.5 text-xs font-bold min-w-max">
           <span class="text-slate-400 text-[10px] uppercase font-bold mr-0.5">Jump to:</span>
           ${CFM_STAGES.map(s => {
-            const count = filteredLeads.filter(l => this.normalizeStage(l.stage) === s.id).length;
+            const count = (s.id === 'closed')
+              ? filteredLeads.filter(l => ['committed', 'closed'].includes(this.normalizeStage(l.stage))).length
+              : filteredLeads.filter(l => this.normalizeStage(l.stage) === s.id).length;
             return `
               <button onclick="app.scrollToStageColumn('${s.id}', this)" class="stage-jump-pill px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shadow-xs flex items-center gap-1.5 shrink-0 text-[11px] active:scale-95 transition">
                 <span class="w-2 h-2 rounded-full bg-${s.color}-500"></span>
@@ -436,42 +459,128 @@ class CFMApp {
     `;
 
     CFM_STAGES.forEach(stage => {
-      const stageLeads = filteredLeads.filter(l => this.normalizeStage(l.stage) === stage.id);
-      const stageTotal = stageLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
+      const isClosedStage = (stage.id === 'closed');
+      let stageLeads;
+      let stageTotal;
 
-      html += `
-        <div class="flex flex-col w-[86vw] sm:w-[300px] min-w-[86vw] sm:min-w-[300px] max-w-[86vw] sm:max-w-[300px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
-             data-stage-column="${stage.id}"
-             ondragover="app.handleDragOver(event)"
-             ondragleave="app.handleDragLeave(event)"
-             ondrop="app.handleDrop(event, '${stage.id}')">
-          <!-- Column Header -->
-          <div class="p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-${stage.color}-500"></span>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">${stage.label}</h3>
-            </div>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
-              ${stageLeads.length}
-            </span>
-          </div>
+      if (isClosedStage) {
+        stageLeads = filteredLeads.filter(l => {
+          const norm = this.normalizeStage(l.stage);
+          return norm === 'committed' || norm === 'closed';
+        });
+        const committedLeads = stageLeads.filter(l => this.normalizeStage(l.stage) === 'committed');
+        const notInterestedLeads = stageLeads.filter(l => this.normalizeStage(l.stage) === 'closed');
+        const committedTotal = committedLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
 
-          <!-- Subheader / Column Pipeline Amount -->
-          <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500 flex justify-between">
-            <span>Potential:</span>
-            <span class="font-bold text-slate-800">${this.formatCurrency(stageTotal)}</span>
-          </div>
+        let displayLeads = stageLeads;
+        if (this.closedSubFilter === 'committed') {
+          displayLeads = committedLeads;
+        } else if (this.closedSubFilter === 'not_interested') {
+          displayLeads = notInterestedLeads;
+        }
 
-          <!-- Cards List -->
-          <div class="p-2 space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-340px)]">
-            ${stageLeads.length === 0 ? `
-              <div class="h-28 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400 italic">
-                Drop leads here
+        html += `
+          <div class="flex flex-col w-[88vw] sm:w-[320px] min-w-[88vw] sm:min-w-[320px] max-w-[88vw] sm:max-w-[320px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
+               data-stage-column="closed"
+               ondragover="app.handleDragOver(event)"
+               ondragleave="app.handleDragLeave(event)"
+               ondrop="app.handleDrop(event, 'committed')">
+            <!-- Column Header -->
+            <div class="p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Closed (Outcome)</h3>
               </div>
-            ` : stageLeads.map(lead => this.renderKanbanCard(lead)).join('')}
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                ${stageLeads.length}
+              </span>
+            </div>
+
+            <!-- Subheader / Committed Value -->
+            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500 flex justify-between">
+              <span>Committed Potential:</span>
+              <span class="font-bold text-emerald-700">${this.formatCurrency(committedTotal)}</span>
+            </div>
+
+            <!-- Sub-options Segmented Control (Committed vs Not Interested) -->
+            <div class="p-1.5 bg-white border-b border-slate-200">
+              <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-[11px] font-semibold w-full">
+                <button onclick="app.setClosedSubFilter('all')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200' : 'text-slate-600 hover:text-slate-900'}">
+                  All (${stageLeads.length})
+                </button>
+                <button onclick="app.setClosedSubFilter('committed')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'committed' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-emerald-700'}">
+                  <i class="fas fa-heart text-[10px] mr-1 ${this.closedSubFilter === 'committed' ? 'text-white' : 'text-emerald-500'}"></i>Committed (${committedLeads.length})
+                </button>
+                <button onclick="app.setClosedSubFilter('not_interested')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'not_interested' ? 'bg-slate-700 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'}">
+                  <i class="fas fa-ban text-[10px] mr-1 ${this.closedSubFilter === 'not_interested' ? 'text-white' : 'text-rose-500'}"></i>Not Int. (${notInterestedLeads.length})
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Sub-Option Drop Targets -->
+            <div class="px-2 pt-2 pb-1">
+              <div class="grid grid-cols-2 gap-1.5 text-center text-xs">
+                <div ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" ondrop="event.stopPropagation(); app.handleDrop(event, 'committed')" 
+                     class="py-1.5 px-1 bg-emerald-50 hover:bg-emerald-100 border border-dashed border-emerald-300 rounded-lg text-emerald-800 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
+                  <i class="fas fa-heart text-emerald-600 text-[10px]"></i>
+                  <span>Drop: Committed</span>
+                </div>
+                <div ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" ondrop="event.stopPropagation(); app.handleDrop(event, 'closed')" 
+                     class="py-1.5 px-1 bg-slate-50 hover:bg-rose-50 border border-dashed border-slate-300 hover:border-rose-300 rounded-lg text-slate-700 hover:text-rose-800 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
+                  <i class="fas fa-ban text-rose-500 text-[10px]"></i>
+                  <span>Drop: Not Int.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cards List -->
+            <div class="p-2 space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-340px)]">
+              ${displayLeads.length === 0 ? `
+                <div class="h-28 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400 italic text-center px-4">
+                  ${this.closedSubFilter === 'committed' ? 'No committed partners yet.<br>Drag leads to Drop: Committed above!' : this.closedSubFilter === 'not_interested' ? 'No leads marked as Not Interested.' : 'Drop closed leads here'}
+                </div>
+              ` : displayLeads.map(lead => this.renderKanbanCard(lead, true)).join('')}
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        stageLeads = filteredLeads.filter(l => this.normalizeStage(l.stage) === stage.id);
+        stageTotal = stageLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
+
+        html += `
+          <div class="flex flex-col w-[86vw] sm:w-[300px] min-w-[86vw] sm:min-w-[300px] max-w-[86vw] sm:max-w-[300px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
+               data-stage-column="${stage.id}"
+               ondragover="app.handleDragOver(event)"
+               ondragleave="app.handleDragLeave(event)"
+               ondrop="app.handleDrop(event, '${stage.id}')">
+            <!-- Column Header -->
+            <div class="p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-${stage.color}-500"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">${stage.label}</h3>
+              </div>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                ${stageLeads.length}
+              </span>
+            </div>
+
+            <!-- Subheader / Column Pipeline Amount -->
+            <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500 flex justify-between">
+              <span>Potential:</span>
+              <span class="font-bold text-slate-800">${this.formatCurrency(stageTotal)}</span>
+            </div>
+
+            <!-- Cards List -->
+            <div class="p-2 space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-340px)]">
+              ${stageLeads.length === 0 ? `
+                <div class="h-28 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-400 italic">
+                  Drop leads here
+                </div>
+              ` : stageLeads.map(lead => this.renderKanbanCard(lead, false)).join('')}
+            </div>
+          </div>
+        `;
+      }
     });
 
     html += `
@@ -481,7 +590,7 @@ class CFMApp {
     container.innerHTML = html;
   }
 
-  renderKanbanCard(lead) {
+  renderKanbanCard(lead, isClosedColumn = false) {
     const campaign = this.campaigns.find(c => c.id === lead.campaignId);
     const campaignName = campaign ? campaign.name : 'General Fund';
     const isOverdue = lead.nextFollowUp && lead.nextFollowUp < new Date().toISOString().split('T')[0] && this.normalizeStage(lead.stage) !== 'committed' && this.normalizeStage(lead.stage) !== 'closed';
@@ -506,6 +615,30 @@ class CFMApp {
             </span>
           ` : ''}
         </div>
+
+        <!-- Outcome Sub-Option Banner (Committed vs Not Interested) -->
+        ${isClosedColumn ? (() => {
+          const norm = this.normalizeStage(lead.stage);
+          if (norm === 'committed') {
+            return `
+              <div class="mb-2 p-1.5 rounded-md bg-emerald-50 border border-emerald-200 flex items-center justify-between text-[11px] font-bold text-emerald-800 shadow-2xs">
+                <span class="flex items-center gap-1"><i class="fas fa-heart text-emerald-600"></i> Committed Partner</span>
+                <button onclick="event.stopPropagation(); app.quickUpdateStage('${lead.id}', 'closed')" class="text-[10px] text-slate-500 hover:text-rose-600 font-semibold underline px-1 py-0.5 rounded hover:bg-white transition" title="Switch to Not Interested">
+                  Mark Not Int.
+                </button>
+              </div>
+            `;
+          } else {
+            return `
+              <div class="mb-2 p-1.5 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-700 shadow-2xs">
+                <span class="flex items-center gap-1"><i class="fas fa-ban text-rose-500"></i> Not Interested</span>
+                <button onclick="event.stopPropagation(); app.quickUpdateStage('${lead.id}', 'committed')" class="text-[10px] text-slate-500 hover:text-emerald-700 font-semibold underline px-1 py-0.5 rounded hover:bg-white transition" title="Switch to Committed Partner">
+                  Mark Committed
+                </button>
+              </div>
+            `;
+          }
+        })() : ''}
 
         <!-- Name & Organization -->
         <h4 class="font-bold text-slate-900 text-sm leading-snug hover:text-amber-700 transition">
@@ -596,13 +729,22 @@ class CFMApp {
         <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-1 text-[11px] sm:hidden" onclick="event.stopPropagation()">
           <span class="text-[10px] text-slate-400 font-semibold">Move Stage:</span>
           <select onchange="app.handleStageChangeDirect('${lead.id}', this.value)" class="text-[11px] font-bold py-1 px-2 rounded-md bg-slate-50 border border-slate-200 text-slate-700 focus:outline-none focus:ring-1 focus:ring-amber-500">
-            ${CFM_STAGES.map(s => `
-              <option value="${s.id}" ${this.normalizeStage(lead.stage) === s.id ? 'selected' : ''}>${s.label}</option>
-            `).join('')}
+            <option value="new" ${this.normalizeStage(lead.stage) === 'new' ? 'selected' : ''}>New Leads</option>
+            <option value="contacted" ${this.normalizeStage(lead.stage) === 'contacted' ? 'selected' : ''}>Contacted</option>
+            <option value="in_discussion" ${this.normalizeStage(lead.stage) === 'in_discussion' ? 'selected' : ''}>In Discussion</option>
+            <optgroup label="Closed (Outcome)">
+              <option value="committed" ${this.normalizeStage(lead.stage) === 'committed' ? 'selected' : ''}>Closed: Committed</option>
+              <option value="closed" ${this.normalizeStage(lead.stage) === 'closed' ? 'selected' : ''}>Closed: Not Interested</option>
+            </optgroup>
           </select>
         </div>
       </div>
     `;
+  }
+
+  setClosedSubFilter(subFilter) {
+    this.closedSubFilter = subFilter;
+    this.render();
   }
 
   scrollToStageColumn(stageId, btnElement) {
@@ -632,6 +774,8 @@ class CFMApp {
     if (targetStage === 'committed') {
       this.celebrateSuccess();
       this.showToast(`Praise God! ${lead.name} marked as Committed Partner!`, 'success');
+    } else if (targetStage === 'closed') {
+      this.showToast(`${lead.name} marked as Closed (Not Interested)`, 'info');
     } else {
       this.showToast(`Updated stage for ${lead.name}`, 'info');
     }
@@ -680,6 +824,8 @@ class CFMApp {
     if (targetStage === 'committed') {
       this.celebrateSuccess();
       this.showToast(`Praise God! ${lead.name} marked as Committed Partner!`, 'success');
+    } else if (targetStage === 'closed') {
+      this.showToast(`${lead.name} marked as Closed (Not Interested)`, 'info');
     } else {
       this.showToast(`Updated stage for ${lead.name}`, 'info');
     }
@@ -877,9 +1023,13 @@ class CFMApp {
                     <td class="py-3 px-4" onclick="event.stopPropagation()">
                       <select onchange="app.quickUpdateStage('${lead.id}', this.value)" 
                               class="text-xs font-semibold rounded-lg px-2 py-1 border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500">
-                        ${CFM_STAGES.map(s => `
-                          <option value="${s.id}" ${this.normalizeStage(lead.stage) === s.id ? 'selected' : ''}>${s.label}</option>
-                        `).join('')}
+                        <option value="new" ${this.normalizeStage(lead.stage) === 'new' ? 'selected' : ''}>New Leads</option>
+                        <option value="contacted" ${this.normalizeStage(lead.stage) === 'contacted' ? 'selected' : ''}>Contacted</option>
+                        <option value="in_discussion" ${this.normalizeStage(lead.stage) === 'in_discussion' ? 'selected' : ''}>In Discussion</option>
+                        <optgroup label="Closed (Outcome)">
+                          <option value="committed" ${this.normalizeStage(lead.stage) === 'committed' ? 'selected' : ''}>Closed: Committed</option>
+                          <option value="closed" ${this.normalizeStage(lead.stage) === 'closed' ? 'selected' : ''}>Closed: Not Interested</option>
+                        </optgroup>
                       </select>
                     </td>
 
@@ -2456,9 +2606,20 @@ class CFMApp {
       stageAmounts[s.id] = 0;
     });
 
+    let closedCommittedCount = 0;
+    let closedNotInterestedCount = 0;
+
     this.leads.forEach(l => {
       const norm = this.normalizeStage(l.stage);
-      if (stageCounts[norm] !== undefined) {
+      if (norm === 'committed') {
+        stageCounts['closed'] = (stageCounts['closed'] || 0) + 1;
+        stageAmounts['closed'] = (stageAmounts['closed'] || 0) + (Number(l.expectedAmount) || 0);
+        closedCommittedCount++;
+      } else if (norm === 'closed') {
+        stageCounts['closed'] = (stageCounts['closed'] || 0) + 1;
+        stageAmounts['closed'] = (stageAmounts['closed'] || 0) + (Number(l.expectedAmount) || 0);
+        closedNotInterestedCount++;
+      } else if (stageCounts[norm] !== undefined) {
         stageCounts[norm]++;
         stageAmounts[norm] += (Number(l.expectedAmount) || 0);
       }
@@ -2492,10 +2653,11 @@ class CFMApp {
                 const totalAll = this.leads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0) || 1;
                 const amt = stageAmounts[s.id] || 0;
                 const pct = Math.round((amt / totalAll) * 100);
+                const subLabel = (s.id === 'closed') ? ` • <span class="text-emerald-700 font-bold">${closedCommittedCount} committed</span>, <span class="text-slate-500">${closedNotInterestedCount} not int.</span>` : '';
                 return `
                   <div>
                     <div class="flex justify-between text-xs font-semibold mb-1">
-                      <span class="text-slate-700">${s.label} (${stageCounts[s.id]} leads)</span>
+                      <span class="text-slate-700">${s.label} (${stageCounts[s.id]} leads)${subLabel}</span>
                       <span class="text-slate-900 font-bold">${this.formatCurrency(amt)} (${pct}%)</span>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-2">
@@ -3620,6 +3782,8 @@ class CFMApp {
     if (newStage === 'committed') {
       this.celebrateSuccess();
       this.showToast(`Praise God! Lead marked as Committed Partner!`, 'success');
+    } else if (newStage === 'closed') {
+      this.showToast(`Lead marked as Closed (Not Interested)`, 'info');
     } else {
       this.showToast(`Stage updated to ${this.getStageLabel(newStage)}`, 'info');
     }
@@ -4918,12 +5082,16 @@ class CFMApp {
 
   getStageLabel(stageId) {
     const norm = this.normalizeStage(stageId);
+    if (norm === 'committed') return 'Closed: Committed';
+    if (norm === 'closed') return 'Closed: Not Interested';
     const s = CFM_STAGES.find(item => item.id === norm);
     return s ? s.label : (stageId || 'New');
   }
 
   getStageBadgeClass(stageId) {
     const norm = this.normalizeStage(stageId);
+    if (norm === 'committed') return 'badge-stage-committed';
+    if (norm === 'closed') return 'badge-stage-closed';
     return `badge-stage-${norm}`;
   }
 
