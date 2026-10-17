@@ -243,18 +243,14 @@ class FirebaseService {
                 campaigns.push({ id: doc.id, ...doc.data() });
               });
               if (campaigns.length === 0) {
-                this.notifyCampaignSubscribers([], 'live');
+                this.seedInitialRemoteCampaigns().then(() => {
+                  this.notifyCampaignSubscribers(this.getLocalCampaigns(), 'live-seeded');
+                });
               } else {
-                const cleaned = campaigns.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
-                if (cleaned.length !== campaigns.length && this.db) {
-                  campaigns.filter(c => c.id && c.id.match(/^camp-[1-5]$/)).forEach(mockCamp => {
-                    this.db.collection(this.campaignsCollection).doc(mockCamp.id).delete().catch(() => {});
-                  });
-                }
                 try {
-                  localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(cleaned));
+                  localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(campaigns));
                 } catch (e) {}
-                this.notifyCampaignSubscribers(cleaned, 'live');
+                this.notifyCampaignSubscribers(campaigns, 'live');
               }
             },
             (error) => {
@@ -314,6 +310,21 @@ class FirebaseService {
                   this.notifyUserSubscribers(this.getLocalUsers(), 'live-seeded');
                 });
               } else {
+                // Ensure initial system users (Pastor David, Nelson Richard) are present and synced across devices
+                const initial = typeof CFM_INITIAL_USERS !== 'undefined' ? CFM_INITIAL_USERS : [];
+                initial.forEach(initUser => {
+                  const exists = users.some(u => 
+                    (u.id && u.id === initUser.id) || 
+                    (u.email && u.email.toLowerCase() === initUser.email.toLowerCase()) ||
+                    (u.username && u.username.toLowerCase() === initUser.username.toLowerCase())
+                  );
+                  if (!exists) {
+                    users.push(initUser);
+                    if (this.db) {
+                      this.db.collection(this.usersCollection).doc(initUser.id).set(initUser, { merge: true }).catch(() => {});
+                    }
+                  }
+                });
                 try {
                   localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(users));
                 } catch (e) {}
@@ -469,18 +480,20 @@ class FirebaseService {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
       if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          const filtered = parsed.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
-          if (filtered.length !== parsed.length) {
-            this.saveLocalCampaigns(filtered, false);
-          }
-          return filtered;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
         }
       }
     } catch (e) {
       console.warn("Error reading local campaigns:", e);
     }
-    return [];
+    const initial = typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' && CFM_INITIAL_CAMPAIGNS.length > 0
+      ? [...CFM_INITIAL_CAMPAIGNS] 
+      : [];
+    if (initial.length > 0) {
+      this.saveLocalCampaigns(initial, false);
+    }
+    return initial;
   }
 
   saveLocalCampaigns(campaigns, notify = true) {
@@ -668,9 +681,21 @@ class FirebaseService {
     }
   }
 
-  // Seed remote Firestore with default campaigns if empty (Disabled in clean mode)
+  // Seed remote Firestore with default campaigns if empty
   async seedInitialRemoteCampaigns() {
-    return;
+    if (!this.isLive || !this.db) return;
+    try {
+      const batch = this.db.batch();
+      const initial = typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' ? CFM_INITIAL_CAMPAIGNS : [];
+      for (const camp of initial) {
+        const ref = this.db.collection(this.campaignsCollection).doc(camp.id);
+        batch.set(ref, camp, { merge: true });
+      }
+      await batch.commit();
+      console.log("Seeded initial campaigns to Cloud Firestore.");
+    } catch (e) {
+      console.warn("Could not seed campaigns to Firestore:", e);
+    }
   }
 
   // ===================== CRUD FOR USERS =====================
@@ -775,7 +800,7 @@ class FirebaseService {
     }
 
     const localLeads = this.getLocalLeads().filter(l => !this.isSampleLead(l));
-    const localCampaigns = this.getLocalCampaigns().filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
+    const localCampaigns = this.getLocalCampaigns();
     const localUsers = this.getLocalUsers().filter(u => u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
 
     let uploadedLeads = 0;

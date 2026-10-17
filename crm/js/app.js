@@ -22,8 +22,8 @@ const CURRENCY_SYMBOLS = {
 class CFMApp {
   constructor() {
     this.leads = [];
-    this.campaigns = [];
-    this.users = [];
+    this.campaigns = (typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' && Array.isArray(CFM_INITIAL_CAMPAIGNS)) ? [...CFM_INITIAL_CAMPAIGNS] : [];
+    this.users = (typeof CFM_INITIAL_USERS !== 'undefined' && Array.isArray(CFM_INITIAL_USERS)) ? [...CFM_INITIAL_USERS] : [];
     this.activeView = 'kanban'; // 'kanban' | 'table' | 'campaigns' | 'followups' | 'analytics'
     this.searchTerm = '';
     this.stageFilter = 'all';
@@ -57,7 +57,7 @@ class CFMApp {
   }
 
   async init() {
-    // Purge legacy mock sample leads and sample campaigns from localStorage while strictly preserving real user leads
+    // Purge legacy mock sample leads from localStorage while strictly preserving real user leads and official campaigns
     try {
       const rawLeads = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
       if (rawLeads) {
@@ -70,13 +70,10 @@ class CFMApp {
         }
       }
       const rawCamps = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS);
-      if (rawCamps) {
-        const parsed = JSON.parse(rawCamps);
-        if (Array.isArray(parsed)) {
-          const cleanCamps = parsed.filter(c => !c.id || !c.id.match(/^camp-[1-5]$/));
-          if (cleanCamps.length !== parsed.length) {
-            localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(cleanCamps));
-          }
+      if (!rawCamps || rawCamps === '[]' || rawCamps === 'null') {
+        const initialCamps = (typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' && Array.isArray(CFM_INITIAL_CAMPAIGNS)) ? CFM_INITIAL_CAMPAIGNS : [];
+        if (initialCamps.length > 0) {
+          localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_CAMPAIGNS, JSON.stringify(initialCamps));
         }
       }
       const rawUsers = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_USERS);
@@ -84,9 +81,12 @@ class CFMApp {
         const u = JSON.parse(rawUsers);
         if (Array.isArray(u)) {
           const cleanUsers = u.filter(x => x.id !== 'user-2' && x.id !== 'user-3' && x.id !== 'user-4');
-          if (cleanUsers.length !== u.length) {
-            localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(cleanUsers));
+          const hasNelson = cleanUsers.some(x => (x.id === 'user-nelson') || (x.email && x.email.includes('nelsonrichard')));
+          if (!hasNelson && typeof CFM_INITIAL_USERS !== 'undefined') {
+            const nelson = CFM_INITIAL_USERS.find(x => x.id === 'user-nelson');
+            if (nelson) cleanUsers.push(nelson);
           }
+          localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(cleanUsers));
         }
       }
     } catch(e) {
@@ -96,6 +96,8 @@ class CFMApp {
     this.checkAuthStatus();
     this.bindGlobalEvents();
     this.renderHeaderStatus();
+    this.populateCampaignFilters();
+    this.populateAssignedUserDropdowns();
 
     // Initialize Firebase service
     const initRes = await cfmFirebase.init();
@@ -258,26 +260,40 @@ class CFMApp {
     const filterSelect = document.getElementById('filter-campaign');
     const modalSelect = document.getElementById('modal-lead-campaign');
 
-    const generateOptions = () => {
-      let html = '<option value="all">All Campaigns</option>';
-      this.campaigns.forEach(c => {
-        html += `<option value="${c.id}">${c.name} (${c.code})</option>`;
-      });
-      return html;
-    };
+    let campaignList = (Array.isArray(this.campaigns) && this.campaigns.length > 0)
+      ? this.campaigns
+      : (typeof cfmFirebase !== 'undefined' ? cfmFirebase.getLocalCampaigns() : (typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' ? CFM_INITIAL_CAMPAIGNS : []));
+
+    if (!campaignList || campaignList.length === 0) {
+      campaignList = (typeof CFM_INITIAL_CAMPAIGNS !== 'undefined' && CFM_INITIAL_CAMPAIGNS.length > 0)
+        ? CFM_INITIAL_CAMPAIGNS
+        : [
+            { id: "camp-1", name: "General Mission & Operations Fund", code: "GEN-2026" },
+            { id: "camp-2", name: "Rural Church Planting Initiative", code: "PLANT-2026" },
+            { id: "camp-3", name: "Youth & Discipleship Camp 2026", code: "YOUTH-2026" },
+            { id: "camp-4", name: "Community Medical & Relief Outreach", code: "MED-2026" },
+            { id: "camp-5", name: "Mission Training Center Expansion", code: "BLDG-2026" }
+          ];
+    }
 
     if (filterSelect) {
       const cur = filterSelect.value;
-      filterSelect.innerHTML = generateOptions();
+      let html = '<option value="all">All Campaigns</option>';
+      campaignList.forEach(c => {
+        html += `<option value="${c.id}">${this.escapeHtml(c.name)} (${this.escapeHtml(c.code || 'FUND')})</option>`;
+      });
+      filterSelect.innerHTML = html;
       if (cur) filterSelect.value = cur;
     }
 
     if (modalSelect) {
+      const cur = modalSelect.value;
       let modalHtml = '<option value="">-- Select Campaign / Ministry Fund --</option>';
-      this.campaigns.forEach(c => {
-        modalHtml += `<option value="${c.id}">${c.name} (${c.code})</option>`;
+      campaignList.forEach(c => {
+        modalHtml += `<option value="${c.id}">${this.escapeHtml(c.name)} (${this.escapeHtml(c.code || 'FUND')})</option>`;
       });
       modalSelect.innerHTML = modalHtml;
+      if (cur) modalSelect.value = cur;
     }
   }
 
@@ -3637,12 +3653,14 @@ class CFMApp {
 
   // ===================== ADD / EDIT LEAD MODAL =====================
   openLeadModal(leadId = null, defaultParentId = null) {
-    this.populateCampaignFilters();
     const modal = document.getElementById('modal-lead-form');
     if (!modal) return;
 
     const form = document.getElementById('lead-edit-form');
-    form.reset();
+    if (form) form.reset();
+
+    // Refresh dynamic options
+    this.populateCampaignFilters();
 
     if (leadId) {
       const lead = this.leads.find(l => l.id === leadId);
@@ -3663,7 +3681,8 @@ class CFMApp {
       document.getElementById('modal-lead-amount').value = lead.expectedAmount || '';
       document.getElementById('modal-lead-received').value = lead.receivedAmount || 0;
       document.getElementById('modal-lead-freq').value = lead.frequency || 'Annual';
-      document.getElementById('modal-lead-campaign').value = lead.campaignId || '';
+      const campSelect = document.getElementById('modal-lead-campaign');
+      if (campSelect) campSelect.value = lead.campaignId || '';
       document.getElementById('modal-lead-priority').value = lead.priority || 'Normal';
       document.getElementById('modal-lead-prob').value = lead.probability || 50;
       document.getElementById('modal-lead-followup').value = lead.nextFollowUp || '';
@@ -3674,7 +3693,8 @@ class CFMApp {
       const parentSelect = document.getElementById('modal-lead-parent');
       if (parentSelect) parentSelect.value = lead.parentLeadId || '';
     } else {
-      this.populateAssignedUserDropdowns('Pastor David');
+      const defaultUser = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Pastor David';
+      this.populateAssignedUserDropdowns(defaultUser);
       this.populateParentLeaderDropdown(null, defaultParentId);
       document.getElementById('modal-lead-title').textContent = 'Add New Fundraising Lead';
       document.getElementById('modal-lead-id').value = '';
@@ -3974,29 +3994,35 @@ class CFMApp {
     }
   }
 
-  // ===================== USER & STAFF MANAGEMENT (ADMIN ONLY) =====================
+  // ===================== USER & STAFF MANAGEMENT =====================
   populateAssignedUserDropdowns(selectedUser = null) {
     const assignedSelect = document.getElementById('modal-lead-assigned');
-    if (assignedSelect) {
-      let optionsHtml = '';
-      if (!this.users || this.users.length === 0) {
-        optionsHtml = `
-          <option value="Pastor David">Pastor David (Director)</option>
-          <option value="Sarah Jenkins">Sarah Jenkins (CRM Staff)</option>
-          <option value="Mark Thompson">Mark Thompson (CRM Staff)</option>
-          <option value="Grace Mathew">Grace Mathew (CRM Staff)</option>
-        `;
-      } else {
-        optionsHtml = this.users.map(u => `
-          <option value="${this.escapeHtml(u.name)}">
-            ${this.escapeHtml(u.name)} (${u.role === 'admin' ? 'Admin' : 'CRM Staff'}${u.title ? ' - ' + this.escapeHtml(u.title) : ''})
-          </option>
-        `).join('');
-      }
-      assignedSelect.innerHTML = optionsHtml;
-      if (selectedUser) {
-        assignedSelect.value = selectedUser;
-      }
+    if (!assignedSelect) return;
+
+    let usersList = (Array.isArray(this.users) && this.users.length > 0)
+      ? this.users
+      : (typeof cfmFirebase !== 'undefined' ? cfmFirebase.getLocalUsers() : (typeof CFM_INITIAL_USERS !== 'undefined' ? CFM_INITIAL_USERS : []));
+
+    // Filter out legacy mock users (Sarah, Mark, Grace)
+    usersList = usersList.filter(u => u && u.name && u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
+
+    if (usersList.length === 0) {
+      usersList = [
+        { id: "user-1", name: "Pastor David", role: "admin", title: "Ministry Director & Founder" },
+        { id: "user-nelson", name: "Nelson Richard", role: "admin", title: "Partner Relations & Stewardship Officer" }
+      ];
+    }
+
+    let optionsHtml = '';
+    usersList.forEach(u => {
+      const roleBadge = u.role === 'admin' ? 'Admin' : 'CRM Staff';
+      const titleSuffix = u.title ? ` - ${this.escapeHtml(u.title)}` : '';
+      optionsHtml += `<option value="${this.escapeHtml(u.name)}">${this.escapeHtml(u.name)} (${roleBadge}${titleSuffix})</option>`;
+    });
+
+    assignedSelect.innerHTML = optionsHtml;
+    if (selectedUser) {
+      assignedSelect.value = selectedUser;
     }
   }
 

@@ -55,8 +55,54 @@ const CFM_NETWORK_STAGES = [
   }
 ];
 
-// Clean state: Live campaigns created dynamically by Administrator
-const CFM_INITIAL_CAMPAIGNS = [];
+// Official Christ Focus Mission Ministry Funds & Strategic Initiatives
+const CFM_INITIAL_CAMPAIGNS = [
+  {
+    id: "camp-1",
+    name: "General Mission & Operations Fund",
+    code: "GEN-2026",
+    target: 500000,
+    raised: 0,
+    description: "Supports day-to-day missionary operations, travel, local outreach, and staff logistics.",
+    color: "emerald"
+  },
+  {
+    id: "camp-2",
+    name: "Rural Church Planting Initiative",
+    code: "PLANT-2026",
+    target: 750000,
+    raised: 0,
+    description: "Equipping local pastors and funding new church plants in unreached rural districts.",
+    color: "blue"
+  },
+  {
+    id: "camp-3",
+    name: "Youth & Discipleship Camp 2026",
+    code: "YOUTH-2026",
+    target: 250000,
+    raised: 0,
+    description: "Subsidizing registrations and study materials for youth leaders in discipleship training.",
+    color: "purple"
+  },
+  {
+    id: "camp-4",
+    name: "Community Medical & Relief Outreach",
+    code: "MED-2026",
+    target: 400000,
+    raised: 0,
+    description: "Free medical clinics, hygiene kits, and emergency food supplies distributed in underprivileged zones.",
+    color: "amber"
+  },
+  {
+    id: "camp-5",
+    name: "Mission Training Center Expansion",
+    code: "BLDG-2026",
+    target: 1200000,
+    raised: 0,
+    description: "Building new classrooms, dorm rooms, and library for ministry trainees.",
+    color: "rose"
+  }
+];
 
 // Clean state: Live donor leads added dynamically by team
 const CFM_INITIAL_LEADS = [];
