@@ -2412,7 +2412,7 @@ class CFMApp {
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Pipeline Analytics & Reports</h2>
-            <p class="text-xs text-slate-500">Real-time health, probability weighting, and lead distribution</p>
+            <p class="text-xs text-slate-500">Real-time pipeline health, stage distribution, and donor insights</p>
           </div>
           <button onclick="app.exportLeadsCSV()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
             <i class="fas fa-download text-emerald-600"></i> Download Full Spreadsheet
@@ -2455,16 +2455,16 @@ class CFMApp {
               `).join('')}
             </div>
 
-            <!-- Probability Weighted Forecast -->
+            <!-- Stage-Weighted Pipeline Forecast -->
             <div class="p-4 rounded-xl bg-amber-50 border border-amber-200/80">
               <div class="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider mb-1">
-                <i class="fas fa-calculator"></i> Weighted Probability Forecast
+                <i class="fas fa-calculator"></i> Stage-Weighted Pipeline Forecast
               </div>
               <div class="text-2xl font-black text-amber-950 mt-1">
                 ${this.formatCurrency(this.calculateWeightedPipeline())}
               </div>
               <p class="text-xs text-amber-800 mt-1">
-                Calculated based on individual lead stage probability percentages (e.g. 80% for proposals, 60% for meetings).
+                Projected realization based on donor progression pipeline stages (100% committed, 60% in discussion, 30% contacted, 10% new leads).
               </p>
             </div>
           </div>
@@ -2476,10 +2476,18 @@ class CFMApp {
   }
 
   calculateWeightedPipeline() {
+    const stageWeights = {
+      'committed': 1.0,
+      'in_discussion': 0.6,
+      'contacted': 0.3,
+      'new': 0.1,
+      'closed': 0.0
+    };
     return this.leads.reduce((sum, lead) => {
-      const prob = Number(lead.probability) || 20;
+      const stage = this.normalizeStage(lead.stage);
+      const weight = stageWeights[stage] !== undefined ? stageWeights[stage] : 0.2;
       const amt = Number(lead.expectedAmount) || 0;
-      return sum + (amt * (prob / 100));
+      return sum + (amt * weight);
     }, 0);
   }
 
@@ -3680,11 +3688,10 @@ class CFMApp {
       document.getElementById('modal-lead-stage').value = this.normalizeStage(lead.stage) || 'new';
       document.getElementById('modal-lead-amount').value = lead.expectedAmount || '';
       document.getElementById('modal-lead-received').value = lead.receivedAmount || 0;
-      document.getElementById('modal-lead-freq').value = lead.frequency || 'Annual';
+      document.getElementById('modal-lead-freq').value = (lead.frequency === 'One-off') ? 'One-off' : 'Monthly';
       const campSelect = document.getElementById('modal-lead-campaign');
       if (campSelect) campSelect.value = lead.campaignId || '';
       document.getElementById('modal-lead-priority').value = lead.priority || 'Normal';
-      document.getElementById('modal-lead-prob').value = lead.probability || 50;
       document.getElementById('modal-lead-followup').value = lead.nextFollowUp || '';
       document.getElementById('modal-lead-prayer').value = lead.prayerRequests || '';
       document.getElementById('modal-lead-notes').value = lead.notes || '';
@@ -3700,7 +3707,7 @@ class CFMApp {
       document.getElementById('modal-lead-id').value = '';
       document.getElementById('modal-lead-stage').value = 'new';
       document.getElementById('modal-lead-priority').value = 'Normal';
-      document.getElementById('modal-lead-prob').value = 40;
+      document.getElementById('modal-lead-freq').value = 'Monthly';
 
       const parentSelect = document.getElementById('modal-lead-parent');
       if (parentSelect && defaultParentId) {
@@ -3762,7 +3769,7 @@ class CFMApp {
       campaignId: document.getElementById('modal-lead-campaign').value,
       priority: document.getElementById('modal-lead-priority').value,
       assignedTo: document.getElementById('modal-lead-assigned').value,
-      probability: Number(document.getElementById('modal-lead-prob').value) || 50,
+      probability: 100,
       nextFollowUp: document.getElementById('modal-lead-followup').value,
       networkTier: document.getElementById('modal-lead-network-tier')?.value || '',
       parentLeadId: document.getElementById('modal-lead-parent')?.value || null,
