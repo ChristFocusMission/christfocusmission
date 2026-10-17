@@ -55,6 +55,7 @@
     <div class="note">🔒 Secure payment by Razorpay · opens in a new tab</div>
   </div>
 <script>
+  if (/\/(widget\.html|index\.html)$/.test(location.pathname)) history.replaceState(null, "", "/kingdavid/widget/" + location.search + location.hash);
   const API_BASE = "https://kdv-supporters.christfocusmission.workers.dev";
   const GOAL = 100000, POLL_MS = 8000;
   const $ = (id) => document.getElementById(id);

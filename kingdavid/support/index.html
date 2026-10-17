@@ -303,6 +303,7 @@
 <canvas id="confetti"></canvas>
 
 <script>
+if (/\/(support\.html|index\.html)$/.test(location.pathname)) history.replaceState(null, "", "/kingdavid/support/" + location.search + location.hash);
 /* ======================== SETTINGS ======================== */
 // Both are filled in by go-live.sh (see SETUP.md).
 // While API_BASE is empty the page runs in preview mode with a simulated counter.
