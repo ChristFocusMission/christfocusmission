@@ -863,9 +863,14 @@ class CFMApp {
             <h3 class="font-bold text-slate-800">All Fundraising Leads</h3>
             <p class="text-xs text-slate-500">Showing ${filteredLeads.length} of ${this.leads.length} records</p>
           </div>
-          <button onclick="app.exportLeadsCSV()" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center gap-1.5 transition">
-            <i class="fas fa-file-csv text-emerald-600"></i> Export to CSV
-          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="app.openImportModal()" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1.5 rounded-lg shadow-sm font-bold flex items-center gap-1.5 transition cursor-pointer">
+              <i class="fas fa-file-import"></i> Import Leads
+            </button>
+            <button onclick="app.exportLeadsCSV()" class="text-xs bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm font-semibold flex items-center gap-1.5 transition cursor-pointer">
+              <i class="fas fa-file-csv text-emerald-600"></i> Export to CSV
+            </button>
+          </div>
         </div>
 
         <!-- Mobile Card Stack (Visible on mobile screens < 768px) -->
@@ -4924,6 +4929,546 @@ class CFMApp {
     }
   }
 
+  // ===================== CSV TEMPLATE & BULK IMPORT =====================
+
+  downloadCSVTemplate() {
+    const headers = [
+      "Name",
+      "Organization",
+      "Lead Type",
+      "Stage",
+      "Expected Amount",
+      "Received Amount",
+      "Currency",
+      "Giving Frequency",
+      "Campaign Code",
+      "Priority",
+      "Assigned To",
+      "Email",
+      "Phone",
+      "City",
+      "Country",
+      "Preferred Contact",
+      "Next Follow Up",
+      "Prayer Requests",
+      "Notes"
+    ];
+
+    const sampleRows = [
+      [
+        '"Dr. Arthur Vance"',
+        '"Grace Family Healthcare"',
+        '"Individual"',
+        '"new"',
+        '50000',
+        '0',
+        '"INR"',
+        '"Monthly"',
+        '"GEN-2026"',
+        '"High"',
+        '"Pastor David"',
+        '"arthur.vance@example.com"',
+        '"+91 98401 23456"',
+        '"Chennai"',
+        '"India"',
+        '"Phone"',
+        '"2026-11-15"',
+        '"Prayer for expanding rural clinic outreach"',
+        '"Met during annual conference; keen to sponsor medical missions."'
+      ],
+      [
+        '"Bethel Fellowship Church"',
+        '"Bethel Community Outreach"',
+        '"Church"',
+        '"in_discussion"',
+        '100000',
+        '0',
+        '"INR"',
+        '"One-off"',
+        '"PLANT-2026"',
+        '"High"',
+        '"Nelson Richard"',
+        '"office@bethelfellowship.org"',
+        '"+91 98765 43210"',
+        '"Bengaluru"',
+        '"India"',
+        '"Email"',
+        '"2026-11-05"',
+        '"Prayer for youth leaders and regional church plants"',
+        '"Pastor requested presentation on rural church planting fund."'
+      ],
+      [
+        '"Sarah Abraham"',
+        '"Apex Global Solutions"',
+        '"Business"',
+        '"committed"',
+        '25000',
+        '25000',
+        '"INR"',
+        '"Monthly"',
+        '"MED-2026"',
+        '"Medium"',
+        '"Pastor David"',
+        '"sarah.a@example.com"',
+        '"+91 91234 56789"',
+        '"Hyderabad"',
+        '"India"',
+        '"WhatsApp"',
+        '""',
+        '"Prayer for family health and business ventures"',
+        '"Committed monthly partner for community health outreach."'
+      ]
+    ];
+
+    const csvText = [headers.join(','), ...sampleRows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob(["\uFEFF" + csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "christ-focus-mission-leads-template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    this.showToast("Downloaded sample leads CSV template", "success");
+  }
+
+  openImportModal() {
+    this.parsedImportLeads = [];
+    const modal = document.getElementById('modal-import-leads');
+    if (!modal) return;
+
+    // Reset file input & UI
+    const fileInput = document.getElementById('import-csv-file');
+    if (fileInput) fileInput.value = '';
+    const fileName = document.getElementById('import-file-name');
+    if (fileName) fileName.textContent = 'Choose a .CSV file or drag & drop here';
+    const previewSec = document.getElementById('import-preview-section');
+    if (previewSec) previewSec.classList.add('hidden');
+    const btnExecute = document.getElementById('btn-execute-import');
+    if (btnExecute) {
+      btnExecute.disabled = true;
+      btnExecute.className = 'px-5 py-2 bg-slate-300 text-slate-500 font-bold rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-not-allowed';
+    }
+    const label = document.getElementById('import-btn-label');
+    if (label) label.textContent = 'Import Leads';
+
+    // Populate default campaign dropdown
+    const campSelect = document.getElementById('import-default-campaign');
+    if (campSelect) {
+      campSelect.innerHTML = this.campaigns.map(c => `
+        <option value="${c.id}">${this.escapeHtml(c.name)} (${c.code})</option>
+      `).join('');
+    }
+
+    // Populate default staff dropdown
+    const staffSelect = document.getElementById('import-default-assigned');
+    if (staffSelect) {
+      staffSelect.innerHTML = this.users.filter(u => u.active !== false).map(u => `
+        <option value="${this.escapeHtml(u.name)}" ${this.currentUser && this.currentUser.name === u.name ? 'selected' : ''}>
+          ${this.escapeHtml(u.name)} (${u.role === 'admin' ? 'Admin' : 'Staff'})
+        </option>
+      `).join('');
+    }
+
+    modal.classList.remove('hidden');
+  }
+
+  closeImportModal() {
+    const modal = document.getElementById('modal-import-leads');
+    if (modal) modal.classList.add('hidden');
+    this.parsedImportLeads = [];
+  }
+
+  handleImportDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropzone = document.getElementById('import-dropzone');
+    if (dropzone) {
+      dropzone.classList.add('border-amber-500', 'bg-amber-50');
+    }
+  }
+
+  handleImportDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropzone = document.getElementById('import-dropzone');
+    if (dropzone) {
+      dropzone.classList.remove('border-amber-500', 'bg-amber-50');
+    }
+  }
+
+  handleImportDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropzone = document.getElementById('import-dropzone');
+    if (dropzone) {
+      dropzone.classList.remove('border-amber-500', 'bg-amber-50');
+    }
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.processImportCSVFile(files[0]);
+    }
+  }
+
+  handleImportFileSelect(e) {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      this.processImportCSVFile(files[0]);
+    }
+  }
+
+  processImportCSVFile(file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert("Please select a valid .CSV spreadsheet file.");
+      return;
+    }
+
+    const fileNameEl = document.getElementById('import-file-name');
+    if (fileNameEl) {
+      fileNameEl.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      this.parseAndPreviewCSV(text);
+    };
+    reader.onerror = () => {
+      alert("Failed to read the selected file. Please try again.");
+    };
+    reader.readAsText(file);
+  }
+
+  // RFC 4180 Compliant CSV Parser
+  parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let inQuotes = false;
+    // Strip UTF-8 BOM if present
+    if (text.charCodeAt(0) === 0xFEFF) {
+      text = text.slice(1);
+    }
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          cell += '"';
+          i++; // Skip escaped quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        row.push(cell.trim());
+        cell = '';
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') i++;
+        row.push(cell.trim());
+        if (row.some(c => c.length > 0)) rows.push(row);
+        row = [];
+        cell = '';
+      } else {
+        cell += char;
+      }
+    }
+    if (cell.length > 0 || row.length > 0) {
+      row.push(cell.trim());
+      if (row.some(c => c.length > 0)) rows.push(row);
+    }
+    return rows;
+  }
+
+  parseAndPreviewCSV(text) {
+    const rawRows = this.parseCSV(text);
+    if (!rawRows || rawRows.length < 2) {
+      alert("The selected CSV file appears to be empty or has no lead rows.");
+      return;
+    }
+
+    const headers = rawRows[0];
+    const dataRows = rawRows.slice(1);
+
+    // Header index normalization and mapping
+    const cleanStr = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const headerMap = {};
+    headers.forEach((h, idx) => {
+      const cleaned = cleanStr(h);
+      if (['name', 'donorname', 'contactname', 'fullname', 'donor', 'contact'].includes(cleaned)) headerMap.name = idx;
+      else if (['org', 'organization', 'church', 'company', 'trust', 'business'].includes(cleaned)) headerMap.organization = idx;
+      else if (['type', 'leadtype', 'donortype', 'category'].includes(cleaned)) headerMap.leadType = idx;
+      else if (['stage', 'status', 'pipeline', 'pipelinestage'].includes(cleaned)) headerMap.stage = idx;
+      else if (['amount', 'expectedamount', 'target', 'pledge', 'pledgedamount', 'expected'].includes(cleaned)) headerMap.expectedAmount = idx;
+      else if (['received', 'receivedamount', 'paid', 'given', 'collected'].includes(cleaned)) headerMap.receivedAmount = idx;
+      else if (['currency'].includes(cleaned)) headerMap.currency = idx;
+      else if (['frequency', 'givingfrequency', 'freq'].includes(cleaned)) headerMap.frequency = idx;
+      else if (['campaign', 'campaigncode', 'campaignname', 'fund', 'initiative'].includes(cleaned)) headerMap.campaign = idx;
+      else if (['priority'].includes(cleaned)) headerMap.priority = idx;
+      else if (['assigned', 'assignedto', 'staff', 'owner', 'leader'].includes(cleaned)) headerMap.assignedTo = idx;
+      else if (['email', 'emailaddress', 'mail'].includes(cleaned)) headerMap.email = idx;
+      else if (['phone', 'phonenumber', 'mobile', 'contactno', 'whatsapp'].includes(cleaned)) headerMap.phone = idx;
+      else if (['city', 'location', 'place'].includes(cleaned)) headerMap.city = idx;
+      else if (['country'].includes(cleaned)) headerMap.country = idx;
+      else if (['contactpref', 'preferredcontact', 'contactmethod'].includes(cleaned)) headerMap.preferredContact = idx;
+      else if (['prayer', 'prayerrequests', 'prayerrequest', 'prayerpoints'].includes(cleaned)) headerMap.prayerRequests = idx;
+      else if (['notes', 'comments', 'remarks', 'description', 'note'].includes(cleaned)) headerMap.notes = idx;
+      else if (['followup', 'nextfollowup', 'nextcontact'].includes(cleaned)) headerMap.nextFollowUp = idx;
+    });
+
+    if (headerMap.name === undefined) {
+      headerMap.name = 0;
+    }
+
+    const defaultCampId = document.getElementById('import-default-campaign')?.value || this.campaigns[0]?.id;
+    const defaultStaff = document.getElementById('import-default-assigned')?.value || (this.currentUser?.name || 'Pastor David');
+
+    this.parsedImportLeads = [];
+
+    dataRows.forEach((row, rowIdx) => {
+      if (!row || row.every(c => !c || c.trim() === '')) return;
+
+      const getVal = (key) => (headerMap[key] !== undefined && row[headerMap[key]] !== undefined) ? row[headerMap[key]].trim() : '';
+
+      const name = getVal('name');
+      const isValid = Boolean(name && name.length > 0);
+
+      // Numbers
+      const rawExpected = getVal('expectedAmount');
+      const expectedAmount = rawExpected ? Number(rawExpected.replace(/[^0-9.]/g, '')) || 0 : 0;
+
+      const rawReceived = getVal('receivedAmount');
+      const receivedAmount = rawReceived ? Number(rawReceived.replace(/[^0-9.]/g, '')) || 0 : 0;
+
+      // Stage
+      let stageRaw = getVal('stage');
+      let stage = 'new';
+      if (stageRaw) {
+        const norm = this.normalizeStage(stageRaw);
+        if (['new', 'contacted', 'in_discussion', 'committed', 'closed'].includes(norm)) {
+          stage = norm;
+        }
+      }
+
+      // Frequency
+      let freqRaw = getVal('frequency').toLowerCase();
+      let frequency = 'Monthly';
+      if (freqRaw.includes('one') || freqRaw.includes('single')) {
+        frequency = 'One-off';
+      }
+
+      // Campaign matching
+      let campVal = getVal('campaign');
+      let matchedCampId = defaultCampId;
+      if (campVal) {
+        const found = this.campaigns.find(c => 
+          c.code.toLowerCase() === campVal.toLowerCase() || 
+          c.name.toLowerCase().includes(campVal.toLowerCase()) || 
+          campVal.toLowerCase().includes(c.code.toLowerCase())
+        );
+        if (found) matchedCampId = found.id;
+      }
+
+      // Staff matching
+      let assignedVal = getVal('assignedTo');
+      let assignedTo = defaultStaff;
+      if (assignedVal) {
+        const foundUser = this.users.find(u => 
+          u.name.toLowerCase() === assignedVal.toLowerCase() || 
+          u.username.toLowerCase() === assignedVal.toLowerCase()
+        );
+        if (foundUser) assignedTo = foundUser.name;
+        else assignedTo = assignedVal;
+      }
+
+      // Priority
+      let prioRaw = getVal('priority').toLowerCase();
+      let priority = 'Normal';
+      if (prioRaw.includes('high')) priority = 'High';
+      else if (prioRaw.includes('med')) priority = 'Medium';
+
+      // Lead Type
+      let typeRaw = getVal('leadType').toLowerCase();
+      let leadType = 'Individual';
+      if (typeRaw.includes('church')) leadType = 'Church';
+      else if (typeRaw.includes('business') || typeRaw.includes('corp')) leadType = 'Business';
+      else if (typeRaw.includes('found')) leadType = 'Foundation';
+
+      this.parsedImportLeads.push({
+        rowNumber: rowIdx + 2,
+        isValid,
+        validationError: isValid ? null : 'Missing Name',
+        lead: {
+          name,
+          organization: getVal('organization'),
+          leadType,
+          stage,
+          expectedAmount,
+          receivedAmount,
+          currency: getVal('currency') || this.currency || 'INR',
+          frequency,
+          campaignId: matchedCampId,
+          priority,
+          assignedTo,
+          email: getVal('email'),
+          phone: getVal('phone'),
+          city: getVal('city'),
+          country: getVal('country') || 'India',
+          preferredContact: getVal('preferredContact') || 'Phone',
+          nextFollowUp: getVal('nextFollowUp'),
+          prayerRequests: getVal('prayerRequests'),
+          notes: getVal('notes')
+        }
+      });
+    });
+
+    this.renderImportPreview();
+  }
+
+  renderImportPreview() {
+    const previewSec = document.getElementById('import-preview-section');
+    const previewCount = document.getElementById('import-preview-count');
+    const previewStatus = document.getElementById('import-preview-status');
+    const tbody = document.getElementById('import-preview-tbody');
+    const btnExecute = document.getElementById('btn-execute-import');
+    const label = document.getElementById('import-btn-label');
+
+    if (!previewSec || !tbody) return;
+
+    previewSec.classList.remove('hidden');
+
+    const total = this.parsedImportLeads.length;
+    const validCount = this.parsedImportLeads.filter(l => l.isValid).length;
+    const invalidCount = total - validCount;
+
+    previewCount.textContent = `Found ${total} row${total === 1 ? '' : 's'} (${validCount} valid)`;
+    if (invalidCount > 0) {
+      previewStatus.innerHTML = `<span class="text-rose-600 font-bold">⚠️ ${invalidCount} row${invalidCount === 1 ? '' : 's'} missing name</span>`;
+    } else {
+      previewStatus.innerHTML = `<span class="text-emerald-700 font-bold">✓ All ${validCount} rows valid and ready</span>`;
+    }
+
+    if (validCount > 0) {
+      btnExecute.disabled = false;
+      btnExecute.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer';
+      label.textContent = `Import ${validCount} Lead${validCount === 1 ? '' : 's'}`;
+    } else {
+      btnExecute.disabled = true;
+      btnExecute.className = 'px-5 py-2 bg-slate-300 text-slate-500 font-bold rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-not-allowed';
+      label.textContent = 'No Valid Leads';
+    }
+
+    tbody.innerHTML = this.parsedImportLeads.map(item => {
+      const l = item.lead;
+      return `
+        <tr class="${item.isValid ? 'hover:bg-slate-50' : 'bg-rose-50/60'}">
+          <td class="p-2 font-bold text-slate-900 truncate max-w-[140px]">${this.escapeHtml(l.name || '(Empty)')}</td>
+          <td class="p-2 text-slate-600 truncate max-w-[120px]">${this.escapeHtml(l.organization || '-')}</td>
+          <td class="p-2">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${l.stage === 'committed' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
+              ${this.getStageLabel(l.stage)}
+            </span>
+          </td>
+          <td class="p-2 font-semibold text-slate-800">${this.formatCurrency(l.expectedAmount)} <span class="text-[9px] text-slate-400 font-normal">/${l.frequency === 'Monthly' ? 'mo' : 'one-off'}</span></td>
+          <td class="p-2 text-slate-500 truncate max-w-[130px]">${this.escapeHtml(l.phone || l.email || '-')}</td>
+          <td class="p-2">
+            ${item.isValid ? `
+              <span class="text-emerald-600 font-bold flex items-center gap-1 text-[10px]">
+                <i class="fas fa-check-circle"></i> Ready
+              </span>
+            ` : `
+              <span class="text-rose-600 font-bold flex items-center gap-1 text-[10px]" title="${item.validationError}">
+                <i class="fas fa-exclamation-circle"></i> ${item.validationError}
+              </span>
+            `}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async executeImportLeads() {
+    if (!this.parsedImportLeads || this.parsedImportLeads.length === 0) {
+      alert("No valid leads to import.");
+      return;
+    }
+
+    const validLeads = this.parsedImportLeads.filter(l => l.isValid);
+    if (validLeads.length === 0) {
+      alert("None of the leads have valid names. Please check your CSV file and try again.");
+      return;
+    }
+
+    const btn = document.getElementById('btn-execute-import');
+    const label = document.getElementById('import-btn-label');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-75');
+    }
+    if (label) label.textContent = `Importing ${validLeads.length} leads...`;
+
+    let importedCount = 0;
+    try {
+      for (const item of validLeads) {
+        const payload = {
+          name: item.lead.name,
+          organization: item.lead.organization || '',
+          leadType: item.lead.leadType || 'Individual',
+          email: item.lead.email || '',
+          phone: item.lead.phone || '',
+          city: item.lead.city || '',
+          country: item.lead.country || '',
+          preferredContact: item.lead.preferredContact || 'Phone',
+          stage: item.lead.stage || 'new',
+          expectedAmount: item.lead.expectedAmount || 0,
+          receivedAmount: item.lead.receivedAmount || 0,
+          frequency: item.lead.frequency || 'Monthly',
+          campaignId: item.lead.campaignId || (this.campaigns[0]?.id || 'camp-1'),
+          priority: item.lead.priority || 'Normal',
+          assignedTo: item.lead.assignedTo || (this.currentUser?.name || 'Pastor David'),
+          probability: 100,
+          nextFollowUp: item.lead.nextFollowUp || '',
+          networkTier: '',
+          parentLeadId: null,
+          prayerRequests: item.lead.prayerRequests || '',
+          notes: item.lead.notes || '',
+          activities: [
+            {
+              id: 'act-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+              date: new Date().toISOString().split('T')[0],
+              type: 'Imported',
+              summary: `Imported via bulk CSV upload into ${this.getStageLabel(item.lead.stage || 'new')}.`,
+              author: this.currentUser?.name || 'Staff'
+            }
+          ]
+        };
+
+        const created = await cfmFirebase.addLead(payload);
+        if (created && !this.leads.some(l => l.id === created.id)) {
+          this.leads.unshift(created);
+        }
+        importedCount++;
+      }
+
+      this.render();
+      this.closeImportModal();
+      this.celebrateSuccess();
+      this.showToast(`Successfully imported ${importedCount} leads!`, 'success');
+    } catch (err) {
+      console.error("Import error:", err);
+      alert(`Import completed with errors. ${importedCount} of ${validLeads.length} leads imported. Error: ${err.message}`);
+      this.render();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75');
+      }
+      if (label) label.textContent = 'Import Leads';
+    }
+  }
+
   // ===================== EXPORT TO CSV =====================
   exportLeadsCSV() {
     if (this.leads.length === 0) {
@@ -4984,15 +5529,17 @@ class CFMApp {
       ].join(',');
     });
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvText = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob(["\uFEFF" + csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     const today = new Date().toISOString().split('T')[0];
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `christ-focus-mission-fundraising-leads-${today}.csv`);
+    link.href = url;
+    link.download = `christ-focus-mission-fundraising-leads-${today}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     this.showToast("Exported leads to CSV", "success");
   }
 
