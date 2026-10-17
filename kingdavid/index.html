@@ -177,7 +177,7 @@
   <div class="wrap">
     <span class="live-tag"><span class="dot"></span>LIVE</span>
     <span class="live-num" id="liveNum">0</span>
-    <span class="live-text">of 1,00,000 supporters</span>
+    <span class="live-text">of 1,00,000 supporters · <b id="liveSubs" style="color:var(--ink)">0</b> monthly subscribers</span>
     <div class="live-bar"><i id="liveBar"></i></div>
     <a href="/kingdavid/support/">Add your voice →</a>
   </div>
@@ -302,6 +302,8 @@
     try {
       const d = await (await fetch(API_BASE + "/api/stats", { cache: "no-store" })).json();
       document.getElementById("liveNum").textContent = fmt(d.supporters);
+      const subEl = document.getElementById("liveSubs");
+      if (subEl) subEl.textContent = fmt(d.subscribers || 0);
       document.getElementById("liveBar").style.width = Math.min(100, (d.supporters / GOAL) * 100) + "%";
     } catch (e) {}
   }

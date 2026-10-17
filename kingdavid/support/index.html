@@ -86,10 +86,10 @@
   .bar-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);background-size:200% 100%;animation:shine 2.6s linear infinite;border-radius:inherit}
   @keyframes shine{from{background-position:200% 0}to{background-position:-200% 0}}
   .bar-meta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);font-weight:700}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
-  .stat{background:var(--cream);border-radius:var(--r-md);padding:14px 16px}
-  .stat b{display:block;font-family:"Baloo 2";font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
-  .stat span{font-size:13px;color:var(--ink-2);font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+  .stat{background:var(--cream);border-radius:var(--r-md);padding:13px 14px}
+  .stat b{display:block;font-family:"Baloo 2";font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stat span{font-size:12.5px;color:var(--ink-2);font-weight:700;line-height:1.25;display:block}
   .milestone{margin-top:18px;padding:14px 16px;border:2px dashed var(--gold-soft);border-radius:var(--r-md)}
   .milestone-top{display:flex;justify-content:space-between;font-size:14px;font-weight:800}
   .milestone-top span:last-child{color:var(--gold)}
@@ -164,6 +164,8 @@
     .hero,.give-grid{grid-template-columns:1fr}
     .hero{padding-top:8px;gap:32px}
     .chips{grid-template-columns:repeat(2,1fr)}
+    .stats{grid-template-columns:1fr 1fr}
+    .stats .stat:first-child{grid-column:1/-1}
     .row{grid-template-columns:1fr}
     .live,form,.give-card{padding:22px}
   }
@@ -205,6 +207,7 @@
       <div class="bar-meta"><span id="pct">0%</span><span id="left">1,00,000 to go</span></div>
       <div class="stats">
         <div class="stat"><b id="raised">₹0</b><span>raised of ₹10 crore</span></div>
+        <div class="stat"><b id="subscribers">0</b><span>monthly subscribers</span></div>
         <div class="stat"><b id="contribs">0</b><span>contributions</span></div>
       </div>
       <div class="milestone">
@@ -320,7 +323,7 @@ const fmt = (n) => Math.round(n).toLocaleString("en-IN");
 const DEMO = !API_BASE;
 if (DEMO) $("demoBanner").hidden = false;
 
-let shown = { supporters: 0, contributions: 0, amount_inr: 0 };
+let shown = { supporters: 0, subscribers: 0, contributions: 0, amount_inr: 0 };
 let latest = null;
 let firstLoad = true;
 let lastSeenRecentAt = 0;
@@ -343,7 +346,9 @@ const MILESTONES = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 75000, 1000
 function render(s) {
   const prev = shown;
   const ms = firstLoad ? 1800 : 1200;
+  const subs = s.subscribers || 0;
   animate($("count"), prev.supporters, s.supporters, ms);
+  animate($("subscribers"), prev.subscribers, subs, ms);
   animate($("contribs"), prev.contributions, s.contributions, ms);
   animate($("raised"), prev.amount_inr, s.amount_inr, ms, "₹");
 
@@ -375,7 +380,7 @@ function render(s) {
   if (s.recent && s.recent[0]) lastSeenRecentAt = Math.max(lastSeenRecentAt, s.recent[0].at);
 
   renderTicker(s.recent || []);
-  shown = { supporters: s.supporters, contributions: s.contributions, amount_inr: s.amount_inr };
+  shown = { supporters: s.supporters, subscribers: subs, contributions: s.contributions, amount_inr: s.amount_inr };
   firstLoad = false;
 }
 
