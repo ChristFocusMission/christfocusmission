@@ -48,8 +48,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Custom Styles (cache-busted v2.8.0) -->
-  <link rel="stylesheet" href="css/styles.css?v=2.8.0">
+  <!-- Custom Styles (cache-busted v2.8.1) -->
+  <link rel="stylesheet" href="css/styles.css?v=2.8.1">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-crm">
 
@@ -122,21 +122,21 @@
   </div>
 
   <!-- TOP HEADER / BRANDING BAR -->
-  <header class="bg-[#181A3A] text-white sticky top-0 z-40 shadow-lg border-b border-indigo-950">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16 sm:h-20 gap-2">
+  <header class="bg-[#181A3A] text-white sticky top-0 z-40 shadow-lg border-b border-indigo-950 w-full max-w-full">
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14 sm:h-20 gap-1 sm:gap-2">
         
         <!-- Official Logo & Organization Name from christfocusmission.org -->
-        <div class="flex items-center space-x-2 sm:space-x-3.5 cursor-pointer shrink-0" onclick="app.switchView('kanban')">
-          <div class="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-white/10 p-1 sm:p-1.5 flex items-center justify-center border border-white/15 shadow-inner shrink-0">
+        <div class="flex items-center space-x-1.5 sm:space-x-3 cursor-pointer shrink-0 min-w-0" onclick="app.switchView('kanban')">
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-white/10 p-1 sm:p-1.5 flex items-center justify-center border border-white/15 shadow-inner shrink-0">
             <img src="assets/cfm-icon.svg" alt="Christ Focus Mission" class="w-full h-full object-contain">
           </div>
-          <div>
-            <div class="flex items-center gap-1.5 sm:gap-2">
-              <h1 class="text-sm sm:text-xl font-bold tracking-tight text-white font-heading truncate max-w-[130px] xs:max-w-[200px] sm:max-w-none">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1 sm:gap-2">
+              <h1 class="text-xs sm:text-lg md:text-xl font-bold tracking-tight text-white font-heading truncate max-w-[110px] sm:max-w-none">
                 Christ Focus Mission
               </h1>
-              <span class="hidden xs:inline-block text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest shrink-0">
+              <span class="text-[9px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.2 sm:py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest shrink-0">
                 CRM
               </span>
             </div>
@@ -146,28 +146,27 @@
           </div>
         </div>
 
-        <!-- Right Side: Clean Uncluttered Header Controls -->
-        <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+        <!-- Right Side: Clean Uncluttered Header Controls (Fits inside bar without overflow) -->
+        <div class="flex items-center space-x-1 sm:space-x-2.5 shrink-0">
           
           <!-- Currency Selector (Visible on both mobile & desktop) -->
-          <div class="relative block">
-            <select id="currency-selector" class="bg-slate-800/90 text-amber-300 text-[11px] sm:text-xs font-bold rounded-lg border border-slate-700 py-1 px-1.5 sm:py-1.5 sm:px-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
-              <option value="INR" selected>INR (₹)</option>
-              <option value="USD">USD ($)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="EUR">EUR (€)</option>
+          <div class="relative block shrink-0">
+            <select id="currency-selector" class="bg-slate-800/90 text-amber-300 text-[10px] sm:text-xs font-bold rounded-lg border border-slate-700 py-1 px-1 sm:py-1.5 sm:px-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer">
+              <option value="INR" selected>₹ INR</option>
+              <option value="USD">$ USD</option>
+              <option value="GBP">£ GBP</option>
+              <option value="EUR">€ EUR</option>
             </select>
           </div>
 
           <!-- Add New Lead Button -->
-          <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg shadow-md flex items-center gap-1 sm:gap-1.5 transition shrink-0" title="Add New Lead">
+          <button id="btn-new-lead" class="cfm-btn-cta text-slate-950 text-xs font-extrabold px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-md flex items-center gap-1 sm:gap-1.5 transition shrink-0" title="Add New Lead">
             <i class="fas fa-plus text-slate-950 text-xs"></i>
-            <span class="hidden xs:inline">New Lead</span>
-            <span class="xs:hidden">Lead</span>
+            <span class="hidden sm:inline">New Lead</span>
           </button>
 
           <!-- Active Logged In User Profile Pill -->
-          <div id="header-user-profile" class="hidden xs:flex items-center gap-1.5 sm:gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-lg px-1.5 py-1 sm:px-2.5 text-xs shrink-0" title="Logged in user">
+          <div id="header-user-profile" class="flex items-center gap-1 sm:gap-2 bg-indigo-950/80 border border-indigo-700/60 rounded-full sm:rounded-lg p-0.5 sm:px-2.5 sm:py-1 text-xs shrink-0 cursor-pointer" onclick="app.showToast('Logged in as ' + (app.currentUser?.name || 'Pastor David') + ' (' + (app.userRole === 'admin' ? 'Administrator' : 'CRM Staff') + ')', 'info')" title="Logged in user">
             <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px] sm:text-[11px] border border-amber-500/30 shadow-inner">
               <span id="header-user-avatar">U</span>
             </div>
@@ -178,7 +177,7 @@
           </div>
 
           <!-- Sign Out / Logout Button -->
-          <button id="btn-logout" onclick="app.logout()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-white text-xs font-semibold p-1.5 sm:px-2.5 sm:py-2 rounded-lg border border-rose-800/60 flex items-center gap-1.5 transition shrink-0" title="Sign Out of CRM">
+          <button id="btn-logout" onclick="app.logout()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-white text-xs font-semibold p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg border border-rose-800/60 flex items-center gap-1 sm:gap-1.5 transition shrink-0" title="Sign Out of CRM">
             <i class="fas fa-sign-out-alt text-xs"></i>
             <span class="hidden md:inline">Sign Out</span>
           </button>
@@ -225,7 +224,7 @@
   </header>
 
   <!-- MAIN WRAPPER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+  <main class="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
 
     <!-- METRICS OVERVIEW CARDS -->
     <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
@@ -1214,9 +1213,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.0) -->
-  <script src="js/sample-data.js?v=2.8.0"></script>
-  <script src="js/firebase-config.js?v=2.8.0"></script>
-  <script src="js/app.js?v=2.8.0"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.1) -->
+  <script src="js/sample-data.js?v=2.8.1"></script>
+  <script src="js/firebase-config.js?v=2.8.1"></script>
+  <script src="js/app.js?v=2.8.1"></script>
 </body>
 </html>
