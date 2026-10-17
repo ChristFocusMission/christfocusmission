@@ -355,7 +355,7 @@ class FirebaseService {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0 && parsed.some(u => u.password)) {
           let updated = false;
-          // Filter out mock users Sarah (user-2), Mark (user-3), Rachel (user-4)
+          // Filter out legacy mock users Sarah (user-2), Mark (user-3), Rachel (user-4)
           const filteredMock = parsed.filter(u => u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
           if (filteredMock.length !== parsed.length) {
             updated = true;
@@ -372,6 +372,31 @@ class FirebaseService {
             }
             return u;
           });
+
+          // Ensure all initial system users (Pastor David, Nelson Richard) are present and synced across devices
+          const initial = typeof CFM_INITIAL_USERS !== 'undefined' ? CFM_INITIAL_USERS : [];
+          initial.forEach(initUser => {
+            const idx = normalized.findIndex(u => 
+              (u.id && u.id === initUser.id) || 
+              (u.email && u.email.toLowerCase() === initUser.email.toLowerCase()) ||
+              (u.username && u.username.toLowerCase() === initUser.username.toLowerCase())
+            );
+            if (idx === -1) {
+              normalized.push(initUser);
+              updated = true;
+            } else {
+              // Ensure correct password and aliases from initial accounts if needed
+              if (initUser.password && normalized[idx].password !== initUser.password) {
+                normalized[idx].password = initUser.password;
+                updated = true;
+              }
+              if (!normalized[idx].aliases || normalized[idx].aliases.length === 0) {
+                normalized[idx].aliases = initUser.aliases;
+                updated = true;
+              }
+            }
+          });
+
           if (updated) {
             this.saveLocalUsers(normalized, false);
           }

@@ -61,7 +61,7 @@ const CFM_INITIAL_CAMPAIGNS = [];
 // Clean state: Live donor leads added dynamically by team
 const CFM_INITIAL_LEADS = [];
 
-// Default Initial Administrator Account
+// Default Initial System Accounts
 const CFM_INITIAL_USERS = [
   {
     id: "user-1",
@@ -74,6 +74,20 @@ const CFM_INITIAL_USERS = [
     title: "Ministry Director & Founder",
     department: "Executive Leadership",
     phone: "+91 98401 23456",
+    active: true,
+    createdAt: "2026-01-10T09:00:00Z"
+  },
+  {
+    id: "user-nelson",
+    name: "Nelson Richard",
+    username: "nelson",
+    email: "nelsonrichard094@gmail.com",
+    aliases: ["nelson", "nelsonrichard", "nelsonrichard094", "nelsonrichard094@gmail.com"],
+    password: "nels@2026",
+    role: "admin",
+    title: "Partner Relations & Stewardship Officer",
+    department: "Partner Engagement",
+    phone: "",
     active: true,
     createdAt: "2026-01-10T09:00:00Z"
   }

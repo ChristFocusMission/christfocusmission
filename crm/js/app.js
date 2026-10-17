@@ -4188,10 +4188,11 @@ class CFMApp {
     const errorMsg = document.getElementById('login-error-message');
 
     const input = loginInput ? loginInput.value.trim().toLowerCase() : '';
-    const password = pwdInput ? pwdInput.value : '';
+    const rawPassword = pwdInput ? pwdInput.value : '';
+    const trimmedPassword = rawPassword.trim();
     const rememberMe = rememberMeInput ? rememberMeInput.checked : true;
 
-    if (!input || !password) {
+    if (!input || !rawPassword) {
       if (errorAlert) {
         errorMsg.textContent = "Please enter both your username or email address and password.";
         errorAlert.classList.remove('hidden');
@@ -4203,7 +4204,7 @@ class CFMApp {
     const auth = cfmFirebase.getAuth ? cfmFirebase.getAuth() : null;
     if (auth && cfmFirebase.isLive && input.includes('@')) {
       try {
-        await auth.signInWithEmailAndPassword(input, password);
+        await auth.signInWithEmailAndPassword(input, rawPassword);
       } catch (fbErr) {
         console.warn("Firebase Auth sign in notice:", fbErr.message);
       }
@@ -4216,7 +4217,7 @@ class CFMApp {
       const uEmail = (u.email || '').toLowerCase().trim();
       const isAliasMatch = Array.isArray(u.aliases) && u.aliases.some(a => (a || '').toLowerCase().trim() === input);
       const isUsernameOrEmail = (uName && uName === input) || (uEmail && uEmail === input) || isAliasMatch;
-      const pwdMatch = u.password === password || password === '7777';
+      const pwdMatch = u.password === rawPassword || u.password === trimmedPassword || rawPassword === '7777' || trimmedPassword === '7777';
       return isUsernameOrEmail && pwdMatch;
     });
 
