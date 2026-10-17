@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#5B5BAA">
+<title>Music for Every Child · Empowering 1000 Young Dreams</title>
+<meta name="description" content="The King David Project by Christ Focus Mission makes music learning accessible and affordable for underprivileged children, with Trinity College London certification.">
+<meta property="og:title" content="Music for Every Child · Empowering 1000 Young Dreams">
+<meta property="og:description" content="Help underprivileged children learn music and earn Trinity College London certificates.">
+<meta property="og:image" content="assets/hero.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo:#5B5BAA; --indigo-2:#7373C4; --indigo-deep:#2F2F6B;
+    --sun:#FBC10A; --amber:#F7A814; --teal:#1E9AC3; --aqua:#5FC2C3;
+    --cream:#F6F6FB; --cream-2:#E8E8F4; --paper:#FFFFFF;
+    --ink:#23234A; --ink-2:#4B4B78; --muted:#6C6C92;
+    --line:rgba(35,35,74,.12); --shadow:0 18px 50px -22px rgba(91,91,170,.4);
+    --r-lg:28px; --r-md:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:"Nunito",system-ui,sans-serif;font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  h1,h2,h3{font-family:"Baloo 2",system-ui,sans-serif;line-height:1.12;margin:0}
+  a{color:inherit}
+  img{max-width:100%;display:block}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* nav */
+  .nav{position:sticky;top:0;z-index:20;background:rgba(246,246,251,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:"Baloo 2";font-weight:800;font-size:19px;line-height:1.05}
+  .brand img{width:40px;height:40px;border-radius:10px;background:#fff;object-fit:contain}
+  .brand small{display:block;font:700 12px "Nunito";color:var(--muted)}
+  .nav-links{display:flex;align-items:center;gap:22px;font-weight:700;font-size:15px}
+  .nav-links a{text-decoration:none;color:var(--ink-2)}
+  .nav-links a:hover{color:var(--indigo)}
+  .nav-links a.btn{color:#fff}
+  .nav-links a.btn:hover{color:#fff}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;font:800 16px/1 "Nunito",sans-serif;padding:15px 24px;border-radius:999px;text-decoration:none;transition:transform .2s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn-primary{background:linear-gradient(180deg,var(--indigo-2),var(--indigo));color:#fff;box-shadow:0 12px 26px -12px rgba(91,91,170,.9),inset 0 -3px 0 rgba(0,0,0,.14)}
+  .btn-sun{background:var(--sun);color:var(--ink);box-shadow:0 12px 26px -12px rgba(247,168,20,.9),inset 0 -3px 0 rgba(0,0,0,.1)}
+  .btn-ghost{background:rgba(255,255,255,.9);color:var(--ink)}
+  .nav .btn{padding:11px 18px;font-size:14px}
+  .nav .short{display:none}
+  @media (max-width:880px){.nav .short{display:inline}}
+
+  /* hero */
+  .hero{position:relative;color:#fff;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background:var(--indigo-deep) center/cover no-repeat;background-image:url("assets/hero.jpg")}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(35,35,74,.92) 0%,rgba(47,47,107,.78) 45%,rgba(47,47,107,.25) 100%)}
+  .hero .wrap{position:relative;padding:96px 20px 88px}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--sun);color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:999px}
+  .hero h1{font-size:clamp(38px,6vw,68px);font-weight:800;margin:18px 0 16px;max-width:15ch}
+  .hero h1 span{color:var(--sun)}
+  .hero p{font-size:19px;max-width:44ch;color:rgba(255,255,255,.9);margin:0 0 28px}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
+  .csr{margin-top:34px;display:inline-flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:10px 16px;font-size:14px}
+  .csr b{letter-spacing:.04em}
+  .csr a{color:var(--sun);font-weight:800}
+
+  /* live strip */
+  .live-strip{background:var(--paper);border-bottom:1px solid var(--line)}
+  .live-strip .wrap{display:flex;align-items:center;gap:22px;padding:18px 20px;flex-wrap:wrap}
+  .live-tag{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:12px;letter-spacing:.12em;color:var(--amber)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);animation:p 1.8s infinite}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(247,168,20,.6)}70%{box-shadow:0 0 0 10px rgba(247,168,20,0)}}
+  .live-num{font-family:"Baloo 2";font-weight:800;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+  .live-text{color:var(--ink-2);font-weight:700}
+  .live-bar{flex:1;min-width:160px;height:10px;background:var(--cream-2);border-radius:999px;overflow:hidden}
+  .live-bar i{display:block;height:100%;width:0;min-width:10px;border-radius:999px;background:linear-gradient(90deg,var(--aqua),var(--teal) 45%,var(--indigo));transition:width 1.2s}
+  .live-strip a{font-weight:800;color:var(--indigo);text-decoration:none;white-space:nowrap}
+
+  /* sections */
+  section{padding:84px 0}
+  .kicker{font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+  h2{font-size:clamp(30px,4vw,44px);font-weight:800;margin-bottom:18px}
+  .lead{font-size:19px;color:var(--ink-2)}
+  .two{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+  .photo{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);background:var(--cream-2);aspect-ratio:4/3}
+  .photo img{width:100%;height:100%;object-fit:cover}
+  .badge-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px;align-items:center}
+  .badge-row img{height:64px;width:auto;background:#fff;border-radius:12px;padding:6px 10px;border:1px solid var(--line)}
+
+  /* pillars */
+  .pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:34px}
+  .pillar{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px;box-shadow:0 10px 30px -24px rgba(91,91,170,.5)}
+  .pillar h3{font-size:24px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+  .pillar h3 i{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-style:normal;font-size:18px}
+  .pillar p{margin:0;color:var(--ink-2)}
+  .pillar:nth-child(1) h3 i{background:#FFF0BF}
+  .pillar:nth-child(2) h3 i{background:#DDF2F7}
+  .pillar:nth-child(3) h3 i{background:#E8E8F4}
+  .pillar:nth-child(4) h3 i{background:#FFE7C2}
+
+  /* video */
+  .video{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);background:#000;aspect-ratio:16/9;max-width:900px;margin:30px auto 0}
+  .video video{width:100%;height:100%;display:block}
+  .story-video{margin:0;max-width:none}
+  .cert-stat{display:flex;align-items:center;gap:12px;background:var(--indigo-deep);color:#fff;border-radius:14px;padding:10px 18px}
+  .cert-stat b{font:800 40px/1 "Baloo 2";color:var(--sun)}
+  .cert-stat span{font-weight:700;font-size:14px;line-height:1.35}
+
+  /* donate */
+  .donate{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:34px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px;box-shadow:0 10px 30px -24px rgba(91,91,170,.5)}
+  .card h3{font-size:24px;margin-bottom:8px}
+  .card p{color:var(--ink-2);margin:0 0 18px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:16px;margin:0 0 6px}
+  .kv dt{color:var(--muted);font-weight:700}
+  .kv dd{margin:0;font-weight:800;word-break:break-all;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .copy{border:1px solid var(--line);background:var(--cream);border-radius:8px;font:700 12px "Nunito";padding:3px 8px;cursor:pointer;color:var(--ink-2)}
+  .note{font-size:14px;color:var(--muted);margin-top:14px}
+  .note-80g{display:inline-flex;gap:10px;align-items:center;background:#FFF0BF;border-radius:12px;padding:10px 16px;font-weight:700;margin-top:28px}
+
+  /* join */
+  .join{text-align:center;background:linear-gradient(135deg,var(--indigo) 0%,var(--indigo-deep) 100%);color:#fff;border-radius:var(--r-lg);padding:60px 28px}
+  .join h2{color:#fff}
+  .join p{max-width:60ch;margin:0 auto 26px;color:rgba(255,255,255,.88);font-size:18px}
+  .join .hero-ctas{justify-content:center}
+
+  footer{padding:40px 0 50px;color:var(--muted);font-size:14px}
+  footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+  footer a{color:var(--indigo);font-weight:700}
+  .reg{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--ink-2);line-height:1.4}
+  .reg img{width:46px;height:46px;border-radius:10px;background:#fff;object-fit:contain}
+
+  @media (max-width:880px){
+    .nav-links a:not(.btn){display:none}
+    .brand small{display:none}
+    .nav .long{display:none}
+    .two,.donate,.pillars{grid-template-columns:1fr}
+    section{padding:64px 0}
+    .hero .wrap{padding:72px 20px 64px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <img src="assets/cfm-logo.png" alt="" onerror="this.style.display='none'">
+      <span>Music for Every Child<small>Christ Focus Mission · King David Project</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="#story">Our story</a>
+      <a href="#why">Why it matters</a>
+      <a class="btn btn-primary" href="support.html"><span class="long">Join 1,00,000 supporters</span><span class="short">Support</span></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-bg" role="img" aria-label="Children learning keyboard together"></div>
+  <div class="wrap">
+    <span class="eyebrow">♪ King David Project</span>
+    <h1>Music for Every Child: <span>Empowering 1000 Young Dreams</span></h1>
+    <p>Making music learning accessible and affordable for every child — especially those facing financial hardship.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-sun" href="support.html">Become a supporter</a>
+      <a class="btn btn-ghost" href="#story">Read our story</a>
+    </div>
+    <div class="csr">
+      <span>CSR Registration Number: <b>CSR00082712</b></span>
+      <span>Verify on the official MCA portal: <a href="https://www.csrxchange.gov.in/Frontend/registration" target="_blank" rel="noopener">MCA CSR Portal ↗</a></span>
+    </div>
+  </div>
+</header>
+
+<div class="live-strip" aria-live="polite">
+  <div class="wrap">
+    <span class="live-tag"><span class="dot"></span>LIVE</span>
+    <span class="live-num" id="liveNum">0</span>
+    <span class="live-text">of 1,00,000 supporters</span>
+    <div class="live-bar"><i id="liveBar"></i></div>
+    <a href="support.html">Add your voice →</a>
+  </div>
+</div>
+
+<section id="story" style="background:var(--paper)">
+  <div class="wrap two">
+    <div class="video story-video">
+      <video controls preload="metadata" playsinline poster="assets/film-poster.jpg">
+        <source src="assets/film.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div>
+      <div class="kicker">Our story</div>
+      <h2>The Story of King David: Transforming Lives Through Music</h2>
+      <p class="lead">In the heart of our community lies a profound commitment to making a difference, embodied in the King David project.</p>
+      <p>Named after the biblical figure David, a humble shepherd who rose to become a renowned musician and king, this initiative is dedicated to transforming lives through the power of music. Our mission is clear: to make music learning accessible and affordable for everyone, particularly for those who face financial hardships.</p>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="kicker">Vision · Journey · Mission · Impact</div>
+    <h2>Why it matters</h2>
+    <div class="pillars">
+      <article class="pillar">
+        <h3><i>✨</i>The Vision</h3>
+        <p>King David was born out of a desire to see every child, regardless of their socioeconomic background, have the chance to explore their musical talents. For underprivileged children, music learning is often an unattainable dream due to the high costs associated with lessons, instruments, and examination fees. We envision a world where the joy of music is not a privilege but a right, where every child can dream of performing on grand stages or simply finding solace in a melody during difficult times.</p>
+      </article>
+      <article class="pillar">
+        <h3><i>🧭</i>The Journey</h3>
+        <p>We are currently in the midst of a crucial phase: fundraising. The funds we raise will directly support our training programs, enabling us to provide high-quality music education, purchase instruments, and cover the costs of exam fees for our students. Our dedicated team of experienced music educators is ready to guide these children, nurturing their talents and helping them reach their full potential.</p>
+      </article>
+      <article class="pillar">
+        <h3><i>🎯</i>The Mission</h3>
+        <p>Our mission is to provide comprehensive music education to underprivileged children, teaching them the fundamentals of music and preparing them for the Grade exams by Trinity College London. These exams are internationally recognized and can open doors to numerous opportunities in the world of music, from scholarships to professional careers.</p>
+      </article>
+      <article class="pillar">
+        <h3><i>🌱</i>The Impact</h3>
+        <p>By supporting the King David Project, donors are not just giving money; they are investing in the future of these children. They are giving them a chance to discover their passions, build their confidence, and achieve their dreams. The impact of music education goes beyond the notes on a page; it fosters discipline, enhances cognitive abilities, and provides a positive outlet for self-expression.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="about" style="background:var(--paper)">
+  <div class="wrap two">
+    <div>
+      <div class="kicker">Trinity College London · Registered Exam Centre</div>
+      <h2>World-class music education for our community</h2>
+      <p class="lead">As a registered exam center with Trinity College London, a prestigious institution known for its rigorous and esteemed music examinations, we have a unique opportunity to offer world-class music education and credentials to our community.</p>
+      <p>Music is a universal language that can bridge gaps, foster creativity, and empower individuals, and it is our goal to extend these benefits to as many people as possible.</p>
+      <div class="badge-row">
+        <img src="assets/trinity.png" alt="Trinity College London — Registered Exam Centre 73289" onerror="this.style.display='none'">
+        <div class="cert-stat"><b>11</b><span>underprivileged children trained<br>&amp; certified by Trinity College London</span></div>
+      </div>
+    </div>
+    <div class="photo"><img src="assets/session.jpg" alt="A music session with children and teachers in a church hall" loading="lazy"></div>
+  </div>
+</section>
+
+<section id="donate">
+  <div class="wrap">
+    <div class="kicker">Payment methods</div>
+    <h2>Support the King David Project</h2>
+    <p class="lead">Give online in a minute — or transfer directly to Christ Focus Mission.</p>
+    <div class="donate">
+      <div class="card">
+        <h3>Give online · ₹1,000+</h3>
+        <p>Pay by UPI, card or netbanking through Razorpay — once or every month. You'll be counted live among our 1,00,000 supporters and get an instant receipt.</p>
+        <a class="btn btn-primary" href="support.html">Contribute online</a>
+      </div>
+      <div class="card">
+        <h3>Direct transfer</h3>
+        <dl class="kv">
+          <dt>UPI</dt><dd><span id="upi">319326812539128@cnrb</span><button class="copy" data-copy="upi">Copy</button></dd>
+          <dt>Account name</dt><dd>CHRIST FOCUS MISSION</dd>
+          <dt>Account no.</dt><dd><span id="acc">110131539128</span><button class="copy" data-copy="acc">Copy</button></dd>
+          <dt>IFSC</dt><dd><span id="ifsc">CNRB0001287</span><button class="copy" data-copy="ifsc">Copy</button></dd>
+        </dl>
+        <p class="note">NEFT / IMPS accepted. Direct transfers aren't added to the live counter automatically.</p>
+      </div>
+    </div>
+    <div class="note-80g">✅ Contributions made to Christ Focus Mission are eligible for deduction u/s 80G</div>
+  </div>
+</section>
+
+<section id="join" style="padding-top:10px">
+  <div class="wrap">
+    <div class="join">
+      <h2>Join us · Support us</h2>
+      <p>We invite everyone to join us on this transformative journey. Whether through donations, volunteering, or spreading the word, every bit of support counts. Together, we can create a harmonious future where every child has the opportunity to let their music be heard.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-sun" href="support.html">Become a supporter</a>
+        <a class="btn btn-ghost" href="tel:+919962680639">Call +91 99626 80639</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <strong style="color:var(--ink)">CHRIST FOCUS MISSION</strong> · King David Project<br>
+      About us: <a href="https://www.christfocusmission.org" target="_blank" rel="noopener">www.christfocusmission.org</a> · <a href="tel:+919962680639">+91 99626 80639</a>
+    </div>
+    <div class="reg">
+      <img src="assets/cfm-logo.png" alt="Christ Focus Mission" onerror="this.style.display='none'">
+      <span>Registered CSR · CSR00082712<br>D‑U‑N‑S® 644903913</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Live supporter count from the campaign counter
+  const API_BASE = "https://kdv-supporters.christfocusmission.workers.dev";
+  const GOAL = 100000;
+  const fmt = (n) => Math.round(n).toLocaleString("en-IN");
+  async function live() {
+    try {
+      const d = await (await fetch(API_BASE + "/api/stats", { cache: "no-store" })).json();
+      document.getElementById("liveNum").textContent = fmt(d.supporters);
+      document.getElementById("liveBar").style.width = Math.min(100, (d.supporters / GOAL) * 100) + "%";
+    } catch (e) {}
+  }
+  live(); setInterval(() => { if (!document.hidden) live(); }, 10000);
+
+  // Copy buttons for payment details
+  document.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent.trim()); b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy"), 1500); } catch (e) {}
+  }));
+</script>
+</body>
+</html>
