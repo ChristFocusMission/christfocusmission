@@ -627,7 +627,7 @@
           </div>
           <div>
             <label class="block font-semibold text-slate-700 mb-1">Assigned Team Member</label>
-            <select id="modal-lead-assigned" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
+            <select id="modal-lead-assigned" onchange="app.handleAssignedChangeInForm(this.value)" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
               <option value="Pastor David">Pastor David (Admin - Ministry Director & Founder)</option>
               <option value="Nelson Richard">Nelson Richard (Admin - Partner Relations & Stewardship Officer)</option>
             </select>
@@ -670,12 +670,12 @@
               </select>
             </div>
             <div>
-              <label class="block font-semibold text-slate-700 mb-1">Recruited Under / Parent Leader (Upline)</label>
+              <label class="block font-semibold text-slate-700 mb-1">Recruited Under / Overseeing Leader</label>
               <select id="modal-lead-parent" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white font-medium">
-                <option value="">None (Root Core Leader)</option>
-                <!-- Populated dynamically -->
+                <option value="staff:Pastor David">Staff Leader: Pastor David (Admin - Ministry Director & Founder)</option>
+                <option value="staff:Nelson Richard">Staff Leader: Nelson Richard (Admin - Partner Relations & Stewardship Officer)</option>
               </select>
-              <p class="text-[10px] text-slate-500 mt-1">Identifies who this leader reports to and counts toward their 10-member level quota.</p>
+              <p class="text-[10px] text-slate-500 mt-1">Core Leaders report to a Staff Member who tracks and mentors them; lower stages report to their upline recruiter.</p>
             </div>
           </div>
         </div>
@@ -1213,9 +1213,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.6) -->
-  <script src="js/sample-data.js?v=2.8.6"></script>
-  <script src="js/firebase-config.js?v=2.8.6"></script>
-  <script src="js/app.js?v=2.8.6"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.7) -->
+  <script src="js/sample-data.js?v=2.8.7"></script>
+  <script src="js/firebase-config.js?v=2.8.7"></script>
+  <script src="js/app.js?v=2.8.7"></script>
 </body>
 </html>

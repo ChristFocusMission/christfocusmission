@@ -542,7 +542,7 @@ class CFMApp {
                 ${parent ? `
                   <i class="fas fa-level-up-alt rotate-90 text-amber-500 text-[9px]"></i> Under: <span class="font-semibold text-slate-700">${this.escapeHtml(parent.name)}</span>
                 ` : `
-                  <i class="fas fa-crown text-amber-500 text-[9px]"></i> <span class="font-bold text-amber-800">Root Core Leader</span>
+                  <i class="fas fa-user-shield text-indigo-600 text-[9px]"></i> Staff Leader: <span class="font-semibold text-indigo-950">${this.escapeHtml(info?.staffLeader || lead.assignedTo || 'Pastor David')}</span>
                 `}
               </div>
             </div>
@@ -849,8 +849,8 @@ class CFMApp {
                                 <i class="fas fa-level-up-alt rotate-90 text-amber-500 text-[9px]"></i> Under: <strong class="text-slate-700">${this.escapeHtml(parent.name)}</strong>
                               </span>
                             ` : `
-                              <span class="text-[10px] text-amber-800 font-bold flex items-center gap-0.5">
-                                <i class="fas fa-crown text-amber-500 text-[9px]"></i> Root Core Leader
+                              <span class="text-[10px] text-indigo-900 font-semibold flex items-center gap-0.5">
+                                <i class="fas fa-user-shield text-indigo-600 text-[9px]"></i> Staff: <strong class="text-indigo-950">${this.escapeHtml(info?.staffLeader || lead.assignedTo || 'Pastor David')}</strong>
                               </span>
                             `}
                             ${info ? `
@@ -1103,7 +1103,20 @@ class CFMApp {
     const lead = this.leads.find(l => l.id === leadId);
     if (!lead) return null;
 
-    const parentLead = lead.parentLeadId ? this.leads.find(l => l.id === lead.parentLeadId) : null;
+    let parentLead = null;
+    let staffLeader = null;
+    if (lead.parentLeadId) {
+      if (lead.parentLeadId.startsWith('staff:')) {
+        staffLeader = lead.parentLeadId.replace('staff:', '');
+      } else {
+        parentLead = this.leads.find(l => l.id === lead.parentLeadId);
+      }
+    }
+    // Core Leaders without donor upline are tracked directly by Ministry Staff
+    if (!parentLead && !staffLeader) {
+      staffLeader = lead.assignedTo || 'Pastor David';
+    }
+
     const directRecruits = this.leads.filter(l => l.parentLeadId === lead.id);
 
     // Recursive downline computation
@@ -1153,6 +1166,7 @@ class CFMApp {
     return {
       lead,
       parentLead,
+      staffLeader,
       directRecruits,
       allDescendants,
       totalTeamSize: allDescendants.length,
@@ -1219,6 +1233,18 @@ class CFMApp {
     const parentSelect = document.getElementById('modal-lead-parent');
     if (!parentSelect) return;
 
+    // Staff Users list (Pastor David, Nelson Richard, etc.)
+    let staffUsers = (Array.isArray(this.users) && this.users.length > 0)
+      ? this.users
+      : (typeof cfmFirebase !== 'undefined' ? cfmFirebase.getLocalUsers() : (typeof CFM_INITIAL_USERS !== 'undefined' ? CFM_INITIAL_USERS : []));
+    staffUsers = staffUsers.filter(u => u && u.name && u.id !== 'user-2' && u.id !== 'user-3' && u.id !== 'user-4');
+    if (staffUsers.length === 0) {
+      staffUsers = [
+        { id: "user-1", name: "Pastor David", role: "admin", title: "Ministry Director & Founder" },
+        { id: "user-nelson", name: "Nelson Richard", role: "admin", title: "Partner Relations & Stewardship Officer" }
+      ];
+    }
+
     // Filter leads that are active network leaders and NOT the current lead (to avoid circular parent reference)
     const candidates = this.leads.filter(l => {
       if (currentLeadId && l.id === currentLeadId) return false;
@@ -1234,16 +1260,37 @@ class CFMApp {
       return (a.name || '').localeCompare(b.name || '');
     });
 
-    let optionsHtml = '<option value="">None (Root Core Leader)</option>';
-    candidates.forEach(cand => {
-      const stageLabel = this.getStageRoleLabel(cand.networkTier);
-      const isSelected = selectedParentId && selectedParentId === cand.id;
+    let optionsHtml = '';
+
+    // 1. Staff Overseer Leaders (Staff members who track and mentor Core Leaders)
+    optionsHtml += '<optgroup label="Ministry Staff Leaders (Core Leader Overseers)">';
+    staffUsers.forEach(u => {
+      const val = `staff:${u.name}`;
+      const isSelected = selectedParentId && (selectedParentId === val || selectedParentId === u.name);
+      const roleBadge = u.role === 'admin' ? 'Admin' : 'Staff';
+      const titleSuffix = u.title ? ` - ${this.escapeHtml(u.title)}` : '';
       optionsHtml += `
-        <option value="${cand.id}" ${isSelected ? 'selected' : ''}>
-          ${this.escapeHtml(cand.name)} (${stageLabel}) ${cand.organization ? `• ${this.escapeHtml(cand.organization)}` : ''}
+        <option value="${this.escapeHtml(val)}" ${isSelected ? 'selected' : ''}>
+          Staff Leader: ${this.escapeHtml(u.name)} (${roleBadge}${titleSuffix})
         </option>
       `;
     });
+    optionsHtml += '</optgroup>';
+
+    // 2. Active Network Leaders (Stage 1 Core Leaders, Stage 2 Champions, etc.)
+    if (candidates.length > 0) {
+      optionsHtml += '<optgroup label="5-Level Network Leaders (Upline Donor Leaders)">';
+      candidates.forEach(cand => {
+        const stageLabel = this.getStageRoleLabel(cand.networkTier);
+        const isSelected = selectedParentId && selectedParentId === cand.id;
+        optionsHtml += `
+          <option value="${cand.id}" ${isSelected ? 'selected' : ''}>
+            ${this.escapeHtml(cand.name)} (${stageLabel}) ${cand.organization ? `• ${this.escapeHtml(cand.organization)}` : ''}
+          </option>
+        `;
+      });
+      optionsHtml += '</optgroup>';
+    }
 
     parentSelect.innerHTML = optionsHtml;
     if (selectedParentId) {
@@ -1260,27 +1307,37 @@ class CFMApp {
     if (!parentSelect) return;
 
     if (tierValue === 'stage-1') {
-      parentSelect.value = '';
+      // Core Leader is overseen and tracked by assigned Staff
+      const assigned = document.getElementById('modal-lead-assigned')?.value || 'Pastor David';
+      parentSelect.value = 'staff:' + assigned;
     } else if (tierValue === 'stage-2') {
       const stage1Leader = this.leads.find(l => l.networkTier === 'stage-1');
-      if (stage1Leader && !parentSelect.value) {
+      if (stage1Leader && (!parentSelect.value || parentSelect.value.startsWith('staff:'))) {
         parentSelect.value = stage1Leader.id;
       }
     } else if (tierValue === 'stage-3') {
       const stage2Leader = this.leads.find(l => l.networkTier === 'stage-2');
-      if (stage2Leader && !parentSelect.value) {
+      if (stage2Leader && (!parentSelect.value || parentSelect.value.startsWith('staff:'))) {
         parentSelect.value = stage2Leader.id;
       }
     } else if (tierValue === 'stage-4') {
       const stage3Leader = this.leads.find(l => l.networkTier === 'stage-3');
-      if (stage3Leader && !parentSelect.value) {
+      if (stage3Leader && (!parentSelect.value || parentSelect.value.startsWith('staff:'))) {
         parentSelect.value = stage3Leader.id;
       }
     } else if (tierValue === 'stage-5') {
       const stage4Leader = this.leads.find(l => l.networkTier === 'stage-4');
-      if (stage4Leader && !parentSelect.value) {
+      if (stage4Leader && (!parentSelect.value || parentSelect.value.startsWith('staff:'))) {
         parentSelect.value = stage4Leader.id;
       }
+    }
+  }
+
+  handleAssignedChangeInForm(assignedUser) {
+    const tierSelect = document.getElementById('modal-lead-network-tier');
+    const parentSelect = document.getElementById('modal-lead-parent');
+    if (tierSelect && tierSelect.value === 'stage-1' && parentSelect) {
+      parentSelect.value = 'staff:' + (assignedUser || 'Pastor David');
     }
   }
 
@@ -1325,8 +1382,8 @@ class CFMApp {
                     <span class="text-[10px] text-slate-400">(${this.getStageRoleLabel(info.parentLead.networkTier)})</span>
                   </span>
                 ` : `
-                  <span class="text-[11px] text-amber-800 font-bold flex items-center gap-1 bg-amber-100/60 px-2 py-0.5 rounded border border-amber-300">
-                    <i class="fas fa-crown text-amber-500 text-[10px]"></i> Root Core Leader
+                  <span class="text-[11px] text-indigo-900 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i> Overseeing Staff Leader: <strong class="text-indigo-800">${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')}</strong>
                   </span>
                 `}
               </div>
@@ -1430,7 +1487,12 @@ class CFMApp {
     const hasFilter = this.lineageStageFilter !== 'all' || this.lineageStatusFilter !== 'all' || (this.lineageSearchTerm && this.lineageSearchTerm.length > 0);
 
     if (!hasFilter) {
-      const rootLeaders = this.leads.filter(l => !l.parentLeadId && Boolean(l.networkTier));
+      const rootLeaders = this.leads.filter(l => Boolean(l.networkTier) && (
+        l.networkTier === 'stage-1' || 
+        !l.parentLeadId || 
+        l.parentLeadId.startsWith('staff:') || 
+        !this.leads.some(p => p.id === l.parentLeadId)
+      ));
       if (rootLeaders.length === 0) {
         return `
           <div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
@@ -1543,9 +1605,11 @@ class CFMApp {
                       </div>
                       <div class="text-[10px] text-slate-400">${this.getStageRoleLabel(parent.networkTier)}</div>
                     ` : `
-                      <span class="text-amber-900 font-extrabold flex items-center gap-1 text-[11px]">
-                        <i class="fas fa-crown text-amber-500 text-[10px]"></i> Root Core Leader
-                      </span>
+                      <div class="text-indigo-900 font-bold flex items-center gap-1 text-[11px]">
+                        <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i>
+                        <span>Staff: ${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')}</span>
+                      </div>
+                      <div class="text-[10px] text-slate-400">Overseeing Staff Leader</div>
                     `}
                   </td>
 
@@ -3389,8 +3453,8 @@ class CFMApp {
                         <span class="text-[10px] font-normal text-slate-500">(${this.getStageRoleLabel(parentLead.networkTier)})</span>
                       </span>
                     ` : `
-                      <span class="text-amber-900 flex items-center gap-1 font-extrabold">
-                        <i class="fas fa-crown text-amber-500"></i> Root Core Leader (No Upline - Executive Founder Team)
+                      <span class="text-indigo-900 flex items-center gap-1 font-extrabold">
+                        <i class="fas fa-user-shield text-indigo-600"></i> Staff Leader: ${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')} (Ministry Staff Overseer)
                       </span>
                     `}
                   </div>
@@ -3400,7 +3464,11 @@ class CFMApp {
                 <button onclick="app.openLeadDetails('${parentLead.id}')" class="text-[11px] bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold px-2 py-1 rounded shadow-xs">
                   View Mentor
                 </button>
-              ` : ''}
+              ` : `
+                <span class="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded">
+                  Staff Mentor
+                </span>
+              `}
             </div>
 
             <!-- Level Quota Progress Meter -->
@@ -3698,7 +3766,15 @@ class CFMApp {
       const tierSelect = document.getElementById('modal-lead-network-tier');
       if (tierSelect) tierSelect.value = lead.networkTier || '';
       const parentSelect = document.getElementById('modal-lead-parent');
-      if (parentSelect) parentSelect.value = lead.parentLeadId || '';
+      if (parentSelect) {
+        if (lead.networkTier === 'stage-1') {
+          parentSelect.value = (lead.parentLeadId && lead.parentLeadId.startsWith('staff:'))
+            ? lead.parentLeadId
+            : 'staff:' + (lead.assignedTo || 'Pastor David');
+        } else {
+          parentSelect.value = lead.parentLeadId || '';
+        }
+      }
     } else {
       const defaultUser = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Pastor David';
       this.populateAssignedUserDropdowns(defaultUser);
@@ -3776,6 +3852,12 @@ class CFMApp {
       prayerRequests: document.getElementById('modal-lead-prayer').value.trim(),
       notes: document.getElementById('modal-lead-notes').value.trim()
     };
+
+    if (payload.networkTier === 'stage-1') {
+      if (!payload.parentLeadId || !payload.parentLeadId.startsWith('staff:')) {
+        payload.parentLeadId = 'staff:' + (payload.assignedTo || 'Pastor David');
+      }
+    }
 
     try {
       if (id) {

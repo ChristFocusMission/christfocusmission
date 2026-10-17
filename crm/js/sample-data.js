@@ -10,7 +10,7 @@ const CFM_NETWORK_STAGES = [
     cumulativeMembers: 10,
     multiplier: "Founder Team",
     color: "amber",
-    description: "The core pioneering leadership team initiating the movement and directly mentoring the next level."
+    description: "The core pioneering leadership team tracked and mentored directly by Ministry Staff, initiating the movement and mentoring the next level."
   },
   {
     id: "stage-2",
