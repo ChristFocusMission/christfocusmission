@@ -476,10 +476,10 @@ nav, .kanban-wrapper, .modal-container, .table-responsive {
   }
 }
 
-/* Mobile Lineage Hierarchy Indentation Adjustment */
-@media (max-width: 640px) {
+/* Responsive Lineage Hierarchy Indentation Adjustment */
+@media (max-width: 768px) {
   .lineage-child-node {
-    margin-left: 14px !important;
+    margin-left: 12px !important;
   }
 
   .lineage-child-node::before {
@@ -488,7 +488,7 @@ nav, .kanban-wrapper, .modal-container, .table-responsive {
   }
 
   .lineage-branch-connector {
-    left: 14px !important;
+    left: 12px !important;
   }
 }
 

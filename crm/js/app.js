@@ -1339,7 +1339,7 @@ class CFMApp {
             </div>
 
             <!-- Right: Level Quota Badge & Progress -->
-            <div class="sm:text-right min-w-[240px] space-y-1.5">
+            <div class="sm:text-right w-full sm:w-auto sm:min-w-[200px] shrink-0 space-y-1.5">
               <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs ${info.statusBadgeClass}">
                 <i class="fas ${info.isReached ? 'fa-check-circle text-emerald-600' : info.recruitCount > 0 ? 'fa-chart-line text-amber-600' : 'fa-clock text-slate-400'}"></i>
                 <span>${info.statusLabel}</span>
@@ -1361,33 +1361,34 @@ class CFMApp {
           </div>
 
           <!-- Footer Bar with Metrics and Actions -->
-          <div class="mt-3 pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 text-xs">
+          <div class="mt-3 pt-3 border-t border-slate-100 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 text-xs">
             <!-- Downline Mobilization Summary -->
-            <div class="flex items-center gap-4 text-[11px] text-slate-600">
-              <span>Direct Downline: <strong class="text-slate-900">${info.recruitCount}</strong></span>
-              <span>Total Network: <strong class="text-amber-700">${info.totalTeamSize}</strong></span>
-              <span>Funds Mobilized: <strong class="text-emerald-700">${this.formatCurrency(info.totalMobilized)}</strong></span>
+            <div class="flex items-center gap-3 sm:gap-4 flex-wrap text-[11px] text-slate-600">
+              <span class="whitespace-nowrap">Direct Downline: <strong class="text-slate-900">${info.recruitCount}</strong></span>
+              <span class="whitespace-nowrap">Total Network: <strong class="text-amber-700">${info.totalTeamSize}</strong></span>
+              <span class="whitespace-nowrap">Funds Mobilized: <strong class="text-emerald-700">${this.formatCurrency(info.totalMobilized)}</strong></span>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div class="flex items-center gap-2 flex-wrap w-full xl:w-auto justify-start xl:justify-end">
               ${hasChildren ? `
                 <button onclick="app.toggleLineageNode('${lead.id}')" 
-                        class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isExpanded ? 'bg-slate-200 text-slate-800 hover:bg-slate-300' : 'bg-amber-100 text-amber-900 hover:bg-amber-200'}">
+                        class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${isExpanded ? 'bg-slate-200 text-slate-800 hover:bg-slate-300' : 'bg-amber-100 text-amber-900 hover:bg-amber-200'}">
                   <i class="fas ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-[10px]"></i>
                   <span>${isExpanded ? 'Hide' : 'Show'} Downline (${directRecruits.length})</span>
                 </button>
               ` : `
-                <span class="text-[11px] text-slate-400 italic px-2">No downline recruits</span>
+                <span class="text-[11px] text-slate-400 italic px-2 shrink-0">No downline recruits</span>
               `}
 
               <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" 
-                      class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm">
-                <i class="fas fa-plus text-[10px]"></i> Add Recruit Under ${firstName}
+                      title="Add Recruit Under ${this.escapeHtml(firstName)}"
+                      class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap">
+                <i class="fas fa-plus text-[10px]"></i> Add Recruit
               </button>
 
               <button onclick="app.openLeadDetails('${lead.id}')" 
-                      class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition">
+                      class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition shrink-0 whitespace-nowrap">
                 Profile
               </button>
             </div>
@@ -1483,17 +1484,17 @@ class CFMApp {
 
     return `
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
+        <table class="w-full min-w-[860px] text-left border-collapse text-xs">
           <thead>
             <tr class="bg-slate-100/90 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-              <th class="py-3 px-4">Leader / Organization</th>
-              <th class="py-3 px-4">Stage & Role</th>
-              <th class="py-3 px-4">Recruited Under (Upline Mentor)</th>
-              <th class="py-3 px-4 text-center">Level Quota Progress</th>
-              <th class="py-3 px-4 text-center">Level Status</th>
-              <th class="py-3 px-4 text-right">Downline Team</th>
-              <th class="py-3 px-4 text-right">Mobilized Funds</th>
-              <th class="py-3 px-4 text-center">Actions</th>
+              <th class="py-3 px-4 whitespace-nowrap">Leader / Organization</th>
+              <th class="py-3 px-4 whitespace-nowrap">Stage & Role</th>
+              <th class="py-3 px-4 whitespace-nowrap">Recruited Under (Upline Mentor)</th>
+              <th class="py-3 px-4 text-center whitespace-nowrap">Level Quota Progress</th>
+              <th class="py-3 px-4 text-center whitespace-nowrap">Level Status</th>
+              <th class="py-3 px-4 text-right whitespace-nowrap">Downline Team</th>
+              <th class="py-3 px-4 text-right whitespace-nowrap">Mobilized Funds</th>
+              <th class="py-3 px-4 text-center whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -1505,20 +1506,20 @@ class CFMApp {
               return `
                 <tr class="hover:bg-amber-50/40 transition cursor-pointer" onclick="app.openLeadDetails('${lead.id}')">
                   <!-- Name & Org -->
-                  <td class="py-3 px-4">
+                  <td class="py-3 px-4 whitespace-nowrap">
                     <div class="font-extrabold text-slate-900 text-sm hover:text-amber-600">${this.escapeHtml(lead.name)}</div>
                     ${lead.organization ? `<div class="text-[11px] text-slate-500">${this.escapeHtml(lead.organization)}</div>` : ''}
                   </td>
 
                   <!-- Stage & Role -->
-                  <td class="py-3 px-4">
+                  <td class="py-3 px-4 whitespace-nowrap">
                     <span class="text-[11px] px-2 py-0.5 rounded-full font-bold bg-${info.stageObj ? info.stageObj.color : 'slate'}-100 text-${info.stageObj ? info.stageObj.color : 'slate'}-800 border border-${info.stageObj ? info.stageObj.color : 'slate'}-200">
                       Stage ${info.stageNumber}: ${info.roleTitle}
                     </span>
                   </td>
 
                   <!-- Recruited Under -->
-                  <td class="py-3 px-4" onclick="event.stopPropagation()">
+                  <td class="py-3 px-4 whitespace-nowrap" onclick="event.stopPropagation()">
                     ${parent ? `
                       <div onclick="app.openLeadDetails('${parent.id}')" class="text-amber-800 hover:text-amber-900 font-bold hover:underline flex items-center gap-1 cursor-pointer">
                         <i class="fas fa-level-up-alt rotate-90 text-amber-500"></i>
@@ -1533,7 +1534,7 @@ class CFMApp {
                   </td>
 
                   <!-- Level Quota Progress Bar -->
-                  <td class="py-3 px-4 text-center">
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
                     <div class="inline-flex flex-col items-center gap-1 min-w-[130px]">
                       <div class="flex items-center justify-between w-full text-[11px]">
                         <span class="font-bold text-slate-700">${info.recruitCount} / 10</span>
@@ -1547,26 +1548,26 @@ class CFMApp {
                   </td>
 
                   <!-- Level Status Badge -->
-                  <td class="py-3 px-4 text-center">
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
                     <span class="px-2.5 py-1 rounded-full text-[11px] ${info.statusBadgeClass}">
                       ${info.statusLabel}
                     </span>
                   </td>
 
                   <!-- Downline Team Size -->
-                  <td class="py-3 px-4 text-right font-bold text-slate-900">
+                  <td class="py-3 px-4 text-right font-bold text-slate-900 whitespace-nowrap">
                     ${info.totalTeamSize} <span class="text-[10px] font-normal text-slate-400">members</span>
                   </td>
 
                   <!-- Mobilized Funds -->
-                  <td class="py-3 px-4 text-right font-black text-emerald-700">
+                  <td class="py-3 px-4 text-right font-black text-emerald-700 whitespace-nowrap">
                     ${this.formatCurrency(info.totalMobilized)}
                   </td>
 
                   <!-- Actions -->
-                  <td class="py-3 px-4 text-center" onclick="event.stopPropagation()">
+                  <td class="py-3 px-4 text-center whitespace-nowrap" onclick="event.stopPropagation()">
                     <div class="flex items-center justify-center gap-1">
-                      <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" title="Add Recruit Under Leader" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold shadow-xs">
+                      <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" title="Add Recruit Under Leader" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold shadow-xs whitespace-nowrap">
                         + Recruit
                       </button>
                       <button onclick="app.openLeadDetails('${lead.id}')" title="View Profile" class="p-1 text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100">
@@ -1693,49 +1694,53 @@ class CFMApp {
         </div>
 
         <!-- 4 Key Stat Metric Cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <!-- Total Member Cap -->
-          <div class="bg-white p-3.5 sm:p-4.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Unique Member Target</div>
-            <div class="text-xl sm:text-3xl font-black text-slate-900 mt-1">1,00,000</div>
-            <div class="text-[11px] text-slate-500 mt-2 flex items-center justify-between">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Unique Member Target</div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900 mt-1.5 leading-tight">1,00,000</div>
+            <div class="text-[11px] text-slate-500 mt-2 flex items-center justify-between pt-1 border-t border-slate-100">
               <span>Capped milestone</span>
-              <span class="text-amber-700 font-bold">5 Stages</span>
+              <span class="text-amber-700 font-bold shrink-0">5 Stages</span>
             </div>
           </div>
 
           <!-- Active CRM Mapped -->
-          <div class="bg-white p-4.5 rounded-xl border border-blue-200 shadow-sm flex flex-col justify-between bg-blue-50/20">
-            <div class="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Leaders Enrolled in CRM</div>
-            <div class="text-2xl sm:text-3xl font-black text-blue-900 mt-1">${totalMappedInCRM} <span class="text-xs font-normal text-slate-400">leads mapped</span></div>
-            <div class="text-[11px] text-blue-700 mt-2 flex items-center gap-1">
-              <i class="fas fa-user-check"></i> Assigned in database
+          <div class="bg-white p-4 rounded-xl border border-blue-200 shadow-sm flex flex-col justify-between bg-blue-50/20">
+            <div class="text-[11px] font-bold text-blue-800 uppercase tracking-wider truncate">Enrolled in CRM</div>
+            <div class="text-2xl sm:text-3xl font-black text-blue-900 mt-1.5 leading-tight">
+              ${totalMappedInCRM} <span class="text-xs font-normal text-slate-500">leads</span>
+            </div>
+            <div class="text-[11px] text-blue-700 mt-2 flex items-center gap-1 pt-1 border-t border-blue-100/60 truncate">
+              <i class="fas fa-user-check shrink-0"></i> <span>Assigned in database</span>
             </div>
           </div>
 
           <!-- Selected Model Gross / Monthly -->
-          <div class="bg-white p-4.5 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
-            <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-              ${isModelA ? 'Model A Gross Collections' : 'Model B Monthly Run-Rate'}
+          <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
+            <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider truncate" title="${isModelA ? 'Model A Gross Collections' : 'Model B Monthly Run-Rate'}">
+              ${isModelA ? 'Model A Gross Total' : 'Model B Monthly Run-Rate'}
             </div>
-            <div class="text-2xl sm:text-3xl font-black text-emerald-700 mt-1">
-              ${this.formatINR(isModelA ? modelAGross : modelBMonthlyGross)}
+            <div class="text-2xl sm:text-3xl font-black text-emerald-700 mt-1.5 leading-tight truncate" title="${this.formatINR(isModelA ? modelAGross : modelBMonthlyGross)}">
+              ${this.formatINR(isModelA ? modelAGross : modelBMonthlyGross, true)}
             </div>
-            <div class="text-[11px] text-emerald-700 mt-2 flex items-center gap-1 font-semibold">
-              <i class="fas fa-coins text-emerald-600"></i> ${isModelA ? '₹10 Crore one-off total' : '₹10 Crore / month gross'}
+            <div class="text-[11px] text-emerald-700 mt-2 flex items-center gap-1 font-semibold pt-1 border-t border-emerald-100/60 truncate">
+              <i class="fas fa-coins text-emerald-600 shrink-0"></i> 
+              <span class="truncate">${isModelA ? '₹10 Cr one-off gross' : '₹10 Cr / month gross'}</span>
             </div>
           </div>
 
           <!-- Annualized Run Rate (Model B) or Contribution Basis -->
-          <div class="bg-white p-4.5 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between bg-amber-50/20">
-            <div class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">
-              ${isModelA ? 'Per Member Contribution' : 'Model B Annualized Run-Rate'}
+          <div class="bg-white p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-between bg-amber-50/20">
+            <div class="text-[11px] font-bold text-amber-900 uppercase tracking-wider truncate" title="${isModelA ? 'Per Member Contribution' : 'Model B Annualized Run-Rate'}">
+              ${isModelA ? 'Per Member Contribution' : 'Model B Annualized'}
             </div>
-            <div class="text-2xl sm:text-3xl font-black text-amber-900 mt-1">
-              ${isModelA ? this.formatINR(contribution) : this.formatINR(modelBAnnualizedGross)}
+            <div class="text-2xl sm:text-3xl font-black text-amber-900 mt-1.5 leading-tight truncate" title="${isModelA ? this.formatINR(contribution) : this.formatINR(modelBAnnualizedGross)}">
+              ${isModelA ? this.formatINR(contribution) : this.formatINR(modelBAnnualizedGross, true)}
             </div>
-            <div class="text-[11px] text-amber-800 mt-2 flex items-center gap-1 font-semibold">
-              ${isModelA ? 'One-time per member' : '₹120 Crore / year (12-mo run-rate)'}
+            <div class="text-[11px] text-amber-800 mt-2 flex items-center gap-1 font-semibold pt-1 border-t border-amber-100/60 truncate">
+              <i class="fas fa-calendar-alt text-amber-600 shrink-0"></i> 
+              <span class="truncate">${isModelA ? 'One-time per member' : '₹120 Cr / year (12-mo)'}</span>
             </div>
           </div>
         </div>
@@ -1743,7 +1748,7 @@ class CFMApp {
         <!-- Interactive Simulation Controller Bar -->
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div class="space-y-0.5">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
               <i class="fas fa-sliders-h text-amber-600"></i> Growth Activation Simulator:
               <span class="text-amber-700 font-black">${this.networkActivationPct}% Target Reach</span>
               <span class="text-slate-400 font-normal">(${activeScaledMembers.toLocaleString('en-IN')} Members)</span>
@@ -1751,11 +1756,11 @@ class CFMApp {
             <p class="text-[11px] text-slate-500">Test progressive scaling projections before 100% capacity is reached.</p>
           </div>
 
-          <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="flex items-center gap-2 sm:gap-3 w-full md:w-auto flex-wrap sm:flex-nowrap">
             <input type="range" min="10" max="100" step="5" value="${this.networkActivationPct}" 
                    oninput="app.setNetworkActivation(this.value)"
                    class="w-full md:w-56 accent-amber-600 cursor-pointer">
-            <div class="flex gap-1.5">
+            <div class="flex gap-1.5 shrink-0">
               <button onclick="app.setNetworkActivation(25)" class="px-2 py-1 text-[11px] font-bold rounded border ${this.networkActivationPct === 25 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700'}">25%</button>
               <button onclick="app.setNetworkActivation(50)" class="px-2 py-1 text-[11px] font-bold rounded border ${this.networkActivationPct === 50 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700'}">50%</button>
               <button onclick="app.setNetworkActivation(100)" class="px-2 py-1 text-[11px] font-bold rounded border ${this.networkActivationPct === 100 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700'}">100%</button>
@@ -1773,7 +1778,7 @@ class CFMApp {
             <span class="text-xs font-semibold text-slate-400">Progression Ratio: 10x</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
             ${stages.map((stage, idx) => {
               const scaledNewMembers = Math.round(stage.targetMembers * factor);
               const scaledCumMembers = Math.round(stage.cumulativeMembers * factor);
@@ -1821,18 +1826,18 @@ class CFMApp {
                     </div>
 
                     <!-- Financial Yield -->
-                    <div class="space-y-1 text-xs">
-                      <div class="flex justify-between text-[11px]">
-                        <span class="text-slate-500">Model A (One-time):</span>
-                        <span class="font-bold text-slate-900">${this.formatINR(stageModelA, true)}</span>
+                    <div class="space-y-1.5 text-xs pt-1">
+                      <div class="flex items-center justify-between gap-1 text-[11px]">
+                        <span class="text-slate-500 truncate" title="Model A (One-Time)">One-Time (A):</span>
+                        <span class="font-bold text-slate-900 shrink-0">${this.formatINR(stageModelA, true)}</span>
                       </div>
-                      <div class="flex justify-between text-[11px]">
-                        <span class="text-slate-500">Model B (Monthly):</span>
-                        <span class="font-bold text-emerald-700">${this.formatINR(stageModelBMonthly, true)}</span>
+                      <div class="flex items-center justify-between gap-1 text-[11px]">
+                        <span class="text-slate-500 truncate" title="Model B (Monthly)">Monthly (B):</span>
+                        <span class="font-bold text-emerald-700 shrink-0">${this.formatINR(stageModelBMonthly, true)}</span>
                       </div>
-                      <div class="flex justify-between text-[11px] font-bold pt-1 border-t border-slate-100">
-                        <span class="text-slate-700">Model B (Annual):</span>
-                        <span class="text-amber-900">${this.formatINR(stageModelBAnnual, true)}</span>
+                      <div class="flex items-center justify-between gap-1 text-[11px] font-bold pt-1 border-t border-slate-100">
+                        <span class="text-slate-700 truncate" title="Model B (Annual)">Annual (B):</span>
+                        <span class="text-amber-900 shrink-0">${this.formatINR(stageModelBAnnual, true)}</span>
                       </div>
                     </div>
                   </div>
@@ -1892,26 +1897,26 @@ class CFMApp {
             <!-- Level Milestone Summary Counter Badges -->
             <div class="flex items-center gap-2 flex-wrap">
               <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-check-circle text-emerald-600 text-sm"></i>
-                <div>
-                  <div class="font-extrabold leading-none text-emerald-700">${reachedCount} Leaders</div>
-                  <div class="text-[10px] text-emerald-800">Reached Level Quota (10/10) ✓</div>
+                <i class="fas fa-check-circle text-emerald-600 text-sm shrink-0"></i>
+                <div class="space-y-0.5">
+                  <div class="font-extrabold leading-snug text-emerald-700">${reachedCount} Leaders</div>
+                  <div class="text-[10px] text-emerald-800 leading-normal">Reached Level Quota (10/10) ✓</div>
                 </div>
               </div>
 
               <div class="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-chart-line text-amber-600 text-sm"></i>
-                <div>
-                  <div class="font-extrabold leading-none text-amber-800">${progressCount} Leaders</div>
-                  <div class="text-[10px] text-amber-700">In Progress (1-9 recruits)</div>
+                <i class="fas fa-chart-line text-amber-600 text-sm shrink-0"></i>
+                <div class="space-y-0.5">
+                  <div class="font-extrabold leading-snug text-amber-800">${progressCount} Leaders</div>
+                  <div class="text-[10px] text-amber-700 leading-normal">In Progress (1-9 recruits)</div>
                 </div>
               </div>
 
               <div class="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-clock text-slate-400 text-sm"></i>
-                <div>
-                  <div class="font-extrabold leading-none text-slate-700">${pendingCount} Leaders</div>
-                  <div class="text-[10px] text-slate-500">Not Started (0 recruits)</div>
+                <i class="fas fa-clock text-slate-400 text-sm shrink-0"></i>
+                <div class="space-y-0.5">
+                  <div class="font-extrabold leading-snug text-slate-700">${pendingCount} Leaders</div>
+                  <div class="text-[10px] text-slate-500 leading-normal">Not Started (0 recruits)</div>
                 </div>
               </div>
             </div>
@@ -2008,17 +2013,17 @@ class CFMApp {
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
+            <table class="w-full min-w-[900px] text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-slate-100/80 border-b border-slate-200 font-bold text-slate-700 uppercase tracking-wider text-[11px]">
-                  <th class="py-3 px-4">Stage</th>
-                  <th class="py-3 px-4">Role Title</th>
-                  <th class="py-3 px-4 text-right">Target Members</th>
-                  <th class="py-3 px-4 text-right">Cumulative Target</th>
-                  <th class="py-3 px-4 text-center">Target Met (Progress)</th>
-                  <th class="py-3 px-4 text-right">Model A One-Time Gross</th>
-                  <th class="py-3 px-4 text-right">Model B Monthly Gross</th>
-                  <th class="py-3 px-4 text-right">Model B Annualized Run-Rate</th>
+                  <th class="py-3 px-4 whitespace-nowrap">Stage</th>
+                  <th class="py-3 px-4 whitespace-nowrap">Role Title</th>
+                  <th class="py-3 px-4 text-right whitespace-nowrap">Target Members</th>
+                  <th class="py-3 px-4 text-right whitespace-nowrap">Cumulative Target</th>
+                  <th class="py-3 px-4 text-center whitespace-nowrap">Target Met (Progress)</th>
+                  <th class="py-3 px-4 text-right whitespace-nowrap">Model A One-Time Gross</th>
+                  <th class="py-3 px-4 text-right whitespace-nowrap">Model B Monthly Gross</th>
+                  <th class="py-3 px-4 text-right whitespace-nowrap">Model B Annualized Run-Rate</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -2035,21 +2040,21 @@ class CFMApp {
 
                   return `
                     <tr class="hover:bg-amber-50/40 transition">
-                      <td class="py-3 px-4 font-bold text-slate-900">
+                      <td class="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">
                         Stage ${s.stageNumber} ${s.isCapped ? '<span class="text-[10px] text-emerald-600 font-normal">(Capped)</span>' : ''}
                       </td>
-                      <td class="py-3 px-4 font-medium text-slate-800">
+                      <td class="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
                         ${s.role}
                       </td>
-                      <td class="py-3 px-4 text-right font-bold text-slate-900">
+                      <td class="py-3 px-4 text-right font-bold text-slate-900 whitespace-nowrap">
                         ${newM.toLocaleString('en-IN')}
                       </td>
-                      <td class="py-3 px-4 text-right font-black text-amber-700">
+                      <td class="py-3 px-4 text-right font-black text-amber-700 whitespace-nowrap">
                         ${cumM.toLocaleString('en-IN')}
                       </td>
-                      <td class="py-3 px-4 text-center">
+                      <td class="py-3 px-4 text-center whitespace-nowrap">
                         <div class="inline-flex flex-col items-center gap-1">
-                          <div class="flex items-center gap-1.5">
+                          <div class="flex items-center gap-1.5 whitespace-nowrap">
                             ${isMet ? `
                               <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shadow-sm">
                                 <i class="fas fa-check-circle text-emerald-600"></i> Target Met (${actualMembers}/${newM.toLocaleString('en-IN')})
@@ -2071,13 +2076,13 @@ class CFMApp {
                           </div>
                         </div>
                       </td>
-                      <td class="py-3 px-4 text-right font-bold text-slate-800">
+                      <td class="py-3 px-4 text-right font-bold text-slate-800 whitespace-nowrap">
                         ${this.formatINR(mAGross)}
                       </td>
-                      <td class="py-3 px-4 text-right font-bold text-emerald-700">
+                      <td class="py-3 px-4 text-right font-bold text-emerald-700 whitespace-nowrap">
                         ${this.formatINR(mBMo)}
                       </td>
-                      <td class="py-3 px-4 text-right font-black text-amber-900">
+                      <td class="py-3 px-4 text-right font-black text-amber-900 whitespace-nowrap">
                         ${this.formatINR(mBAnn)}
                       </td>
                     </tr>
@@ -2091,7 +2096,7 @@ class CFMApp {
                   const totalPct = ((totalActualMembers / totalTarget) * 100).toFixed(2);
                   const isTotalMet = totalActualMembers >= totalTarget;
                   return `
-                    <tr class="bg-slate-900 text-white font-bold text-xs border-t-2 border-amber-500">
+                    <tr class="bg-slate-900 text-white font-bold text-xs border-t-2 border-amber-500 whitespace-nowrap">
                       <td class="py-3.5 px-4" colspan="2">TOTAL MILESTONE CAPACITY</td>
                       <td class="py-3.5 px-4 text-right">1,00,000</td>
                       <td class="py-3.5 px-4 text-right text-amber-300">1,00,000</td>
