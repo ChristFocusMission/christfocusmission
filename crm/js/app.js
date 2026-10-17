@@ -5,11 +5,11 @@
 
 // Streamlined 5-Stage Donor Progression Pipeline
 const CFM_STAGES = [
-  { id: 'new', label: 'New / Identified', color: 'slate', icon: 'fa-user-plus' },
+  { id: 'new', label: 'New Leads', color: 'slate', icon: 'fa-user-plus' },
   { id: 'contacted', label: 'Contacted', color: 'blue', icon: 'fa-paper-plane' },
-  { id: 'in_discussion', label: 'Meeting & Proposal', color: 'purple', icon: 'fa-comments' },
-  { id: 'committed', label: 'Committed Partner', color: 'emerald', icon: 'fa-heart' },
-  { id: 'closed', label: 'Deferred / Closed', color: 'gray', icon: 'fa-box-archive' }
+  { id: 'in_discussion', label: 'In Discussion', color: 'purple', icon: 'fa-comments' },
+  { id: 'committed', label: 'Committed', color: 'emerald', icon: 'fa-heart' },
+  { id: 'closed', label: 'Closed', color: 'gray', icon: 'fa-box-archive' }
 ];
 
 const CURRENCY_SYMBOLS = {
@@ -929,7 +929,7 @@ class CFMApp {
       <div class="space-y-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Christ Focus Mission Campaigns & Funds</h2>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Mission Campaigns & Funds</h2>
             <p class="text-xs text-slate-500">Track target vs raised pledges for each strategic mission priority.</p>
           </div>
           ${this.userRole === 'admin' ? `
@@ -2230,7 +2230,7 @@ class CFMApp {
             <div class="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
               <i class="fas fa-hands-helping"></i> Christ Focus Mission Pastoral & Stewardship Care
             </div>
-            <h2 class="text-xl font-bold font-serif-title">Ministry Partner Follow-ups & Intercession</h2>
+            <h2 class="text-base sm:text-xl font-bold font-serif-title leading-tight">Partner Follow-ups & Intercession</h2>
             <p class="text-xs text-blue-200 mt-1 max-w-2xl">
               "Every fundraising conversation is an opportunity for prayer and fellowship. Follow up promptly and pray for your partners."
             </p>
@@ -2395,7 +2395,7 @@ class CFMApp {
       <div class="space-y-6">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 class="text-lg font-bold text-slate-900">Fundraising Pipeline Analytics & Reports</h2>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Pipeline Analytics & Reports</h2>
             <p class="text-xs text-slate-500">Real-time health, probability weighting, and lead distribution</p>
           </div>
           <button onclick="app.exportLeadsCSV()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
@@ -2513,9 +2513,9 @@ class CFMApp {
                 • ${isLive ? `<span class="text-emerald-400 font-semibold"><i class="fas fa-check-circle mr-1"></i>Cloud Firestore (${this.escapeHtml(savedConfig?.projectId || 'Connected')})</span>` : '<span class="text-amber-400 font-semibold"><i class="fas fa-database mr-1"></i>Local Storage Mode</span>'}
               </span>
             </div>
-            <h2 class="text-xl font-bold font-heading text-white flex items-center gap-2">
+            <h2 class="text-base sm:text-xl font-bold font-heading text-white flex items-center gap-2 leading-tight">
               <i class="fas fa-shield-halved text-amber-400"></i>
-              <span>Administration & System Settings</span>
+              <span>Administrator Control Center</span>
             </h2>
             <p class="text-xs text-slate-300 max-w-2xl">
               Manage team members & passwords, configure Google Firebase Cloud Firestore, test connections, and manage permissions.

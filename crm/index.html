@@ -48,8 +48,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Custom Styles (cache-busted v2.8.3) -->
-  <link rel="stylesheet" href="css/styles.css?v=2.8.3">
+  <!-- Custom Styles (cache-busted v2.8.4) -->
+  <link rel="stylesheet" href="css/styles.css?v=2.8.4">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-crm">
 
@@ -133,7 +133,7 @@
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-1 sm:gap-2">
-              <h1 class="text-xs sm:text-lg md:text-xl font-bold tracking-tight text-white font-heading truncate max-w-[110px] sm:max-w-none">
+              <h1 class="text-xs sm:text-base md:text-xl font-bold tracking-tight text-white font-heading whitespace-nowrap">
                 Christ Focus Mission
               </h1>
               <span class="text-[9px] sm:text-[10px] font-bold px-1 sm:px-2 py-0.2 sm:py-0.5 rounded bg-[#1BA3CC]/20 text-[#1BA3CC] border border-[#1BA3CC]/30 uppercase tracking-widest shrink-0">
@@ -230,7 +230,7 @@
     <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
       <!-- Total Pipeline -->
       <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pipeline Potential</div>
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap truncate" title="Pipeline Potential">Total Pipeline</div>
         <div id="metric-total-pipeline" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">₹0</div>
         <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-stream text-amber-500"></i> All active stages
@@ -239,7 +239,7 @@
 
       <!-- Committed / Won -->
       <div class="bg-white p-3 sm:p-4 rounded-xl border border-emerald-200 shadow-sm flex flex-col justify-between bg-emerald-50/20">
-        <div class="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider truncate">Committed / Raised</div>
+        <div class="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-wider whitespace-nowrap truncate" title="Committed / Raised">Total Raised</div>
         <div id="metric-total-committed" class="text-lg sm:text-2xl font-black text-emerald-700 mt-1 truncate">₹0</div>
         <div class="text-[10px] sm:text-[11px] text-emerald-600 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-check-double"></i> Confirmed partners
@@ -248,7 +248,7 @@
 
       <!-- Active Prospects -->
       <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Prospects</div>
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap truncate" title="Active Prospects">Active Leads</div>
         <div id="metric-active-leads" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0</div>
         <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-user-clock text-blue-500"></i> In discussions
@@ -257,7 +257,7 @@
 
       <!-- Conversion Rate -->
       <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
-        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap truncate" title="Conversion Rate">Win Rate</div>
         <div id="metric-conversion-rate" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0%</div>
         <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="fas fa-chart-line text-indigo-500"></i> Closed won ratio
@@ -266,7 +266,7 @@
 
       <!-- Follow-ups Due -->
       <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between col-span-2 sm:col-span-1">
-        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Follow-ups Due</div>
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap truncate" title="Follow-ups Due">Follow-ups Due</div>
         <div id="metric-followups-due" class="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">0</div>
         <div class="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center gap-1 truncate">
           <i class="far fa-bell text-rose-500"></i> Due today or past
@@ -1213,9 +1213,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.3) -->
-  <script src="js/sample-data.js?v=2.8.3"></script>
-  <script src="js/firebase-config.js?v=2.8.3"></script>
-  <script src="js/app.js?v=2.8.3"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.8.4) -->
+  <script src="js/sample-data.js?v=2.8.4"></script>
+  <script src="js/firebase-config.js?v=2.8.4"></script>
+  <script src="js/app.js?v=2.8.4"></script>
 </body>
 </html>
