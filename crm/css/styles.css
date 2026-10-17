@@ -151,6 +151,19 @@ body.role-crm .admin-only {
   flex-shrink: 0;
 }
 
+@media (min-width: 1024px) {
+  .kanban-wrapper {
+    overflow-x: visible !important;
+  }
+  .kanban-column {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    flex-shrink: 1 !important;
+  }
+}
+
 .kanban-column.drag-over {
   background-color: #eff6ff !important;
   border: 2px dashed #1BA3CC !important;

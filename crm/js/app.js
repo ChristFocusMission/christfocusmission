@@ -454,8 +454,8 @@ class CFMApp {
         </div>
       </div>
 
-      <div class="kanban-wrapper w-full overflow-x-auto pb-8 pt-1 no-scrollbar">
-        <div class="flex items-start gap-3 sm:gap-4 min-w-max">
+      <div class="kanban-wrapper w-full overflow-x-auto lg:overflow-x-visible pb-8 pt-1 no-scrollbar">
+        <div class="flex items-start gap-2.5 sm:gap-3 lg:gap-3 min-w-max lg:min-w-0 w-full">
     `;
 
     CFM_STAGES.forEach(stage => {
@@ -480,39 +480,39 @@ class CFMApp {
         }
 
         html += `
-          <div class="flex flex-col w-[88vw] sm:w-[320px] min-w-[88vw] sm:min-w-[320px] max-w-[88vw] sm:max-w-[320px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
+          <div class="flex flex-col w-[85vw] sm:w-[280px] lg:w-auto lg:flex-1 lg:min-w-0 flex-shrink-0 lg:flex-shrink bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
                data-stage-column="closed"
                ondragover="app.handleDragOver(event)"
                ondragleave="app.handleDragLeave(event)"
                ondrop="app.handleDrop(event, 'committed')">
             <!-- Column Header -->
-            <div class="p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Closed (Outcome)</h3>
+            <div class="p-2.5 sm:p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
+              <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 truncate" title="Closed (Outcome)">Closed (Outcome)</h3>
               </div>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 shrink-0">
                 ${stageLeads.length}
               </span>
             </div>
 
             <!-- Subheader / Committed Value -->
             <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500 flex justify-between">
-              <span>Committed Potential:</span>
-              <span class="font-bold text-emerald-700">${this.formatCurrency(committedTotal)}</span>
+              <span class="truncate mr-1">Committed:</span>
+              <span class="font-bold text-emerald-700 shrink-0">${this.formatCurrency(committedTotal)}</span>
             </div>
 
             <!-- Sub-options Segmented Control (Committed vs Not Interested) -->
             <div class="p-1.5 bg-white border-b border-slate-200">
-              <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-[11px] font-semibold w-full">
-                <button onclick="app.setClosedSubFilter('all')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200' : 'text-slate-600 hover:text-slate-900'}">
+              <div class="inline-flex rounded-lg bg-slate-100 p-0.5 text-[10px] sm:text-[11px] font-semibold w-full">
+                <button onclick="app.setClosedSubFilter('all')" class="flex-1 py-1 px-1 rounded-md transition text-center truncate ${this.closedSubFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-bold border border-slate-200' : 'text-slate-600 hover:text-slate-900'}">
                   All (${stageLeads.length})
                 </button>
-                <button onclick="app.setClosedSubFilter('committed')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'committed' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-emerald-700'}">
-                  <i class="fas fa-heart text-[10px] mr-1 ${this.closedSubFilter === 'committed' ? 'text-white' : 'text-emerald-500'}"></i>Committed (${committedLeads.length})
+                <button onclick="app.setClosedSubFilter('committed')" class="flex-1 py-1 px-1 rounded-md transition text-center truncate ${this.closedSubFilter === 'committed' ? 'bg-emerald-600 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-emerald-700'}">
+                  <i class="fas fa-heart text-[9px] mr-0.5 ${this.closedSubFilter === 'committed' ? 'text-white' : 'text-emerald-500'}"></i>Committed (${committedLeads.length})
                 </button>
-                <button onclick="app.setClosedSubFilter('not_interested')" class="flex-1 py-1 px-1 rounded-md transition text-center ${this.closedSubFilter === 'not_interested' ? 'bg-slate-700 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'}">
-                  <i class="fas fa-ban text-[10px] mr-1 ${this.closedSubFilter === 'not_interested' ? 'text-white' : 'text-rose-500'}"></i>Not Int. (${notInterestedLeads.length})
+                <button onclick="app.setClosedSubFilter('not_interested')" class="flex-1 py-1 px-1 rounded-md transition text-center truncate ${this.closedSubFilter === 'not_interested' ? 'bg-slate-700 text-white shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'}">
+                  <i class="fas fa-ban text-[9px] mr-0.5 ${this.closedSubFilter === 'not_interested' ? 'text-white' : 'text-rose-500'}"></i>Not Int. (${notInterestedLeads.length})
                 </button>
               </div>
             </div>
@@ -521,14 +521,14 @@ class CFMApp {
             <div class="px-2 pt-2 pb-1">
               <div class="grid grid-cols-2 gap-1.5 text-center text-xs">
                 <div ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" ondrop="event.stopPropagation(); app.handleDrop(event, 'committed')" 
-                     class="py-1.5 px-1 bg-emerald-50 hover:bg-emerald-100 border border-dashed border-emerald-300 rounded-lg text-emerald-800 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
-                  <i class="fas fa-heart text-emerald-600 text-[10px]"></i>
-                  <span>Drop: Committed</span>
+                     class="py-1 px-1 bg-emerald-50 hover:bg-emerald-100 border border-dashed border-emerald-300 rounded-lg text-emerald-800 text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs whitespace-nowrap">
+                  <i class="fas fa-heart text-emerald-600 text-[10px] shrink-0"></i>
+                  <span class="truncate">Drop: Committed</span>
                 </div>
                 <div ondragover="app.handleDragOver(event)" ondragleave="app.handleDragLeave(event)" ondrop="event.stopPropagation(); app.handleDrop(event, 'closed')" 
-                     class="py-1.5 px-1 bg-slate-50 hover:bg-rose-50 border border-dashed border-slate-300 hover:border-rose-300 rounded-lg text-slate-700 hover:text-rose-800 text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
-                  <i class="fas fa-ban text-rose-500 text-[10px]"></i>
-                  <span>Drop: Not Int.</span>
+                     class="py-1 px-1 bg-slate-50 hover:bg-rose-50 border border-dashed border-slate-300 hover:border-rose-300 rounded-lg text-slate-700 hover:text-rose-800 text-[10px] sm:text-[11px] font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-2xs whitespace-nowrap">
+                  <i class="fas fa-ban text-rose-500 text-[10px] shrink-0"></i>
+                  <span class="truncate">Drop: Not Int.</span>
                 </div>
               </div>
             </div>
@@ -548,26 +548,26 @@ class CFMApp {
         stageTotal = stageLeads.reduce((sum, l) => sum + (Number(l.expectedAmount) || 0), 0);
 
         html += `
-          <div class="flex flex-col w-[86vw] sm:w-[300px] min-w-[86vw] sm:min-w-[300px] max-w-[86vw] sm:max-w-[300px] flex-shrink-0 bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
+          <div class="flex flex-col w-[85vw] sm:w-[280px] lg:w-auto lg:flex-1 lg:min-w-0 flex-shrink-0 lg:flex-shrink bg-slate-100/95 rounded-xl border border-slate-200/90 shadow-sm kanban-column"
                data-stage-column="${stage.id}"
                ondragover="app.handleDragOver(event)"
                ondragleave="app.handleDragLeave(event)"
                ondrop="app.handleDrop(event, '${stage.id}')">
             <!-- Column Header -->
-            <div class="p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-${stage.color}-500"></span>
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">${stage.label}</h3>
+            <div class="p-2.5 sm:p-3 border-b border-slate-200 bg-white/70 rounded-t-xl flex items-center justify-between">
+              <div class="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-${stage.color}-500 shrink-0"></span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 truncate" title="${stage.label}">${stage.label}</h3>
               </div>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 shrink-0">
                 ${stageLeads.length}
               </span>
             </div>
 
             <!-- Subheader / Column Pipeline Amount -->
             <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[11px] font-medium text-slate-500 flex justify-between">
-              <span>Potential:</span>
-              <span class="font-bold text-slate-800">${this.formatCurrency(stageTotal)}</span>
+              <span class="truncate mr-1">Potential:</span>
+              <span class="font-bold text-slate-800 shrink-0">${this.formatCurrency(stageTotal)}</span>
             </div>
 
             <!-- Cards List -->
