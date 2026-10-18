@@ -45,12 +45,12 @@
     <div class="row">
       <div>
         <div class="count" id="count">0</div>
-        <div class="of">of 1,00,000 supporters</div>
+        <div class="of">supporters are helping children learn music</div>
       </div>
       <div class="raised"><b id="raised">₹0</b>raised so far</div>
     </div>
     <div class="bar"><div class="fill" id="fill"></div></div>
-    <div class="meta"><span id="pct">0%</span><span id="left">1,00,000 to go</span></div>
+    <div class="meta"><span id="pct">0%</span><span id="left">Our goal: 1,00,000 supporters</span></div>
     <a class="btn" id="cta" href="https://www.christfocusmission.org/kingdavid/support/" target="_blank" rel="noopener">Become a supporter · ₹1,000+</a>
     <div class="note">🔒 Secure payment by Razorpay · opens in a new tab</div>
   </div>
@@ -78,7 +78,7 @@
       const pct = Math.min(100, (d.supporters / GOAL) * 100);
       $("fill").style.width = pct + "%";
       $("pct").textContent = pct > 0 && pct < 0.01 ? "<0.01%" : (pct < 1 ? pct.toFixed(2) : pct.toFixed(1)) + "%";
-      $("left").textContent = d.supporters >= GOAL ? "Goal reached! 🎉" : fmt(GOAL - d.supporters) + " to go";
+      $("left").textContent = d.supporters >= GOAL ? "Goal reached! 🎉" : "Our goal: " + fmt(GOAL) + " supporters (" + fmt(GOAL - d.supporters) + " to go)";
       shown = { s: d.supporters, a: d.amount_inr }; first = false;
     } catch (e) { /* try again next round */ }
   }

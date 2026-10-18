@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="theme-color" content="#5B5BAA">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>1,00,000 Supporters · Music for Every Child</title>
-<meta name="description" content="Join 1,00,000 supporters bringing music to every child. Contribute ₹1,000 or more and watch the count grow live.">
-<meta property="og:title" content="Be one of 1,00,000 supporters — Music for Every Child">
-<meta property="og:description" content="Contribute ₹1,000 or more and help bring music to every child.">
+<title>Supporters · Music for Every Child · Christ Focus Mission</title>
+<meta name="description" content="Supporters bringing music to every child. Contribute ₹1,000 or more and watch our community grow live.">
+<meta property="og:title" content="Music for Every Child · King David Project">
+<meta property="og:description" content="Contribute ₹1,000 or more and help bring free music education to underprivileged children.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -190,21 +190,21 @@
   <header class="hero">
     <div>
       <span class="eyebrow">♪ Empowering 1000 Young Dreams</span>
-      <h1>1,00,000 supporters.<br>Music for <em>every child.</em></h1>
-      <p class="lead">Every ₹1,000 adds one more voice to this movement — and you can watch it grow, live, right here.</p>
-      <a class="btn pay-link" href="#give" id="heroBtn">Become supporter #1</a>
-      <div class="hero-sub">Minimum contribution ₹1,000 · Secure payment via Razorpay</div>
+      <h1>Music for <em>every child.</em><br><span style="font-size:0.65em;display:block;margin-top:10px;font-weight:700;color:var(--ink-2)">Join our community of supporters giving free music education to underprivileged children.</span></h1>
+      <p class="lead">Every contribution directly funds lessons, instruments, and Trinity College London examinations for children who need it most.</p>
+      <a class="btn pay-link" href="#give" id="heroBtn">Become a supporter</a>
+      <div class="hero-sub">Secure payment via Razorpay · Indian citizens & accounts only</div>
     </div>
 
     <div class="live" aria-live="polite">
       <div class="live-head">
-        <span class="live-tag"><span class="dot"></span>LIVE</span>
+        <span class="live-tag"><span class="dot"></span>LIVE COUNTER</span>
         <span class="updated" id="updated">connecting…</span>
       </div>
       <div class="count" id="count">0</div>
-      <div class="count-of">of <span id="goalText">1,00,000</span> supporters</div>
+      <div class="count-of" id="countLabel">supporters are helping children learn music</div>
       <div class="bar" role="progressbar" aria-label="Progress to goal" aria-valuemin="0" aria-valuemax="100" id="bar"><div class="bar-fill" id="barFill"></div></div>
-      <div class="bar-meta"><span id="pct">0%</span><span id="left">1,00,000 to go</span></div>
+      <div class="bar-meta"><span id="pct">0%</span><span id="left">Our goal: 1,00,000 supporters</span></div>
       <div class="stats">
         <div class="stat"><b id="raised">₹0</b><span>raised of ₹10 crore</span></div>
         <div class="stat"><b id="subscribers">0</b><span>monthly subscribers</span></div>
@@ -267,6 +267,17 @@
           <option value="5000">₹5,000 a month</option>
           <option value="10000">₹10,000 a month</option>
         </select>
+        <div class="pledge-terms" style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin:0 0 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
+          <b style="color:var(--ink);display:block;margin-bottom:6px;font-size:14px;">Monthly pledge terms</b>
+          <ul style="margin:0;padding-left:18px;display:grid;gap:6px;">
+            <li>Your donation is debited automatically through Razorpay. You'll get a notice before each debit and a receipt after.</li>
+            <li>You can cancel anytime using the link in your receipt or by emailing <a href="mailto:admin@christfocusmission.org" style="color:var(--indigo);font-weight:700;">admin@christfocusmission.org</a>.</li>
+            <li>Donations can't be refunded, except for debits made in error, which are refunded within 30 days.</li>
+            <li>The money supports King David and other charitable work of the trust.</li>
+            <li>Donations aren't eligible for 80G. Only Indian citizens can give, and you'll need to provide your PAN and address.</li>
+            <li><em>Privacy note:</em> We respect your privacy. Donor names, PAN, contact, and pledge details are stored securely and never sold or shared with third parties.</li>
+          </ul>
+        </div>
         <div id="subWrap">
           <!-- One Razorpay Subscription Button per amount; the dropdown shows the matching one -->
           <div class="rzp-wrap sub-btn" data-amount="1000"><form><script src="https://cdn.razorpay.com/static/widget/subscription-button.js" data-subscription_button_id="pl_TnRQk50Klw1Whp" data-button_theme="brand-color" async></script></form></div>
@@ -277,6 +288,12 @@
         <div class="soon" id="subSoon" hidden>Monthly giving opens very soon. Meanwhile, you can give once.</div>
       </div>
 
+      <div style="background:#FFF0BF;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--ink);font-weight:600;margin-top:16px;line-height:1.45;">
+        Christ Focus Mission is a registered public charitable trust (PAN AADTC2907R). Donations are not currently eligible for 80G tax deduction; we will update supporters if this changes.
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:10px;font-weight:600;text-align:center;">
+        🇮🇳 Donations are accepted only from Indian citizens using Indian bank accounts or cards. We cannot accept foreign contributions.
+      </div>
       <div class="err" id="err" role="alert"></div>
       <div class="secure">🔒 Payments processed securely by Razorpay</div>
     </div>
@@ -284,7 +301,7 @@
 </section>
 
 <footer>
-  <div class="wrap">Music for Every Child · Christ Focus Mission · <a href="/kingdavid/">Home</a> · Contributions to Christ Focus Mission are eligible for deduction u/s 80G</div>
+  <div class="wrap">Music for Every Child · Christ Focus Mission · <a href="/kingdavid/">Home</a> · Trust PAN: AADTC2907R</div>
 </footer>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="tyTitle">
@@ -293,7 +310,7 @@
     <h3 id="tyTitle">Thank you, <span id="tyName">friend</span>!</h3>
     <p>You're now part of the movement. The count is</p>
     <div class="badge" id="tyNum">#1</div>
-    <p id="tyNote">Ask two friends to join you — that's how we reach 1,00,000.</p>
+    <p id="tyNote">Invite your friends to join in bringing music to every child.</p>
     <div class="share">
       <a class="wa" id="waShare" target="_blank" rel="noopener">Share on WhatsApp</a>
       <button type="button" id="copyLink">Copy link</button>
@@ -356,7 +373,7 @@ function render(s) {
   $("barFill").style.width = pct + "%";
   $("bar").setAttribute("aria-valuenow", pct.toFixed(2));
   $("pct").textContent = pct > 0 && pct < 0.01 ? "<0.01%" : (pct < 1 ? pct.toFixed(2) : pct.toFixed(1)) + "%";
-  $("left").textContent = s.supporters >= GOAL ? "Goal reached! 🎉" : fmt(GOAL - s.supporters) + " to go";
+  $("left").textContent = s.supporters >= GOAL ? "Goal reached! 🎉" : "Our goal: " + fmt(GOAL) + " supporters (" + fmt(GOAL - s.supporters) + " to go)";
 
   const next = MILESTONES.find((m) => m > s.supporters) || GOAL;
   const prevM = [...MILESTONES].reverse().find((m) => m <= s.supporters) || 0;
@@ -364,7 +381,7 @@ function render(s) {
   $("msLeft").textContent = s.supporters >= GOAL ? "Done!" : fmt(next - s.supporters) + " to go";
   $("msBar").style.width = Math.min(100, ((s.supporters - prevM) / (next - prevM)) * 100) + "%";
 
-  $("heroBtn").textContent = "Become supporter #" + fmt(s.supporters + 1);
+  $("heroBtn").textContent = "Become a supporter";
 
   // celebrate growth seen by this visitor
   if (!firstLoad && s.supporters > prev.supporters) {
@@ -463,8 +480,8 @@ document.querySelectorAll(".pay-link").forEach((a) => {
 function thankYou() {
   $("tyName").textContent = "friend";
   $("tyNum").textContent = "♥";
-  $("tyNote").textContent = "Your contribution is confirmed. Watch the counter — it updates within a few seconds. Ask two friends to join you; that's how we reach 1,00,000.";
-  const msg = `I just became a supporter of Music for Every Child 🎶 Join me — let's reach 1,00,000 supporters: ${location.origin + location.pathname}`;
+  $("tyNote").textContent = "Your contribution is confirmed. Watch the counter — it updates within a few seconds. Invite your friends to join in bringing music to every child.";
+  const msg = `I just became a supporter of Music for Every Child 🎶 Join me in bringing music to every child: ${location.origin + location.pathname}`;
   $("waShare").href = "https://wa.me/?text=" + encodeURIComponent(msg);
   $("modal").classList.add("open");
   burst(260);
