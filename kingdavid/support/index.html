@@ -243,11 +243,32 @@
 
       <div class="panel" id="panelOnce" role="tabpanel" aria-labelledby="tabOnce">
         <ol class="steps">
-          <li><b>Tap Contribute Now</b> — a secure Razorpay window opens right here.</li>
-          <li><b>Choose your amount</b> — ₹1,000 or more.</li>
+          <li><b>Choose your contribution</b> — ₹1,000 or more.</li>
+          <li><b>Confirm the declaration below</b> and tap Contribute Now.</li>
           <li><b>Pay by UPI, card or netbanking</b> — your receipt arrives by email.</li>
           <li><b>Watch the counter</b> — it moves by one within seconds. That's you.</li>
         </ol>
+
+        <!-- Donor Declarations (One-Time) -->
+        <div style="margin:16px 0 14px;">
+          <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:10px;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13.5px;line-height:1.45;color:var(--ink);font-weight:600;">
+              <input type="checkbox" id="tickCitizenshipOnce" class="tick-citizenship" checked style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+              <span>I confirm I am an Indian citizen donating from an Indian bank account or card. We cannot accept foreign contributions. <span style="color:#E02424">*</span></span>
+            </label>
+          </div>
+          <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.45;color:var(--ink);">
+              <input type="checkbox" id="tickCorpusOnce" class="tick-corpus" style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+              <span>I direct that my donation be added to the Corpus Fund of Christ Focus Mission. I understand the amount will be kept invested, and only the income earned from it will be used for CFM's charitable objects, including the King David music programme.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="citizenship-warn" id="warnOnce" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
+          Please confirm Indian citizenship above to proceed.
+        </div>
+
         <div class="rzp-wrap" id="rzpWrap">
           <!-- Razorpay Payment Button (one-time) -->
           <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TlUkhL8KNEA7Vv" async></script></form>
@@ -268,6 +289,27 @@
           <option value="5000">₹5,000 a month</option>
           <option value="10000">₹10,000 a month</option>
         </select>
+
+        <!-- Donor Declarations (Monthly) -->
+        <div style="margin:16px 0 14px;">
+          <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:10px;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13.5px;line-height:1.45;color:var(--ink);font-weight:600;">
+              <input type="checkbox" id="tickCitizenshipMonthly" class="tick-citizenship" checked style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+              <span>I confirm I am an Indian citizen donating from an Indian bank account or card. We cannot accept foreign contributions. <span style="color:#E02424">*</span></span>
+            </label>
+          </div>
+          <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px;">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.45;color:var(--ink);">
+              <input type="checkbox" id="tickCorpusMonthly" class="tick-corpus" style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+              <span>I direct that my donation be added to the Corpus Fund of Christ Focus Mission. I understand the amount will be kept invested, and only the income earned from it will be used for CFM's charitable objects, including the King David music programme.</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="citizenship-warn" id="warnMonthly" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
+          Please confirm Indian citizenship above to proceed.
+        </div>
+
         <div class="pledge-terms" style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin:0 0 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
           <b style="color:var(--ink);display:block;margin-bottom:6px;font-size:14px;">Monthly pledge terms</b>
           <ul style="margin:0;padding-left:18px;display:grid;gap:6px;">
@@ -553,6 +595,22 @@ function loop() {
   const sel = $("subAmount");
   const pick = () => document.querySelectorAll("#subWrap .sub-btn").forEach((d) => (d.hidden = d.dataset.amount !== sel.value));
   sel.addEventListener("change", pick); pick();
+
+  // Synchronize citizenship checkboxes to gate payment buttons
+  function setupCheckboxGate(tickId, btnWrapId, warnId) {
+    const tick = $(tickId), wrap = $(btnWrapId), warn = $(warnId);
+    if (!tick || !wrap) return;
+    function update() {
+      const ok = tick.checked;
+      wrap.style.pointerEvents = ok ? "auto" : "none";
+      wrap.style.opacity = ok ? "1" : "0.35";
+      if (warn) warn.style.display = ok ? "none" : "block";
+    }
+    tick.addEventListener("change", update);
+    update();
+  }
+  setupCheckboxGate("tickCitizenshipOnce", "rzpWrap", "warnOnce");
+  setupCheckboxGate("tickCitizenshipMonthly", "subWrap", "warnMonthly");
 })();
 
 startPolling();
