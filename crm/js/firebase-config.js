@@ -11,6 +11,10 @@ const CFM_STORAGE_KEYS = {
   ACTIVE_CURRENCY: 'cfm_active_currency'
 };
 
+// Global Firebase Project Credentials for Christ Focus Mission
+// When populated, all team members & devices automatically connect to the same live database.
+const CFM_GLOBAL_FIREBASE_CONFIG = null;
+
 class FirebaseService {
   constructor() {
     this.app = null;
@@ -65,11 +69,18 @@ class FirebaseService {
   getSavedConfig() {
     try {
       const saved = localStorage.getItem(CFM_STORAGE_KEYS.FIREBASE_CONFIG);
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.projectId && parsed.apiKey) return parsed;
+      }
     } catch (e) {
       console.warn("Could not read saved firebase config:", e);
-      return null;
     }
+    // Fall back to global configuration if available
+    if (typeof CFM_GLOBAL_FIREBASE_CONFIG !== 'undefined' && CFM_GLOBAL_FIREBASE_CONFIG && CFM_GLOBAL_FIREBASE_CONFIG.projectId) {
+      return CFM_GLOBAL_FIREBASE_CONFIG;
+    }
+    return null;
   }
 
   // Save config
@@ -170,14 +181,14 @@ class FirebaseService {
     if (this.isLive && this.db) {
       try {
         const unsubscribe = this.db.collection(this.leadsCollection)
-          .orderBy('createdAt', 'desc')
           .onSnapshot(
             (snapshot) => {
               const leads = [];
               const mockLeadsToDelete = [];
               snapshot.forEach((doc) => {
                 const data = doc.data();
-                const leadObj = { id: doc.id, ...data };
+                // Ensure doc.id is always the canonical identifier
+                const leadObj = { ...data, id: doc.id };
                 if (this.isSampleLead(leadObj)) {
                   mockLeadsToDelete.push(doc.id);
                 } else {
@@ -191,6 +202,12 @@ class FirebaseService {
                 });
                 batch.commit().catch(() => {});
               }
+              // In-memory sort by creation or update timestamp descending
+              leads.sort((a, b) => {
+                const timeA = a.createdAt || a.updatedAt || '';
+                const timeB = b.createdAt || b.updatedAt || '';
+                return timeB.localeCompare(timeA);
+              });
               try {
                 localStorage.setItem(CFM_STORAGE_KEYS.LOCAL_LEADS, JSON.stringify(leads));
               } catch (e) {}
@@ -240,7 +257,7 @@ class FirebaseService {
             (snapshot) => {
               const campaigns = [];
               snapshot.forEach((doc) => {
-                campaigns.push({ id: doc.id, ...doc.data() });
+                campaigns.push({ ...doc.data(), id: doc.id });
               });
               if (campaigns.length === 0) {
                 this.seedInitialRemoteCampaigns().then(() => {
@@ -297,7 +314,7 @@ class FirebaseService {
                 if (doc.id === 'user-2' || doc.id === 'user-3' || doc.id === 'user-4') {
                   mockUsersToDelete.push(doc.id);
                 } else {
-                  users.push({ id: doc.id, ...doc.data() });
+                  users.push({ ...doc.data(), id: doc.id });
                 }
               });
               if (mockUsersToDelete.length > 0 && this.db) {
@@ -541,7 +558,7 @@ class FirebaseService {
     };
 
     if (this.isLive && this.db) {
-      await this.db.collection(this.leadsCollection).doc(leadId).update(payload);
+      await this.db.collection(this.leadsCollection).doc(leadId).set(payload, { merge: true });
       const local = this.getLocalLeads();
       const idx = local.findIndex(l => l.id === leadId);
       if (idx !== -1) {
@@ -645,7 +662,7 @@ class FirebaseService {
     };
 
     if (this.isLive && this.db) {
-      await this.db.collection(this.campaignsCollection).doc(campaignId).update(payload);
+      await this.db.collection(this.campaignsCollection).doc(campaignId).set(payload, { merge: true });
       const campaigns = this.getLocalCampaigns();
       const idx = campaigns.findIndex(c => c.id === campaignId);
       if (idx !== -1) {
@@ -741,7 +758,7 @@ class FirebaseService {
     };
 
     if (this.isLive && this.db) {
-      await this.db.collection(this.usersCollection).doc(userId).update(payload);
+      await this.db.collection(this.usersCollection).doc(userId).set(payload, { merge: true });
       const local = this.getLocalUsers();
       const idx = local.findIndex(u => u.id === userId);
       if (idx !== -1) {

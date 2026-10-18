@@ -48,8 +48,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-  <!-- Custom Styles (cache-busted v2.9.0) -->
-  <link rel="stylesheet" href="css/styles.css?v=2.9.0">
+  <!-- Custom Styles (cache-busted v2.9.1) -->
+  <link rel="stylesheet" href="css/styles.css?v=2.9.1">
 </head>
 <body class="bg-[#F5F7FC] min-h-screen text-[#181A3A] flex flex-col antialiased role-crm">
 
@@ -343,10 +343,11 @@
       <div>
         <span class="font-bold text-slate-700">Christ Focus Mission</span> &copy; 2026. Fundraising Leads & Ministry Stewardship Portal.
       </div>
-      <div class="flex items-center space-x-4">
+      <!-- Firebase Cloud Sync Link (Strictly Admin Only) -->
+      <div class="admin-only flex items-center space-x-3">
         <span>Linked with Google Firebase Firestore</span>
-        <span class="admin-only text-slate-300">•</span>
-        <button onclick="app.openFirebaseModal()" class="admin-only text-amber-700 hover:underline font-semibold">
+        <span class="text-slate-300">•</span>
+        <button onclick="app.openFirebaseModal()" class="text-amber-700 hover:underline font-semibold cursor-pointer">
           Configure Firebase Cloud Sync (Admin)
         </button>
       </div>
@@ -1337,9 +1338,9 @@
   <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.9.0) -->
-  <script src="js/sample-data.js?v=2.9.0"></script>
-  <script src="js/firebase-config.js?v=2.9.0"></script>
-  <script src="js/app.js?v=2.9.0"></script>
+  <!-- APPLICATION JAVASCRIPT FILES (cache-busted v2.9.1) -->
+  <script src="js/sample-data.js?v=2.9.1"></script>
+  <script src="js/firebase-config.js?v=2.9.1"></script>
+  <script src="js/app.js?v=2.9.1"></script>
 </body>
 </html>
