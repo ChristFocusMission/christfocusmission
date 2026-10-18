@@ -149,6 +149,26 @@ class CFMApp {
         }
       }
     });
+
+    // Support URL parameters for direct view/modal navigation
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get('view');
+      const leadIdParam = urlParams.get('leadId') || 'lead-bethel';
+      if (viewParam) {
+        setTimeout(() => {
+          if (viewParam === 'lead-modal') {
+            this.openLeadModal(leadIdParam);
+          } else if (viewParam === 'lead-details') {
+            this.openLeadDetails(leadIdParam);
+          } else if (viewParam === 'new-modal') {
+            this.openLeadModal();
+          } else {
+            this.switchView(viewParam);
+          }
+        }, 150);
+      }
+    } catch (e) {}
   }
 
   // Bind top navbar & interactive events
