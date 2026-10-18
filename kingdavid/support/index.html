@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="theme-color" content="#5B5BAA">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
 <title>Supporters · Music for Every Child · Christ Focus Mission</title>
 <meta name="description" content="Supporters bringing music to every child. Contribute ₹1,000 or more and watch our community grow live.">
 <meta property="og:title" content="Music for Every Child · King David Project">
@@ -11,10 +12,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
-  /* ============ CONFIG lives in the <script> at the bottom ============ */
   :root{
-    /* Christ Focus Mission logo colours */
     --indigo:#5B5BAA; --indigo-2:#7373C4; --indigo-deep:#2F2F6B;
     --sun:#FBC10A; --amber:#F7A814; --teal:#1E9AC3; --aqua:#5FC2C3;
     --cream:#F6F6FB; --cream-2:#E8E8F4; --paper:#FFFFFF;
@@ -28,47 +28,36 @@
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--cream);color:var(--ink);font-family:"Nunito",system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  h1,h2,h3,.display{font-family:"Baloo 2",ui-rounded,system-ui,sans-serif;line-height:1.1;margin:0}
-  a{color:inherit}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
-
-  /* demo banner */
-  .demo{background:var(--indigo-deep);color:var(--sun);text-align:center;font-size:14px;padding:8px 16px;font-weight:700}
-  .demo[hidden]{display:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
 
   /* nav */
-  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
-  .brand{display:flex;align-items:center;gap:10px;font-family:"Baloo 2";font-weight:800;font-size:20px;text-decoration:none}
-  .brand-mark{width:44px;height:44px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 6px 16px -8px rgba(91,91,170,.6);overflow:hidden}
-  .brand-mark img{width:40px;height:40px;display:block}
-  .brand small{display:block;font:700 12px "Nunito",sans-serif;color:var(--muted);letter-spacing:.02em;line-height:1}
-  .nav-cta{background:var(--ink);color:var(--paper);text-decoration:none;font-weight:800;padding:10px 20px;border-radius:999px;font-size:15px;transition:transform .2s}
-  .nav-cta:hover{transform:translateY(-2px)}
-  .nav-right{display:flex;align-items:center;gap:18px}
-  .nav-home{font-weight:800;font-size:15px;color:var(--ink-2);text-decoration:none}
-  .nav-home:hover{color:var(--indigo)}
-  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--cream);border-radius:999px;padding:5px;margin:0 0 22px}
-  .tab{border:0;background:transparent;border-radius:999px;padding:11px 10px;font:800 15px "Nunito",sans-serif;color:var(--ink-2);cursor:pointer}
-  .tab[aria-selected="true"]{background:var(--paper);color:var(--indigo);box-shadow:0 4px 14px -6px rgba(91,91,170,.5)}
-  .panel[hidden],.rzp-wrap[hidden],.soon[hidden]{display:none}
-  .monthly-perks{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:10px;color:var(--ink-2)}
-  .monthly-perks li::before{content:"♪";color:var(--teal);font-weight:800;margin-right:10px}
-  .amt-label{display:block;font-weight:800;font-size:14px;color:var(--ink-2);margin:0 0 8px}
-  .amt-select{width:100%;font:800 18px "Nunito",sans-serif;color:var(--ink);background:var(--cream);border:2px solid var(--line);border-radius:14px;padding:13px 16px;margin:0 0 16px;cursor:pointer}
-  .amt-select:focus{outline:none;border-color:var(--indigo)}
-  .soon{text-align:center;background:var(--cream);border-radius:14px;padding:16px;font-weight:700;color:var(--ink-2)}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+  .brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);font-weight:800;font-size:18px}
+  .brand img{height:42px;width:auto;display:block}
+  .brand span{display:block;line-height:1.15}
+  .brand small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+  .nav-right{display:flex;align-items:center;gap:16px}
+  .nav-link{color:var(--ink-2);text-decoration:none;font-weight:700;font-size:15px}
+  .nav-link:hover{color:var(--indigo)}
+  .nav-cta{padding:10px 18px;font-size:15px;background:var(--indigo);color:#fff;border-radius:999px;text-decoration:none;font-weight:800;transition:transform .2s}
+  .nav-cta:hover{transform:translateY(-1px)}
+
+  /* tabs */
+  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--cream);border-radius:999px;padding:5px;margin:0 0 20px}
+  .tab{border:0;background:transparent;border-radius:999px;padding:11px 10px;font:800 15px "Nunito",sans-serif;color:var(--ink-2);cursor:pointer;transition:all .2s}
+  .tab.active{background:var(--paper);color:var(--indigo);box-shadow:0 4px 14px -6px rgba(91,91,170,.5)}
 
   /* hero */
   .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:28px 0 64px}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--gold-soft);color:var(--ink-2);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:999px}
-  .hero h1{font-size:clamp(40px,6vw,72px);font-weight:800;margin:18px 0 18px;letter-spacing:-.01em}
+  .hero h1{font-size:clamp(38px,5.5vw,68px);font-weight:800;margin:18px 0 16px;letter-spacing:-.01em;line-height:1.15}
   .hero h1 em{font-style:normal;color:var(--teal);position:relative;white-space:nowrap}
   .hero h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.06em;height:.16em;background:var(--gold-soft);z-index:-1;border-radius:6px}
-  .hero p.lead{font-size:20px;color:var(--ink-2);max-width:34ch;margin:0 0 28px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;font:800 18px/1 "Nunito",sans-serif;padding:18px 30px;border-radius:999px;background:linear-gradient(180deg,var(--gold-2),var(--gold));color:#fff;box-shadow:0 14px 30px -12px rgba(91,91,170,.85),inset 0 -3px 0 rgba(0,0,0,.14);transition:transform .2s,box-shadow .2s;text-decoration:none}
+  .hero p.lead{font-size:19px;color:var(--ink-2);max-width:36ch;margin:0 0 26px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;font:800 17px/1 "Nunito",sans-serif;padding:17px 28px;border-radius:999px;background:linear-gradient(180deg,var(--gold-2),var(--gold));color:#fff;box-shadow:0 14px 30px -12px rgba(91,91,170,.85),inset 0 -3px 0 rgba(0,0,0,.14);transition:transform .2s,box-shadow .2s;text-decoration:none}
   .btn:hover{transform:translateY(-2px);box-shadow:0 18px 36px -12px rgba(91,91,170,1),inset 0 -3px 0 rgba(0,0,0,.14)}
   .btn:disabled{opacity:.6;cursor:wait;transform:none}
-  .hero-sub{margin-top:14px;color:var(--muted);font-size:15px}
+  .hero-sub{margin-top:14px;color:var(--muted);font-size:14.5px}
 
   /* live card */
   .live{background:var(--paper);border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden}
@@ -78,9 +67,9 @@
   .dot{width:10px;height:10px;border-radius:50%;background:var(--rose);box-shadow:0 0 0 0 rgba(247,168,20,.6);animation:pulse 1.8s infinite}
   @keyframes pulse{70%{box-shadow:0 0 0 12px rgba(247,168,20,0)}100%{box-shadow:0 0 0 0 rgba(247,168,20,0)}}
   .updated{font-size:13px;color:var(--muted)}
-  .count{font-family:"Baloo 2";font-weight:800;font-size:clamp(56px,9vw,92px);line-height:1;letter-spacing:-.02em;margin:8px 0 2px;font-variant-numeric:tabular-nums;transition:color .4s}
+  .count{font-family:"Baloo 2";font-weight:800;font-size:clamp(54px,8vw,88px);line-height:1;letter-spacing:-.02em;margin:8px 0 4px;font-variant-numeric:tabular-nums;transition:color .4s}
   .count.bump{color:var(--gold)}
-  .count-of{color:var(--ink-2);font-weight:700;font-size:18px}
+  .count-of{color:var(--ink-2);font-weight:700;font-size:16.5px;line-height:1.35}
   .bar{height:18px;background:var(--cream-2);border-radius:999px;margin:22px 0 10px;overflow:hidden;position:relative}
   .bar-fill{height:100%;width:0;min-width:18px;border-radius:999px;background:linear-gradient(90deg,var(--aqua),var(--teal) 45%,var(--indigo));position:relative;transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
   .bar-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);background-size:200% 100%;animation:shine 2.6s linear infinite;border-radius:inherit}
@@ -107,93 +96,85 @@
   @keyframes scroll{to{transform:translateX(-50%)}}
 
   /* contribute */
-  section.give{padding:80px 0}
+  section.give{padding:70px 0 80px}
   .give-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:start}
-  .give h2{font-size:clamp(34px,4.5vw,50px);font-weight:800;margin-bottom:16px}
+  .give h2{font-size:clamp(32px,4vw,46px);font-weight:800;margin-bottom:14px}
   .give p{color:var(--ink-2)}
-  .promise{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:14px}
-  .promise li{display:flex;gap:14px;align-items:flex-start;font-weight:700}
-  .promise li i{flex:none;width:32px;height:32px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;font-style:normal;color:var(--gold)}
-  form{background:var(--paper);border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow);border:1px solid var(--line)}
-  .label{font-weight:800;font-size:14px;margin:0 0 10px;display:block}
-  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-  .chip{border:2px solid var(--line);background:var(--cream);border-radius:var(--r-sm);padding:14px 4px;font:800 17px "Nunito";cursor:pointer;color:var(--ink);transition:all .15s}
-  .chip:hover{border-color:var(--gold-2)}
-  .chip[aria-pressed="true"]{border-color:var(--gold);background:var(--gold-soft)}
-  .custom{position:relative;margin-top:12px}
-  .custom::before{content:"₹";position:absolute;left:16px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--ink-2)}
-  input[type=text],input[type=email],input[type=tel],input[type=number]{width:100%;border:2px solid var(--line);background:var(--cream);border-radius:var(--r-sm);padding:14px 16px;font:600 16px "Nunito";color:var(--ink);outline:none;transition:border-color .15s}
-  .custom input{padding-left:34px}
-  input:focus{border-color:var(--gold)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-  .field{margin-top:18px}
-  .check{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:14px;color:var(--ink-2);cursor:pointer}
-  .check input{width:18px;height:18px;accent-color:var(--gold);margin-top:3px}
-  .err{color:#B3402A;font-weight:700;font-size:14px;min-height:22px;margin-top:12px}
-  form .btn,.give-card .btn{width:100%;margin-top:6px}
-  .give-card{background:var(--paper);border-radius:var(--r-lg);padding:30px;box-shadow:var(--shadow);border:1px solid var(--line)}
-  .steps{margin:0 0 22px;padding-left:22px;display:grid;gap:12px;color:var(--ink-2)}
-  .steps b{color:var(--ink)}
-  .rzp-wrap{display:flex;justify-content:center;min-height:56px;margin:6px 0 4px;transform:scale(1.15);transform-origin:center top}
-  .rzp-wrap form{margin:0}
-  .alt-link{display:block;text-align:center;font-size:13px;color:var(--ink-2);margin-top:18px;text-decoration:underline;text-underline-offset:3px}
-  .secure{text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
+  .promise{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:14px}
+  .promise li{display:flex;gap:14px;align-items:flex-start;font-weight:700;font-size:15.5px}
+  .promise li i{flex:none;width:32px;height:32px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;font-style:normal;color:var(--gold);font-weight:800}
 
-  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:14px;text-align:center}
+  .give-card{background:var(--paper);border-radius:var(--r-lg);padding:32px 30px;box-shadow:var(--shadow);border:1px solid var(--line)}
+  .form-group{margin-bottom:14px;display:flex;flex-direction:column;gap:5px}
+  .form-label{font-size:13.5px;font-weight:700;color:var(--ink-2)}
+  .form-label .req{color:#E02424}
+  .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.form-grid-2{grid-template-columns:1fr}}
+  .form-group input, .form-group textarea{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:inherit;font-size:15px;color:var(--ink);background:var(--paper);transition:border-color .2s}
+  .form-group input:focus, .form-group textarea:focus{border-color:var(--indigo);outline:none;background:#fff}
+  .amt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .amt-pill{padding:10px 4px;border:1.5px solid var(--line);border-radius:var(--r-sm);background:var(--cream);font-family:inherit;font-size:15px;font-weight:800;color:var(--ink);cursor:pointer;transition:all .2s;text-align:center}
+  .amt-pill:hover{border-color:var(--indigo-2)}
+  .amt-pill.active{border-color:var(--indigo);background:var(--cream-2);color:var(--indigo)}
 
-  /* thank you modal */
-  .modal{position:fixed;inset:0;background:rgba(35,35,74,.55);display:none;place-items:center;padding:20px;z-index:50;backdrop-filter:blur(4px)}
-  .modal.open{display:grid}
-  .modal-card{background:var(--paper);border-radius:var(--r-lg);padding:38px 30px;max-width:440px;width:100%;text-align:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
-  @keyframes pop{from{transform:scale(.8);opacity:0}}
-  .modal-card .badge{font-family:"Baloo 2";font-weight:800;font-size:54px;color:var(--gold);line-height:1;margin:10px 0}
-  .modal-card h3{font-size:28px}
-  .modal-card p{color:var(--ink-2)}
-  .share{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
-  .share a,.share button{font:800 15px "Nunito";padding:12px 18px;border-radius:999px;text-decoration:none;border:2px solid var(--line);background:var(--cream);color:var(--ink);cursor:pointer}
-  .share a.wa{background:#25D366;border-color:#25D366;color:#fff}
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(35,35,74,.6);display:grid;place-items:center;padding:20px;z-index:999;opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto}
+  .modal.open{opacity:1;pointer-events:auto}
+  .modal-card{background:var(--paper);border-radius:24px;padding:32px 28px;max-width:580px;width:100%;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
+  .modal-card h3{font-size:26px;font-weight:800;margin:10px 0 4px}
+  .badge{display:inline-block;background:var(--gold-soft);color:var(--ink);font-weight:800;font-size:28px;padding:6px 20px;border-radius:999px;margin:12px 0}
+  .share{display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+  .share a,.share button{padding:12px 20px;border-radius:999px;font:800 15px "Nunito";border:0;cursor:pointer;text-decoration:none}
+  .share .wa{background:#25D366;color:#fff}
+  .share button{background:var(--cream-2);color:var(--ink)}
+
+  /* receipt preview box inside modal */
+  .receipt-box{background:#FCFCFE;border:1px solid #E0E0F0;border-radius:14px;padding:20px;text-align:left;font-size:13px;line-height:1.55;color:var(--ink);margin:18px 0}
+  .receipt-box table{width:100%;border-collapse:collapse;margin:10px 0}
+  .receipt-box td{padding:6px 0}
+  .receipt-box td:first-child{color:var(--muted);width:40%}
+  .receipt-box td:last-child{font-weight:700;text-align:right}
 
   /* toast */
-  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,calc(100% + 60px));visibility:hidden;background:var(--ink);color:var(--cream);padding:14px 22px;border-radius:999px;font-weight:700;font-size:15px;box-shadow:var(--shadow);transition:transform .45s cubic-bezier(.2,1.2,.4,1);z-index:40;max-width:calc(100% - 32px);text-align:center}
-  .toast.show{transform:translate(-50%,0);visibility:visible}
-  .toast b{color:var(--sun)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.35);font-size:15px;font-weight:700;z-index:998;transition:transform .3s ease;pointer-events:none}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:997}
 
-  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+  footer{padding:32px 0;text-align:center;color:var(--muted);font-size:13.5px;border-top:1px solid var(--line)}
+  footer a{color:var(--ink-2);text-decoration:none;font-weight:700}
 
-  @media (max-width:880px){
-    .hero,.give-grid{grid-template-columns:1fr}
-    .hero{padding-top:8px;gap:32px}
-    .chips{grid-template-columns:repeat(2,1fr)}
-    .stats{grid-template-columns:1fr 1fr}
-    .stats .stat:first-child{grid-column:1/-1}
-    .row{grid-template-columns:1fr}
-    .live,form,.give-card{padding:22px}
+  @media(max-width:860px){
+    .hero{grid-template-columns:1fr;gap:36px;padding:20px 0 44px}
+    .give-grid{grid-template-columns:1fr;gap:36px}
   }
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media(print){
+    body *{visibility:hidden}
+    .receipt-box, .receipt-box *{visibility:visible}
+    .receipt-box{position:absolute;left:0;top:0;width:100%;border:none}
+  }
 </style>
 </head>
 <body>
 
-<div class="demo" id="demoBanner" hidden>Preview mode — the counter is simulated. Add your API address in the page settings to go live.</div>
-
 <div class="wrap">
   <nav>
     <a class="brand" href="/kingdavid/">
-      <span class="brand-mark" aria-hidden="true">
-        <img src="/kingdavid/assets/cfm-logo.png" alt="" onerror="this.onerror=null;this.src='https://cdn.razorpay.com/logos/SUx8nZ0IUtaNeh_large.png'">
-      </span>
-      <span>Music for Every Child<small>Christ Focus Mission</small></span>
+      <img src="https://www.christfocusmission.org/assets/img/logo.png" alt="Christ Focus Mission logo" onerror="this.style.display='none'">
+      <span>Christ Focus Mission<small>King David Project</small></span>
     </a>
-    <div class="nav-right"><a class="nav-home" href="/kingdavid/">Home</a><a class="nav-cta pay-link" href="#give">Support now</a></div>
+    <div class="nav-right">
+      <a class="nav-link" href="/kingdavid/">Our Story</a>
+      <a class="nav-cta pay-link" href="#give">Support</a>
+    </div>
   </nav>
 
   <header class="hero">
     <div>
       <span class="eyebrow">♪ Empowering 1000 Young Dreams</span>
-      <h1>Music for <em>every child.</em><br><span style="font-size:0.65em;display:block;margin-top:10px;font-weight:700;color:var(--ink-2)">Join our community of supporters giving free music education to underprivileged children.</span></h1>
+      <h1>Music for <em>every child.</em><br><span style="font-size:0.62em;display:block;margin-top:10px;font-weight:700;color:var(--ink-2)">Join our community of supporters giving free music education to underprivileged children.</span></h1>
       <p class="lead">Every contribution directly funds lessons, instruments, and Trinity College London examinations for children who need it most.</p>
       <a class="btn pay-link" href="#give" id="heroBtn">Become a supporter</a>
-      <div class="hero-sub">Secure payment via Razorpay · Indian citizens & accounts only</div>
+      <div class="hero-sub">Razorpay Secure · Indian citizens only</div>
     </div>
 
     <div class="live" aria-live="polite">
@@ -202,7 +183,7 @@
         <span class="updated" id="updated">connecting…</span>
       </div>
       <div class="count" id="count">0</div>
-      <div class="count-of" id="countLabel">supporters are helping children learn music</div>
+      <div class="count-of" id="countLabel">supporters are helping children learn music. Our goal: 1,00,000 supporters.</div>
       <div class="bar" role="progressbar" aria-label="Progress to goal" aria-valuemin="0" aria-valuemax="100" id="bar"><div class="bar-fill" id="barFill"></div></div>
       <div class="bar-meta"><span id="pct">0%</span><span id="left">Our goal: 1,00,000 supporters</span></div>
       <div class="stats">
@@ -226,94 +207,159 @@
   <div class="wrap give-grid">
     <div>
       <h2>Add your voice.</h2>
-      <p>Contribute ₹1,000 or more. The moment your payment goes through, the counter above moves by one — for everyone watching this page.</p>
+      <p>Contribute ₹1,000 or more. The moment your payment goes through, the counter moves live — for everyone watching this page.</p>
       <ul class="promise">
-        <li><i>1</i><span>Every contribution of ₹1,000+ counts you as a supporter.</span></li>
-        <li><i>2</i><span>Give once or every month — you're counted as one supporter, and every gift adds to the total raised.</span></li>
-        <li><i>3</i><span>A receipt is emailed to you by Razorpay right after payment.</span></li>
+        <li><i>1</i><span>Every contribution of ₹1,000+ adds you as a supporter helping a child learn music.</span></li>
+        <li><i>2</i><span>Give once or every month — every gift directly empowers our young musicians.</span></li>
+        <li><i>3</i><span>An official tax receipt with Form 10BE information is generated instantly.</span></li>
       </ul>
     </div>
 
     <div class="give-card">
-      <div class="tabs" role="tablist" aria-label="How would you like to give?">
-        <button class="tab" role="tab" id="tabOnce" aria-selected="true" aria-controls="panelOnce">Give once</button>
-        <button class="tab" role="tab" id="tabMonthly" aria-selected="false" aria-controls="panelMonthly">Give monthly</button>
+      <div class="tabs" role="tablist" aria-label="Contribution Frequency">
+        <button class="tab active" type="button" role="tab" id="tabOnce" aria-selected="true">Give once</button>
+        <button class="tab" type="button" role="tab" id="tabMonthly" aria-selected="false">Give monthly</button>
       </div>
 
-      <div class="panel" id="panelOnce" role="tabpanel" aria-labelledby="tabOnce">
-        <ol class="steps">
-          <li><b>Tap Contribute Now</b> — a secure Razorpay window opens right here.</li>
-          <li><b>Choose your amount</b> — ₹1,000 or more.</li>
-          <li><b>Pay by UPI, card or netbanking</b> — your receipt arrives by email.</li>
-          <li><b>Watch the counter</b> — it moves by one within seconds. That's you.</li>
-        </ol>
-        <div class="rzp-wrap" id="rzpWrap">
-          <!-- Razorpay Payment Button (one-time) -->
-          <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_TlUkhL8KNEA7Vv" async></script></form>
+      <form id="donationForm" novalidate>
+        <!-- Amount Selection -->
+        <div class="form-group" style="margin-bottom:18px;">
+          <label class="form-label">Select Contribution Amount (₹1,000 or more)</label>
+          <div class="amt-grid">
+            <button type="button" class="amt-pill active" data-amt="1000">₹1,000</button>
+            <button type="button" class="amt-pill" data-amt="2000">₹2,000</button>
+            <button type="button" class="amt-pill" data-amt="5000">₹5,000</button>
+            <button type="button" class="amt-pill" data-amt="10000">₹10,000</button>
+          </div>
+          <div style="margin-top:10px;position:relative;">
+            <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:800;color:var(--ink-2);font-size:16px;">₹</span>
+            <input type="number" id="customAmount" min="1000" step="500" value="1000" placeholder="Other amount (min. ₹1,000)" style="width:100%;padding:11px 14px 11px 32px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:inherit;font-size:16px;font-weight:700;color:var(--ink);background:var(--paper);">
+          </div>
         </div>
-        <a class="alt-link pay-link" id="payBtn" data-direct href="#give">Button not showing? Pay on Razorpay's secure page →</a>
-      </div>
 
-      <div class="panel" id="panelMonthly" role="tabpanel" aria-labelledby="tabMonthly" hidden>
-        <ul class="monthly-perks">
-          <li><b>12 monthly gifts</b>, charged automatically.</li>
-          <li><b>Cancel anytime</b> using the link in your Razorpay emails.</li>
-          <li><b>Counted once as a supporter</b>; every month adds to the total raised.</li>
-        </ul>
-        <label class="amt-label" for="subAmount">Choose your monthly gift</label>
-        <select class="amt-select" id="subAmount">
-          <option value="1000">₹1,000 a month</option>
-          <option value="2000">₹2,000 a month</option>
-          <option value="5000">₹5,000 a month</option>
-          <option value="10000">₹10,000 a month</option>
-        </select>
-        <div class="pledge-terms" style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin:0 0 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
+        <!-- Donor Information Fields -->
+        <div style="font-weight:800;font-size:13.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.04em;margin:22px 0 10px;">
+          Donor Information (Required for 80G & Form 10BE)
+        </div>
+
+        <div class="form-group">
+          <label for="donorName" class="form-label">Full Name <span class="req">*</span></label>
+          <input type="text" id="donorName" required placeholder="Full name as per official PAN" autocomplete="name">
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="donorPan" class="form-label">PAN <span class="req">*</span></label>
+            <input type="text" id="donorPan" required maxlength="10" placeholder="e.g. ABCDE1234F" style="text-transform:uppercase;" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="donorPhone" class="form-label">Mobile Number <span class="req">*</span></label>
+            <input type="tel" id="donorPhone" required maxlength="10" placeholder="10-digit mobile number" autocomplete="tel">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="donorEmail" class="form-label">Email Address <span class="req">*</span></label>
+          <input type="email" id="donorEmail" required placeholder="For tax receipt delivery" autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="donorAddress" class="form-label">Postal Address <span class="req">*</span></label>
+          <textarea id="donorAddress" required rows="2" placeholder="Complete postal address for tax receipt / Form 10BE certificate"></textarea>
+        </div>
+
+        <!-- Citizenship Checkbox (Required) -->
+        <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 14px;margin:16px 0 12px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13.5px;line-height:1.45;color:var(--ink);font-weight:600;">
+            <input type="checkbox" id="tickCitizenship" required style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+            <span>I confirm I am an Indian citizen donating from an Indian bank account or card. We cannot accept foreign contributions. <span class="req">*</span></span>
+          </label>
+        </div>
+
+        <!-- Corpus Checkbox (Optional, Unticked by Default) -->
+        <div style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 14px;margin:0 0 18px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.45;color:var(--ink);">
+            <input type="checkbox" id="tickCorpus" style="margin-top:3px;transform:scale(1.2);accent-color:var(--indigo);">
+            <span>I direct that my donation be added to the Corpus Fund of Christ Focus Mission. I understand the amount will be kept invested, and only the income earned from it will be used for CFM's charitable objects, including the King David music programme.</span>
+          </label>
+        </div>
+
+        <!-- Monthly Pledge Terms (Shown above pay button when monthly is picked) -->
+        <div id="monthlyPledgeTerms" style="display:none;background:#F6F6FC;border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin:0 0 18px;font-size:13px;color:var(--ink-2);line-height:1.55;">
           <b style="color:var(--ink);display:block;margin-bottom:6px;font-size:14px;">Monthly pledge terms</b>
           <ul style="margin:0;padding-left:18px;display:grid;gap:6px;">
-            <li>Your donation is debited automatically through Razorpay. You'll get a notice before each debit and a receipt after.</li>
-            <li>You can cancel anytime using the link in your receipt or by emailing <a href="mailto:admin@christfocusmission.org" style="color:var(--indigo);font-weight:700;">admin@christfocusmission.org</a>.</li>
-            <li>Donations can't be refunded, except for debits made in error, which are refunded within 30 days.</li>
-            <li>The money supports King David and other charitable work of the trust.</li>
-            <li>Donations aren't eligible for 80G. Only Indian citizens can give, and you'll need to provide your PAN and address.</li>
-            <li><em>Privacy note:</em> We respect your privacy. Donor names, PAN, contact, and pledge details are stored securely and never sold or shared with third parties.</li>
+            <li>Automatic debit through Razorpay, with a notice before each debit and a receipt after.</li>
+            <li>Cancel anytime using the receipt link or by emailing <a href="mailto:admin@christfocusmission.org" style="color:var(--indigo);font-weight:700;">admin@christfocusmission.org</a>.</li>
+            <li>No refunds, except for debits made in error, which are refunded within 30 days.</li>
+            <li>Funds support King David and other charitable work of the trust.</li>
+            <li>Eligible for 80G [from effective date]. Indian citizens only. PAN and address required.</li>
+            <li><em>Privacy:</em> Your details are used only for receipts, tax reporting and updates from CFM.</li>
           </ul>
         </div>
-        <div id="subWrap">
-          <!-- One Razorpay Subscription Button per amount; the dropdown shows the matching one -->
-          <div class="rzp-wrap sub-btn" data-amount="1000"><form><script src="https://cdn.razorpay.com/static/widget/subscription-button.js" data-subscription_button_id="pl_TnRQk50Klw1Whp" data-button_theme="brand-color" async></script></form></div>
-          <div class="rzp-wrap sub-btn" data-amount="2000" hidden><form><script src="https://cdn.razorpay.com/static/widget/subscription-button.js" data-subscription_button_id="pl_TnRT0RFbQTZUgc" data-button_theme="brand-color" async></script></form></div>
-          <div class="rzp-wrap sub-btn" data-amount="5000" hidden><form><script src="https://cdn.razorpay.com/static/widget/subscription-button.js" data-subscription_button_id="pl_TnRVLvTXWyxS3n" data-button_theme="brand-color" async></script></form></div>
-          <div class="rzp-wrap sub-btn" data-amount="10000" hidden><form><script src="https://cdn.razorpay.com/static/widget/subscription-button.js" data-subscription_button_id="pl_TnRXZUvDDr1Dwz" data-button_theme="brand-color" async></script></form></div>
-        </div>
-        <div class="soon" id="subSoon" hidden>Monthly giving opens very soon. Meanwhile, you can give once.</div>
+
+        <div class="err" id="formErr" role="alert" style="display:none;margin-bottom:12px;padding:10px 14px;background:#FDE8E8;border-radius:8px;color:#C81E1E;font-size:13px;font-weight:700;"></div>
+
+        <button type="submit" id="btnSubmitDonate" class="btn" style="width:100%;padding:16px;font-size:18px;font-weight:800;border:none;border-radius:999px;cursor:pointer;background:linear-gradient(180deg,var(--indigo-2),var(--indigo));color:#fff;box-shadow:var(--shadow);">
+          Proceed to Contribute ₹1,000
+        </button>
+      </form>
+
+      <!-- Trust and Tax Line -->
+      <div style="background:#FFF0BF;border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);font-weight:600;margin-top:18px;line-height:1.55;">
+        Christ Focus Mission is a registered public charitable trust (PAN AADTC2907R), registered under Section 12A [12A registration no.] and approved under Section 80G [80G approval no., valid from ___ to ___]. Donations made on or after [effective date] are eligible for deduction under Section 80G. Please give your PAN and address so we can issue your Form 10BE certificate.
       </div>
 
-      <div style="background:#FFF0BF;border-radius:12px;padding:12px 14px;font-size:13px;color:var(--ink);font-weight:600;margin-top:16px;line-height:1.45;">
-        Christ Focus Mission is a registered public charitable trust (PAN AADTC2907R). Donations are not currently eligible for 80G tax deduction; we will update supporters if this changes.
-      </div>
-      <div style="font-size:12.5px;color:var(--muted);margin-top:10px;font-weight:600;text-align:center;">
-        🇮🇳 Donations are accepted only from Indian citizens using Indian bank accounts or cards. We cannot accept foreign contributions.
-      </div>
-      <div class="err" id="err" role="alert"></div>
-      <div class="secure">🔒 Payments processed securely by Razorpay</div>
+      <div style="text-align:center;font-size:12.5px;color:var(--muted);margin-top:12px;">🔒 Payments processed securely via Razorpay (Test Mode)</div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">Music for Every Child · Christ Focus Mission · <a href="/kingdavid/">Home</a> · Trust PAN: AADTC2907R</div>
+  <div class="wrap">
+    Music for Every Child · Christ Focus Mission · <a href="/kingdavid/">Home</a> · Trust PAN: AADTC2907R · 12A [12A registration no.] · 80G [80G approval no., valid from ___ to ___]
+  </div>
 </footer>
 
+<!-- Thank You / Official Receipt Modal -->
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="tyTitle">
   <div class="modal-card">
     <div style="font-size:42px">🎶</div>
     <h3 id="tyTitle">Thank you, <span id="tyName">friend</span>!</h3>
-    <p>You're now part of the movement. The count is</p>
-    <div class="badge" id="tyNum">#1</div>
-    <p id="tyNote">Invite your friends to join in bringing music to every child.</p>
+    <p style="margin:4px 0 10px;color:var(--ink-2);">You're now part of the movement bringing music to underprivileged children.</p>
+    <div class="badge" id="tyNum">♥</div>
+
+    <!-- Official Digital Receipt -->
+    <div class="receipt-box" id="receiptBox">
+      <div style="border-bottom:2px solid var(--indigo);padding-bottom:10px;margin-bottom:12px;">
+        <strong style="font-size:16px;color:var(--indigo);display:block;">Christ Focus Mission</strong>
+        <span style="font-size:12px;color:var(--muted);display:block;">Public Charitable Trust · PAN: <b>AADTC2907R</b></span>
+        <span style="font-size:11.5px;color:var(--muted);display:block;">12A [12A registration no.] · 80G [80G approval no., valid from ___ to ___]</span>
+      </div>
+      <table>
+        <tr><td>Receipt No.</td><td id="rcptNo">CFM-KD-PENDING</td></tr>
+        <tr><td>Date & Time</td><td id="rcptDate">—</td></tr>
+        <tr><td>Razorpay ID</td><td id="rcptPayId" style="font-family:monospace;">—</td></tr>
+        <tr><td>Donor Name</td><td id="rcptDonorName">—</td></tr>
+        <tr><td>Donor PAN</td><td id="rcptDonorPan">—</td></tr>
+        <tr><td>Amount</td><td id="rcptAmount" style="color:var(--indigo);font-size:15px;">—</td></tr>
+      </table>
+      <div id="rcptCorpusBox" style="display:none;background:#FFF8E7;border:1px solid #F7A814;border-radius:8px;padding:10px 12px;margin:12px 0;font-size:12px;line-height:1.45;">
+        <b style="color:#B45309;display:block;margin-bottom:4px;">Corpus donation received as per the donor's specific written direction.</b>
+        <span id="rcptCorpusText" style="font-style:italic;color:#78350F;display:block;margin-bottom:6px;"></span>
+        <div style="font-size:11px;color:#92400E;display:flex;justify-content:space-between;border-top:1px dashed #FCD34D;padding-top:4px;">
+          <span id="rcptCorpusTime"></span>
+          <span id="rcptCorpusIp"></span>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:8px;">
+        Donations made on or after [effective date] are eligible for deduction under Section 80G. Form 10BE certificate will be issued to the provided email and address.
+      </div>
+    </div>
+
     <div class="share">
+      <button type="button" onclick="window.print()" style="background:var(--indigo);color:#fff;">Print / Save Receipt</button>
       <a class="wa" id="waShare" target="_blank" rel="noopener">Share on WhatsApp</a>
-      <button type="button" id="copyLink">Copy link</button>
+      <button type="button" id="copyLink">Copy Link</button>
       <button type="button" id="closeModal">Close</button>
     </div>
   </div>
@@ -323,29 +369,67 @@
 <canvas id="confetti"></canvas>
 
 <script>
-if (/\/(support\.html|index\.html)$/.test(location.pathname)) history.replaceState(null, "", "/kingdavid/support/" + location.search + location.hash);
+if (/\/(support\.html|index\.html)$/.test(location.pathname)) {
+  history.replaceState(null, "", "/kingdavid/support/" + location.search + location.hash);
+}
+
 /* ======================== SETTINGS ======================== */
-// Both are filled in by go-live.sh (see SETUP.md).
-// While API_BASE is empty the page runs in preview mode with a simulated counter.
-const API_BASE = "https://kdv-supporters.christfocusmission.workers.dev";          // e.g. "https://kdv-supporters.yourname.workers.dev"
-const RAZORPAY_PAGE_URL = "https://rzp.io/rzp/WEeH9ljU"; // your Razorpay Payment Page link, e.g. "https://rzp.io/rzp/xxxx"
+const API_BASE = "https://kdv-supporters.christfocusmission.workers.dev";
+const RAZORPAY_KEY_ID = "rzp_test_placeholder"; // Replace with your Razorpay Test Key ID (e.g. rzp_test_xxx)
 const GOAL = 100000;
-const GOAL_AMOUNT_INR = 100000000; // ₹10 crore
-const MIN_AMOUNT = 1000;
 const POLL_MS = 8000;
+const CORPUS_TEXT = "I direct that my donation be added to the Corpus Fund of Christ Focus Mission. I understand the amount will be kept invested, and only the income earned from it will be used for CFM's charitable objects, including the King David music programme.";
 /* ========================================================== */
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Math.round(n).toLocaleString("en-IN");
-const DEMO = !API_BASE;
-if (DEMO) $("demoBanner").hidden = false;
 
 let shown = { supporters: 0, subscribers: 0, contributions: 0, amount_inr: 0 };
-let latest = null;
 let firstLoad = true;
-let lastSeenRecentAt = 0;
+let isMonthly = false;
+let currentAmount = 1000;
 
-/* ---------- animated number ---------- */
+/* ---------- Frequency Tabs ---------- */
+$("tabOnce").addEventListener("click", () => setFrequency(false));
+$("tabMonthly").addEventListener("click", () => setFrequency(true));
+
+function setFrequency(monthly) {
+  isMonthly = monthly;
+  $("tabOnce").classList.toggle("active", !monthly);
+  $("tabOnce").setAttribute("aria-selected", !monthly);
+  $("tabMonthly").classList.toggle("active", monthly);
+  $("tabMonthly").setAttribute("aria-selected", monthly);
+  $("monthlyPledgeTerms").style.display = monthly ? "block" : "none";
+  updateSubmitButton();
+}
+
+/* ---------- Amount Pills & Custom Amount ---------- */
+document.querySelectorAll(".amt-pill").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".amt-pill").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentAmount = parseInt(btn.dataset.amt, 10);
+    $("customAmount").value = currentAmount;
+    updateSubmitButton();
+  });
+});
+
+$("customAmount").addEventListener("input", (e) => {
+  const v = parseInt(e.target.value, 10) || 0;
+  currentAmount = v;
+  document.querySelectorAll(".amt-pill").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.amt, 10) === v);
+  });
+  updateSubmitButton();
+});
+
+function updateSubmitButton() {
+  const amtStr = currentAmount > 0 ? "₹" + fmt(currentAmount) : "";
+  const prefix = isMonthly ? "Start Monthly Pledge of " : "Proceed to Contribute ";
+  $("btnSubmitDonate").textContent = prefix + amtStr;
+}
+
+/* ---------- Animated number helper ---------- */
 function animate(el, from, to, ms, prefix = "") {
   if (from === to) { el.textContent = prefix + fmt(to); return; }
   const start = performance.now();
@@ -364,10 +448,13 @@ function render(s) {
   const prev = shown;
   const ms = firstLoad ? 1800 : 1200;
   const subs = s.subscribers || 0;
+
   animate($("count"), prev.supporters, s.supporters, ms);
   animate($("subscribers"), prev.subscribers, subs, ms);
   animate($("contribs"), prev.contributions, s.contributions, ms);
   animate($("raised"), prev.amount_inr, s.amount_inr, ms, "₹");
+
+  $("countLabel").textContent = "supporters are helping children learn music. Our goal: " + fmt(GOAL) + " supporters.";
 
   const pct = Math.min(100, (s.supporters / GOAL) * 100);
   $("barFill").style.width = pct + "%";
@@ -383,18 +470,13 @@ function render(s) {
 
   $("heroBtn").textContent = "Become a supporter";
 
-  // celebrate growth seen by this visitor
   if (!firstLoad && s.supporters > prev.supporters) {
     $("count").classList.add("bump");
     setTimeout(() => $("count").classList.remove("bump"), 1200);
-    const newest = (s.recent || []).find((r) => r.at > lastSeenRecentAt);
-    const who = newest ? newest.name + (newest.city ? " from " + newest.city : "") : "Someone";
     const diff = s.supporters - prev.supporters;
-    toast(diff > 1 ? `<b>${diff} new supporters</b> just joined!` : `<b>${escapeHtml(who)}</b> just became supporter #${fmt(s.supporters)} 🎶`);
+    toast(diff > 1 ? `<b>${diff} new supporters</b> just joined!` : `<b>A kind supporter</b> just joined the movement! 🎶`);
     burst(60);
-    if (MILESTONES.some((m) => prev.supporters < m && s.supporters >= m)) burst(220);
   }
-  if (s.recent && s.recent[0]) lastSeenRecentAt = Math.max(lastSeenRecentAt, s.recent[0].at);
 
   renderTicker(s.recent || []);
   shown = { supporters: s.supporters, subscribers: subs, contributions: s.contributions, amount_inr: s.amount_inr };
@@ -402,11 +484,9 @@ function render(s) {
 }
 
 function renderTicker(list) {
-  if (!list.length) return;
-  const items = list.map((r) =>
-    `<span><em>${escapeHtml(r.name)}</em>${r.city ? " from " + escapeHtml(r.city) : ""} joined ${ago(r.at)}</span>`
-  ).join("");
-  $("ticker").innerHTML = items + items; // doubled for seamless loop
+  if (!list || !list.length) return;
+  const items = list.map((r) => `<span><em>${escapeHtml(r.name)}</em> joined ${ago(r.at)}</span>`).join("");
+  $("ticker").innerHTML = items + items;
 }
 
 function ago(sec) {
@@ -418,17 +498,15 @@ function ago(sec) {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/* ---------- polling ---------- */
+/* ---------- Polling live stats ---------- */
 async function poll() {
   try {
-    const s = DEMO ? demoStats() : await (await fetch(API_BASE + "/api/stats", { cache: "no-store" })).json();
-    if (typeof s.supporters !== "number") throw new Error("bad");
-    latest = s;
-    render(s);
-    $("updated").textContent = "updated " + new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", second: "2-digit" });
+    const s = await (await fetch(API_BASE + "/api/stats", { cache: "no-store" })).json();
+    if (typeof s.supporters === "number") render(s);
+    $("updated").textContent = "updated " + new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
   } catch (e) {
     $("updated").textContent = "reconnecting…";
   }
@@ -436,68 +514,160 @@ async function poll() {
 let timer;
 function startPolling() { clearInterval(timer); poll(); timer = setInterval(poll, POLL_MS); }
 document.addEventListener("visibilitychange", () => document.hidden ? clearInterval(timer) : startPolling());
-// startPolling() is called at the very end of this script, once everything is defined.
 
-/* ---------- demo data (only when API_BASE is empty) ---------- */
-let demo = { supporters: 1247, contributions: 1389, amount_inr: 1689000, recent: [] };
-const demoNames = [["Priya","Chennai"],["Arun","Madurai"],["Meera","Bengaluru"],["Joseph","Kochi"],["Ananya","Pune"],["Rahul","Delhi"],["Fatima","Hyderabad"],["David","Coimbatore"]];
-demo.recent = demoNames.slice(0, 6).map((n, i) => ({ name: "A kind supporter", city: "", at: Date.now() / 1000 - (i + 1) * 170 }));
-function demoStats() {
-  if (!firstLoad && Math.random() < 0.6) {
-    const n = demoNames[Math.floor(Math.random() * demoNames.length)];
-    const amt = [1000, 1000, 2500, 5000][Math.floor(Math.random() * 4)];
-    demo.supporters += 1; demo.contributions += 1; demo.amount_inr += amt;
-    demo.recent = [{ name: "A kind supporter", city: "", at: Date.now() / 1000 }, ...demo.recent].slice(0, 8);
-  }
-  return { goal: GOAL, ...demo };
-}
+/* ---------- Form Validation & Submission ---------- */
+const donationForm = $("donationForm");
+const formErr = $("formErr");
 
-/* ---------- contribute buttons ---------- */
-document.querySelectorAll(".pay-link").forEach((a) => {
-  if (a.id === "heroBtn" || a.classList.contains("nav-cta")) {
-    a.addEventListener("click", (ev) => { ev.preventDefault(); $("give").scrollIntoView({ behavior: "smooth" }); });
-    return;
+donationForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  formErr.style.display = "none";
+
+  const name = $("donorName").value.trim();
+  const pan = $("donorPan").value.trim().toUpperCase();
+  const phone = $("donorPhone").value.replace(/\D/g, "");
+  const email = $("donorEmail").value.trim().toLowerCase();
+  const address = $("donorAddress").value.trim();
+  const citizenship = $("tickCitizenship").checked;
+  const corpus = $("tickCorpus").checked;
+  const amount = parseInt($("customAmount").value, 10);
+
+  if (!name) return showErr("Please enter your full name as per PAN.");
+  if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+    return showErr("Please enter a valid 10-character PAN (e.g. ABCDE1234F).");
   }
-  if (RAZORPAY_PAGE_URL) {
-    a.href = RAZORPAY_PAGE_URL; // opens the secure Razorpay Payment Page
-  } else {
-    a.addEventListener("click", (ev) => {
-      if (a.id === "heroBtn" || a.classList.contains("nav-cta")) return; // just scroll to the section
-      ev.preventDefault();
-      if (DEMO) { // preview: simulate one contribution
-        demo.supporters += 1; demo.contributions += 1; demo.amount_inr += 1000;
-        demo.recent = [{ name: "A kind supporter", city: "", at: Date.now() / 1000 }, ...demo.recent].slice(0, 8);
-        render({ goal: GOAL, ...demo });
-        thankYou();
-      } else {
-        $("err").textContent = "Payment link not set yet — add RAZORPAY_PAGE_URL in this page's settings.";
-      }
+  if (phone.length !== 10) return showErr("Please enter a valid 10-digit mobile number.");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr("Please enter a valid email address.");
+  if (address.length < 5) return showErr("Please enter your complete postal address for the tax certificate.");
+  if (!citizenship) return showErr("You must confirm that you are an Indian citizen donating from an Indian account or card.");
+  if (!amount || amount < 1000) return showErr("Minimum contribution amount is ₹1,000.");
+
+  const submitBtn = $("btnSubmitDonate");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Processing details…";
+
+  try {
+    // 1. Create donation intent in D1
+    const res = await fetch(API_BASE + "/api/donations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        pan,
+        phone,
+        email,
+        address,
+        amount,
+        frequency: isMonthly ? "monthly" : "one-time",
+        citizenship: true,
+        corpus,
+        corpus_text: corpus ? CORPUS_TEXT : null,
+      }),
     });
+    const data = await res.json();
+    if (!data.success) {
+      showErr(data.error || "Failed to initiate donation. Please try again.");
+      submitBtn.disabled = false;
+      updateSubmitButton();
+      return;
+    }
+
+    const donationId = data.donation_id;
+
+    // 2. Razorpay Checkout Flow (Live / Test key)
+    if (typeof Razorpay !== "undefined" && RAZORPAY_KEY_ID && !RAZORPAY_KEY_ID.includes("placeholder")) {
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: amount * 100,
+        currency: "INR",
+        name: "Christ Focus Mission",
+        description: isMonthly ? "Music for Every Child · Monthly Pledge" : "Music for Every Child Support",
+        image: "https://www.christfocusmission.org/assets/img/logo.png",
+        prefill: { name, email, contact: phone },
+        notes: { donation_id: donationId, pan },
+        handler: async function (response) {
+          await completeDonation(donationId, response.razorpay_payment_id);
+        },
+        modal: {
+          ondismiss: function () {
+            submitBtn.disabled = false;
+            updateSubmitButton();
+          },
+        },
+        theme: { color: "#5B5BAA" },
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    } else {
+      // Test Mode Simulation: Completes instantly, logs to D1, generates receipt
+      const testPaymentId = "pay_test_" + Math.random().toString(36).slice(2, 10);
+      await completeDonation(donationId, testPaymentId);
+    }
+  } catch (err) {
+    showErr("Connection error. Please try again.");
+    submitBtn.disabled = false;
+    updateSubmitButton();
   }
 });
 
-/* ---------- thank you (Razorpay sends donors back to ?thanks=1) ---------- */
-function thankYou() {
-  $("tyName").textContent = "friend";
+function showErr(msg) {
+  formErr.textContent = msg;
+  formErr.style.display = "block";
+  formErr.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+async function completeDonation(donationId, paymentId) {
+  try {
+    const res = await fetch(API_BASE + "/api/donations/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ donation_id: donationId, payment_id: paymentId }),
+    });
+    const d = await res.json();
+    if (d.success && d.receipt) {
+      showReceiptModal(d.receipt);
+      poll();
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    $("btnSubmitDonate").disabled = false;
+    updateSubmitButton();
+  }
+}
+
+function showReceiptModal(rcpt) {
+  $("tyName").textContent = rcpt.donor_name || "friend";
   $("tyNum").textContent = "♥";
-  $("tyNote").textContent = "Your contribution is confirmed. Watch the counter — it updates within a few seconds. Invite your friends to join in bringing music to every child.";
-  const msg = `I just became a supporter of Music for Every Child 🎶 Join me in bringing music to every child: ${location.origin + location.pathname}`;
+  $("rcptNo").textContent = rcpt.receipt_no;
+  $("rcptDate").textContent = rcpt.date;
+  $("rcptPayId").textContent = rcpt.payment_id;
+  $("rcptDonorName").textContent = rcpt.donor_name;
+  $("rcptDonorPan").textContent = rcpt.donor_pan;
+  $("rcptAmount").textContent = "₹" + fmt(rcpt.amount_inr) + (rcpt.frequency === "monthly" ? " / month" : "");
+
+  if (rcpt.corpus) {
+    $("rcptCorpusBox").style.display = "block";
+    $("rcptCorpusText").textContent = `"${rcpt.corpus_text}"`;
+    $("rcptCorpusTime").textContent = "Time: " + rcpt.iso_time;
+    $("rcptCorpusIp").textContent = "IP: " + rcpt.ip_address;
+  } else {
+    $("rcptCorpusBox").style.display = "none";
+  }
+
+  const msg = `I just supported Music for Every Child 🎶 Join me in giving free music education to underprivileged children: ${location.origin + location.pathname}`;
   $("waShare").href = "https://wa.me/?text=" + encodeURIComponent(msg);
   $("modal").classList.add("open");
   burst(260);
 }
-if (/[?&]thanks=1\b/.test(location.search)) {
-  history.replaceState(null, "", location.pathname); // so a refresh doesn't show it again
-  setTimeout(thankYou, 600);
-  setTimeout(poll, 4000); setTimeout(poll, 9000); // pick up the new count quickly
-}
+
 $("closeModal").onclick = () => $("modal").classList.remove("open");
 $("modal").onclick = (e) => { if (e.target.id === "modal") $("modal").classList.remove("open"); };
 $("copyLink").onclick = async () => {
-  try { await navigator.clipboard.writeText(location.origin + location.pathname); $("copyLink").textContent = "Copied!"; } catch (_) {}
+  try { await navigator.clipboard.writeText(location.origin + location.pathname); $("copyLink").textContent = "Copied!"; setTimeout(() => $("copyLink").textContent = "Copy Link", 1500); } catch (_) {}
 };
 
-/* ---------- toast ---------- */
+/* ---------- Toast Notification ---------- */
 let toastT;
 function toast(html) {
   const t = $("toast");
@@ -505,7 +675,7 @@ function toast(html) {
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 4200);
 }
 
-/* ---------- confetti ---------- */
+/* ---------- Confetti Canvas ---------- */
 const cv = $("confetti"), cx = cv.getContext("2d");
 let parts = [], raf = null;
 function size() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
@@ -522,36 +692,23 @@ function burst(n) {
   if (!raf) loop();
 }
 function loop() {
-  cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  cx.clearRect(0, 0, innerWidth, innerHeight);
-  parts.forEach((p) => {
-    p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += .1; p.life++;
-    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c;
-    if (p.note) { cx.font = "bold 20px sans-serif"; cx.fillText("♪", 0, 0); }
-    else cx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * .6);
+  cx.clearRect(0, 0, cv.width, cv.height);
+  const dpr = devicePixelRatio;
+  parts = parts.filter((p) => p.life < 100);
+  for (const p of parts) {
+    p.life++; p.x += p.vx; p.y += p.vy; p.vy += .38; p.vx *= .98; p.a += .1;
+    cx.save(); cx.translate(p.x * dpr, p.y * dpr); cx.rotate(p.a);
+    cx.fillStyle = p.c;
+    if (p.note) {
+      cx.font = `${p.r * 2.2 * dpr}px sans-serif`;
+      cx.fillText("♪", 0, 0);
+    } else {
+      cx.fillRect(-p.r * dpr, -p.r * dpr, p.r * 2 * dpr, p.r * 1.4 * dpr);
+    }
     cx.restore();
-  });
-  parts = parts.filter((p) => p.y < innerHeight + 40 && p.life < 240);
-  raf = parts.length ? requestAnimationFrame(loop) : (cx.clearRect(0, 0, innerWidth, innerHeight), null);
-}
-
-/* ---------- give once / give monthly ---------- */
-(function () {
-  const tabs = [["tabOnce", "panelOnce"], ["tabMonthly", "panelMonthly"]];
-  function show(id) {
-    tabs.forEach(([t, p]) => {
-      const on = t === id;
-      $(t).setAttribute("aria-selected", String(on));
-      $(p).hidden = !on;
-    });
   }
-  tabs.forEach(([t]) => $(t).addEventListener("click", () => show(t)));
-  if (location.hash === "#monthly") show("tabMonthly");
-  // monthly amount dropdown: show only the matching Razorpay button
-  const sel = $("subAmount");
-  const pick = () => document.querySelectorAll("#subWrap .sub-btn").forEach((d) => (d.hidden = d.dataset.amount !== sel.value));
-  sel.addEventListener("change", pick); pick();
-})();
+  if (parts.length) raf = requestAnimationFrame(loop); else raf = null;
+}
 
 startPolling();
 </script>
