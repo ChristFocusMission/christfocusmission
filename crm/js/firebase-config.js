@@ -13,7 +13,15 @@ const CFM_STORAGE_KEYS = {
 
 // Global Firebase Project Credentials for Christ Focus Mission
 // When populated, all team members & devices automatically connect to the same live database.
-const CFM_GLOBAL_FIREBASE_CONFIG = null;
+const CFM_GLOBAL_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAyoxnt1x07052JMsHxlNpQlMWJpvOeNis",
+  authDomain: "cfmcrm.firebaseapp.com",
+  projectId: "cfmcrm",
+  storageBucket: "cfmcrm.firebasestorage.app",
+  messagingSenderId: "870114446681",
+  appId: "1:870114446681:web:c4b46027cb81c22e5e1048",
+  measurementId: "G-ZZK9H2VQ2F"
+};
 
 class FirebaseService {
   constructor() {
@@ -67,6 +75,20 @@ class FirebaseService {
 
   // Get current stored configuration or null
   getSavedConfig() {
+    // If global project configuration is baked in, use it as the authoritative configuration
+    if (typeof CFM_GLOBAL_FIREBASE_CONFIG !== 'undefined' && CFM_GLOBAL_FIREBASE_CONFIG && CFM_GLOBAL_FIREBASE_CONFIG.projectId) {
+      try {
+        const saved = localStorage.getItem(CFM_STORAGE_KEYS.FIREBASE_CONFIG);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.projectId && parsed.apiKey && parsed.projectId === CFM_GLOBAL_FIREBASE_CONFIG.projectId) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return CFM_GLOBAL_FIREBASE_CONFIG;
+    }
+
     try {
       const saved = localStorage.getItem(CFM_STORAGE_KEYS.FIREBASE_CONFIG);
       if (saved) {
@@ -75,10 +97,6 @@ class FirebaseService {
       }
     } catch (e) {
       console.warn("Could not read saved firebase config:", e);
-    }
-    // Fall back to global configuration if available
-    if (typeof CFM_GLOBAL_FIREBASE_CONFIG !== 'undefined' && CFM_GLOBAL_FIREBASE_CONFIG && CFM_GLOBAL_FIREBASE_CONFIG.projectId) {
-      return CFM_GLOBAL_FIREBASE_CONFIG;
     }
     return null;
   }
