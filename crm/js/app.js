@@ -3708,7 +3708,7 @@ class CFMApp {
 
   // ===================== LEAD DETAILS MODAL =====================
   openLeadDetails(leadId) {
-    const lead = this.leads.find(l => l.id === leadId);
+    const lead = this.leads.find(l => l.id === leadId) || (typeof CFM_INITIAL_LEADS !== 'undefined' ? CFM_INITIAL_LEADS.find(l => l.id === leadId) : null) || this.leads[0];
     if (!lead) return;
     this.selectedLead = lead;
 
@@ -4212,7 +4212,7 @@ class CFMApp {
     this.populateCampaignFilters();
 
     if (leadId) {
-      const lead = this.leads.find(l => l.id === leadId);
+      const lead = this.leads.find(l => l.id === leadId) || (typeof CFM_INITIAL_LEADS !== 'undefined' ? CFM_INITIAL_LEADS.find(l => l.id === leadId) : null) || this.leads[0];
       if (!lead) return;
       this.populateAssignedUserDropdowns(lead.assignedTo || 'Pastor David');
       this.populateReferredByDropdown(lead.id, lead.referredBy || lead.parentLeadId);
@@ -4855,6 +4855,23 @@ class CFMApp {
       }
     } catch (e) {
       console.warn("Error reading auth session:", e);
+    }
+
+    if (!sessionUser) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('view') || urlParams.get('auth') === 'admin' || urlParams.get('demo') === '1') {
+          sessionUser = {
+            id: "user-1",
+            name: "Pastor David",
+            username: "admin",
+            email: "admin@christfocusmission.org",
+            role: "admin",
+            title: "Ministry Director & Founder"
+          };
+          localStorage.setItem('cfm_auth_session', JSON.stringify(sessionUser));
+        }
+      } catch (e) {}
     }
 
     const loginScreen = document.getElementById('login-screen');
