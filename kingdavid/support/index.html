@@ -265,8 +265,8 @@
           </div>
         </div>
 
-        <div class="citizenship-warn" id="warnOnce" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
-          Please confirm Indian citizenship above to proceed.
+        <div class="citizenship-warn" id="warnOnce" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
+          Please confirm both declarations above to proceed with your contribution.
         </div>
 
         <div class="rzp-wrap" id="rzpWrap">
@@ -306,8 +306,8 @@
           </div>
         </div>
 
-        <div class="citizenship-warn" id="warnMonthly" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
-          Please confirm Indian citizenship above to proceed.
+        <div class="citizenship-warn" id="warnMonthly" style="display:none;background:#FDE8E8;color:#C81E1E;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;margin-bottom:12px;text-align:center;">
+          Please confirm both declarations above to proceed with your contribution.
         </div>
 
         <div class="pledge-terms" style="background:var(--cream);border:1px solid var(--line);border-radius:var(--r-sm);padding:16px;margin:0 0 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
@@ -596,21 +596,27 @@ function loop() {
   const pick = () => document.querySelectorAll("#subWrap .sub-btn").forEach((d) => (d.hidden = d.dataset.amount !== sel.value));
   sel.addEventListener("change", pick); pick();
 
-  // Synchronize citizenship checkboxes to gate payment buttons
-  function setupCheckboxGate(tickId, btnWrapId, warnId) {
-    const tick = $(tickId), wrap = $(btnWrapId), warn = $(warnId);
-    if (!tick || !wrap) return;
+  // Only if BOTH checkboxes are enabled/checked, contribute buttons are enabled
+  function setupDualCheckboxGate(citId, corpId, wrapIds, warnId) {
+    const cit = $(citId), corp = $(corpId), warn = $(warnId);
+    if (!cit || !corp) return;
     function update() {
-      const ok = tick.checked;
-      wrap.style.pointerEvents = ok ? "auto" : "none";
-      wrap.style.opacity = ok ? "1" : "0.35";
+      const ok = cit.checked && corp.checked;
+      wrapIds.forEach((id) => {
+        const el = $(id);
+        if (el) {
+          el.style.pointerEvents = ok ? "auto" : "none";
+          el.style.opacity = ok ? "1" : "0.35";
+        }
+      });
       if (warn) warn.style.display = ok ? "none" : "block";
     }
-    tick.addEventListener("change", update);
+    cit.addEventListener("change", update);
+    corp.addEventListener("change", update);
     update();
   }
-  setupCheckboxGate("tickCitizenshipOnce", "rzpWrap", "warnOnce");
-  setupCheckboxGate("tickCitizenshipMonthly", "subWrap", "warnMonthly");
+  setupDualCheckboxGate("tickCitizenshipOnce", "tickCorpusOnce", ["rzpWrap", "payBtn"], "warnOnce");
+  setupDualCheckboxGate("tickCitizenshipMonthly", "tickCorpusMonthly", ["subWrap"], "warnMonthly");
 })();
 
 startPolling();
