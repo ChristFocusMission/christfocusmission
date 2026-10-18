@@ -159,10 +159,21 @@ class CFMApp {
         setTimeout(() => {
           if (viewParam === 'lead-modal') {
             this.openLeadModal(leadIdParam);
+          } else if (viewParam === 'lead-modal-bottom') {
+            this.openLeadModal(leadIdParam);
+            setTimeout(() => {
+              const scrollEl = document.querySelector('#modal-lead-form > div') || document.querySelector('#modal-lead-form .overflow-y-auto') || document.getElementById('modal-lead-form');
+              if (scrollEl) scrollEl.scrollTop = 9999;
+              const refCard = document.getElementById('modal-lead-supporter-type');
+              if (refCard) refCard.scrollIntoView({ behavior: 'instant', block: 'center' });
+            }, 120);
           } else if (viewParam === 'lead-details') {
             this.openLeadDetails(leadIdParam);
           } else if (viewParam === 'new-modal') {
             this.openLeadModal();
+          } else if (viewParam === 'network-table') {
+            this.lineageViewMode = 'table';
+            this.switchView('network');
           } else {
             this.switchView(viewParam);
           }
@@ -1816,17 +1827,16 @@ class CFMApp {
     const hasFilter = this.lineageStageFilter !== 'all' || this.lineageStatusFilter !== 'all' || (this.lineageSearchTerm && this.lineageSearchTerm.length > 0);
 
     if (!hasFilter) {
-      const rootLeaders = this.leads.filter(l => Boolean(l.networkTier) && (
-        l.networkTier === 'stage-1' || 
-        !l.parentLeadId || 
-        l.parentLeadId.startsWith('staff:') || 
-        !this.leads.some(p => p.id === l.parentLeadId)
+      const allLeadsPool = (this.leads && this.leads.length > 0) ? this.leads : (typeof CFM_INITIAL_LEADS !== 'undefined' ? CFM_INITIAL_LEADS : []);
+      const rootLeaders = allLeadsPool.filter(l => (
+        !l.referredBy || 
+        !allLeadsPool.some(p => p.id === l.referredBy)
       ));
       if (rootLeaders.length === 0) {
         return `
           <div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
             <i class="fas fa-users text-3xl mb-2 text-slate-300"></i>
-            <p class="text-sm font-semibold">No root network leaders found in database.</p>
+            <p class="text-sm font-semibold">No root supporters found in database.</p>
           </div>
         `;
       }
@@ -1991,7 +2001,8 @@ class CFMApp {
     const factor = (this.networkActivationPct || 100) / 100;
 
     // Lineage statistics & Non-Profit Supporter Directory Counts
-    const networkLeads = this.leads.filter(l => Boolean(l.networkTier) || Boolean(l.supporterType));
+    const allLeadsPool = (this.leads && this.leads.length > 0) ? this.leads : (typeof CFM_INITIAL_LEADS !== 'undefined' ? CFM_INITIAL_LEADS : []);
+    const networkLeads = allLeadsPool;
     const totalSupportersCount = networkLeads.length;
     const withReferralsCount = networkLeads.filter(l => (this.getLeaderLevelInfo(l.id)?.recruitCount || 0) > 0).length;
     const ambassadorsCount = networkLeads.filter(l => this.getSupporterType(l) === 'Volunteer Ambassador').length;
