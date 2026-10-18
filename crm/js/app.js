@@ -39,6 +39,8 @@ class CFMApp {
     this.campaignFilter = 'all';
     this.priorityFilter = 'all';
     this.assignedFilter = 'all';
+    this.corpusFilter = 'all'; // 'all' | 'corpus' | 'general'
+    this.supporterTypeFilter = 'all'; // 'all' | 'Donor' | 'Monthly Supporter' | 'Volunteer Ambassador'
     // Default currency: INR (Indian Rupee ₹)
     const savedCurrency = localStorage.getItem(CFM_STORAGE_KEYS.ACTIVE_CURRENCY);
     const explicitlySet = localStorage.getItem('cfm_currency_explicitly_set');
@@ -193,6 +195,22 @@ class CFMApp {
       });
     }
 
+    const corpusSelect = document.getElementById('filter-corpus');
+    if (corpusSelect) {
+      corpusSelect.addEventListener('change', (e) => {
+        this.corpusFilter = e.target.value;
+        this.renderMainContent();
+      });
+    }
+
+    const supporterTypeSelect = document.getElementById('filter-supporter-type');
+    if (supporterTypeSelect) {
+      supporterTypeSelect.addEventListener('change', (e) => {
+        this.supporterTypeFilter = e.target.value;
+        this.renderMainContent();
+      });
+    }
+
     // Currency Switcher
     const currencySelect = document.getElementById('currency-selector');
     if (currencySelect) {
@@ -330,6 +348,19 @@ class CFMApp {
       // Priority filter
       if (this.priorityFilter !== 'all' && lead.priority !== this.priorityFilter) return false;
 
+      // Corpus filter (Yes / No)
+      if (this.corpusFilter && this.corpusFilter !== 'all') {
+        const isCorpus = Boolean(lead.isCorpus === true || lead.isCorpus === 'Yes' || lead.isCorpus === 'yes');
+        if (this.corpusFilter === 'corpus' && !isCorpus) return false;
+        if (this.corpusFilter === 'general' && isCorpus) return false;
+      }
+
+      // Supporter Type filter (Donor, Monthly Supporter, Volunteer Ambassador)
+      if (this.supporterTypeFilter && this.supporterTypeFilter !== 'all') {
+        const type = this.getSupporterType(lead);
+        if (type !== this.supporterTypeFilter) return false;
+      }
+
       // Search term
       if (this.searchTerm) {
         const text = [
@@ -339,6 +370,11 @@ class CFMApp {
           lead.phone,
           lead.city,
           lead.country,
+          lead.pan,
+          lead.address,
+          lead.paymentId,
+          lead.referredByName,
+          lead.volunteerCoordinator,
           lead.assignedTo,
           lead.notes,
           lead.prayerRequests
@@ -657,30 +693,54 @@ class CFMApp {
           </span>
         </div>
 
-        <!-- 5-Level Scaling Lineage & Level Quota Badge -->
-        ${lead.networkTier ? (() => {
+        <!-- Statutory Compliance & Supporter Stewardship Badges -->
+        <div class="my-1.5 flex flex-wrap gap-1 items-center">
+          ${lead.isCorpus ? `
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200" title="Corpus Gift - Sec 11(1)(d)">
+              <i class="fas fa-landmark text-[9px]"></i> Corpus Gift
+            </span>
+          ` : ''}
+          ${lead.pan ? `
+            <span class="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200" title="Income Tax PAN">
+              <i class="fas fa-id-card text-[9px] text-slate-500"></i> ${this.escapeHtml(lead.pan)}
+            </span>
+          ` : ''}
+          ${(lead.supporterType || lead.networkTier) ? `
+            <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200" title="Supporter Type">
+              <i class="fas fa-handshake-angle text-[9px] text-amber-600"></i> ${this.escapeHtml(this.getSupporterType(lead))}
+            </span>
+          ` : ''}
+        </div>
+
+        <!-- Supporter Referral & Coordinator Record (For Record-Keeping Only) -->
+        ${(() => {
           const info = this.getLeaderLevelInfo(lead.id);
           const parent = info ? info.parentLead : null;
+          const coord = lead.volunteerCoordinator || info?.staffLeader || lead.assignedTo || 'Pastor David';
+          const refCount = this.getReferralsCount(lead.id);
+
+          if (!parent && !lead.supporterType && !lead.networkTier && refCount === 0) return '';
+
           return `
             <div class="my-1.5 p-1.5 rounded-md bg-slate-50 border border-slate-200/80 text-[10px] space-y-0.5">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-slate-800">${this.getStageRoleLabel(lead.networkTier)}</span>
-                ${info ? `
-                  <span class="px-1.5 py-0.2 rounded font-extrabold ${info.isReached ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : info.recruitCount > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-200 text-slate-600'}">
-                    ${info.isReached ? '★ 10/10 ✓' : `${info.recruitCount}/10`}
+                <span class="font-bold text-slate-700 truncate max-w-[130px]" title="Volunteer Coordinator">
+                  <i class="fas fa-user-shield text-indigo-600 text-[9px]"></i> ${this.escapeHtml(coord)}
+                </span>
+                ${refCount > 0 ? `
+                  <span class="px-1.5 py-0.2 rounded font-extrabold bg-amber-100 text-amber-900 border border-amber-300" title="Referrals on Record (For Info Only)">
+                    Referrals: ${refCount}
                   </span>
                 ` : ''}
               </div>
-              <div class="text-slate-500 truncate">
-                ${parent ? `
-                  <i class="fas fa-level-up-alt rotate-90 text-amber-500 text-[9px]"></i> Under: <span class="font-semibold text-slate-700">${this.escapeHtml(parent.name)}</span>
-                ` : `
-                  <i class="fas fa-user-shield text-indigo-600 text-[9px]"></i> Staff Leader: <span class="font-semibold text-indigo-950">${this.escapeHtml(info?.staffLeader || lead.assignedTo || 'Pastor David')}</span>
-                `}
-              </div>
+              ${parent ? `
+                <div class="text-slate-500 truncate text-[9px]">
+                  <i class="fas fa-handshake-angle text-amber-500"></i> Referred by: <strong class="text-slate-700">${this.escapeHtml(parent.name)}</strong> <span class="text-slate-400">(info only)</span>
+                </div>
+              ` : ''}
             </div>
           `;
-        })() : ''}
+        })()}
 
         <!-- Financial Row -->
         <div class="flex items-baseline justify-between mt-2 pt-2 border-t border-slate-100">
@@ -895,6 +955,16 @@ class CFMApp {
                       <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-slate-100 text-slate-600">
                         ${lead.leadType || 'Individual'}
                       </span>
+                      ${lead.isCorpus ? `
+                        <span class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                          Corpus
+                        </span>
+                      ` : ''}
+                      ${lead.pan ? `
+                        <span class="text-[10px] px-1.5 py-0.2 rounded font-mono bg-slate-100 text-slate-700">
+                          ${this.escapeHtml(lead.pan)}
+                        </span>
+                      ` : ''}
                     </div>
                     ${lead.organization ? `
                       <div class="text-xs text-slate-500 truncate mt-0.5">${this.escapeHtml(lead.organization)}</div>
@@ -987,31 +1057,39 @@ class CFMApp {
                       ${lead.organization ? `
                         <div class="text-xs text-slate-500">${this.escapeHtml(lead.organization)}</div>
                       ` : ''}
-                      ${lead.networkTier ? (() => {
+                      ${(() => {
                         const info = this.getLeaderLevelInfo(lead.id);
                         const parent = info ? info.parentLead : null;
+                        const sType = this.getSupporterType(lead);
+                        const refCount = this.getReferralsCount(lead.id);
                         return `
                           <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                              ${this.getStageRoleLabel(lead.networkTier)}
+                            ${lead.isCorpus ? `
+                              <span class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-purple-100 text-purple-800 border border-purple-200" title="Corpus Gift - Sec 11(1)(d)">
+                                <i class="fas fa-landmark text-[9px]"></i> Corpus
+                              </span>
+                            ` : ''}
+                            ${lead.pan ? `
+                              <span class="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Income Tax PAN">
+                                PAN: ${this.escapeHtml(lead.pan)}
+                              </span>
+                            ` : ''}
+                            <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                              ${sType}
                             </span>
                             ${parent ? `
                               <span class="text-[10px] text-slate-500 flex items-center gap-0.5">
-                                <i class="fas fa-level-up-alt rotate-90 text-amber-500 text-[9px]"></i> Under: <strong class="text-slate-700">${this.escapeHtml(parent.name)}</strong>
+                                <i class="fas fa-handshake-angle text-amber-500 text-[9px]"></i> Referred by: <strong class="text-slate-700">${this.escapeHtml(parent.name)}</strong>
                               </span>
-                            ` : `
-                              <span class="text-[10px] text-indigo-900 font-semibold flex items-center gap-0.5">
-                                <i class="fas fa-user-shield text-indigo-600 text-[9px]"></i> Staff: <strong class="text-indigo-950">${this.escapeHtml(info?.staffLeader || lead.assignedTo || 'Pastor David')}</strong>
-                              </span>
-                            `}
-                            ${info ? `
-                              <span class="text-[10px] px-1.5 py-0.2 rounded font-bold ${info.isReached ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : info.recruitCount > 0 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-500'}">
-                                ${info.isReached ? '★ Quota Met (10/10) ✓' : `${info.recruitCount}/10 Recruits`}
+                            ` : ''}
+                            ${refCount > 0 ? `
+                              <span class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Referrals: ${refCount}
                               </span>
                             ` : ''}
                           </div>
                         `;
-                      })() : ''}
+                      })()}
                       ${lead.prayerRequests ? `
                         <div class="text-[11px] text-indigo-600 flex items-center gap-1 mt-0.5">
                           <i class="fas fa-pray text-[10px]"></i> Prayer noted
@@ -1247,11 +1325,91 @@ class CFMApp {
     }
   }
 
-  // ===================== LEADER LINEAGE & LEVEL QUOTA TRACKING =====================
+  // Supporter Type Helper (Donor, Monthly Supporter, Volunteer Ambassador)
+  getSupporterType(lead) {
+    if (!lead) return 'Donor';
+    if (lead.supporterType) return lead.supporterType;
+    if (lead.networkTier) {
+      if (['stage-1', 'stage-2', 'stage-3', 'stage-4'].includes(lead.networkTier)) {
+        return 'Volunteer Ambassador';
+      }
+      if (lead.networkTier === 'stage-5') {
+        return 'Monthly Supporter';
+      }
+    }
+    if (lead.frequency === 'Monthly') return 'Monthly Supporter';
+    return 'Donor';
+  }
+
+  // Count total referrals introduced by a supporter (record-keeping only, no rewards/perks)
+  getReferralsCount(leadId) {
+    if (!leadId) return 0;
+    return this.leads.filter(l => l.referredBy === leadId || l.parentLeadId === leadId).length;
+  }
+
+  // Handle Corpus donation toggle in Lead Add/Edit modal
+  handleCorpusChangeInForm(val) {
+    const box = document.getElementById('modal-lead-corpus-direction-box');
+    const warning = document.getElementById('modal-lead-corpus-high-value-warning');
+    const isCorpus = (val === 'Yes');
+    if (box) {
+      box.classList.toggle('hidden', !isCorpus);
+    }
+    if (warning) {
+      const amount = Number(document.getElementById('modal-lead-amount')?.value || 0);
+      const received = Number(document.getElementById('modal-lead-received')?.value || 0);
+      const maxAmt = Math.max(amount, received);
+      // Highlight requirement for gifts of 1 lakh or more
+      if (maxAmt >= 100000) {
+        warning.classList.remove('opacity-75');
+        warning.classList.add('ring-2', 'ring-amber-500', 'bg-amber-100');
+      } else {
+        warning.classList.remove('ring-2', 'ring-amber-500');
+      }
+    }
+  }
+
+  // Handle Supporter Type changes in modal
+  handleSupporterTypeChangeInForm(val) {
+    const hiddenTier = document.getElementById('modal-lead-network-tier');
+    if (hiddenTier) {
+      if (val === 'Volunteer Ambassador') hiddenTier.value = 'stage-1';
+      else if (val === 'Monthly Supporter') hiddenTier.value = 'stage-5';
+      else hiddenTier.value = '';
+    }
+  }
+
+  // Populate Referred By dropdown in modal
+  populateReferredByDropdown(currentLeadId = null, selectedReferredById = null) {
+    const select = document.getElementById('modal-lead-referred-by');
+    if (!select) return;
+
+    let optionsHtml = '<option value="">None / Direct Supporter</option>';
+    const candidates = this.leads.filter(l => (!currentLeadId || l.id !== currentLeadId));
+    candidates.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    candidates.forEach(cand => {
+      const sType = this.getSupporterType(cand);
+      const isSel = selectedReferredById && (selectedReferredById === cand.id || selectedReferredById === cand.name);
+      const city = cand.city ? ` • ${this.escapeHtml(cand.city)}` : '';
+      optionsHtml += `
+        <option value="${cand.id}" ${isSel ? 'selected' : ''}>
+          ${this.escapeHtml(cand.name)} (${sType}${city})
+        </option>
+      `;
+    });
+
+    select.innerHTML = optionsHtml;
+    if (selectedReferredById) {
+      select.value = selectedReferredById;
+    }
+  }
+
+  // ===================== SUPPORTER & REFERRAL STEWARDSHIP TRACKING =====================
   getStageRoleLabel(stageId) {
     const stages = typeof CFM_NETWORK_STAGES !== 'undefined' ? CFM_NETWORK_STAGES : [];
     const stageObj = stages.find(s => s.id === stageId);
-    return stageObj ? `Stage ${stageObj.stageNumber}: ${stageObj.role}` : (stageId || 'Donor');
+    return stageObj ? `${stageObj.role}` : (stageId || 'Donor');
   }
 
   getLeaderLevelInfo(leadId) {
@@ -1260,23 +1418,25 @@ class CFMApp {
 
     let parentLead = null;
     let staffLeader = null;
-    if (lead.parentLeadId) {
+    if (lead.referredBy) {
+      parentLead = this.leads.find(l => l.id === lead.referredBy);
+    }
+    if (!parentLead && lead.parentLeadId) {
       if (lead.parentLeadId.startsWith('staff:')) {
         staffLeader = lead.parentLeadId.replace('staff:', '');
       } else {
         parentLead = this.leads.find(l => l.id === lead.parentLeadId);
       }
     }
-    // Core Leaders without donor upline are tracked directly by Ministry Staff
     if (!parentLead && !staffLeader) {
-      staffLeader = lead.assignedTo || 'Pastor David';
+      staffLeader = lead.volunteerCoordinator || lead.assignedTo || 'Pastor David';
     }
 
-    const directRecruits = this.leads.filter(l => l.parentLeadId === lead.id);
+    const directRecruits = this.leads.filter(l => (l.referredBy === lead.id || l.parentLeadId === lead.id));
 
-    // Recursive downline computation
+    // Recursive referral computation
     const getDescendants = (id) => {
-      const children = this.leads.filter(l => l.parentLeadId === id);
+      const children = this.leads.filter(l => (l.referredBy === id || l.parentLeadId === id));
       let desc = [...children];
       for (const child of children) {
         desc = desc.concat(getDescendants(child.id));
@@ -1288,11 +1448,12 @@ class CFMApp {
     const stages = typeof CFM_NETWORK_STAGES !== 'undefined' ? CFM_NETWORK_STAGES : [];
     const stageObj = stages.find(s => s.id === lead.networkTier);
     const stageNumber = stageObj ? stageObj.stageNumber : 1;
-    const roleTitle = stageObj ? stageObj.role : (lead.networkTier || 'Partner');
+    const supporterType = this.getSupporterType(lead);
+    const roleTitle = supporterType;
 
-    // Quota goal for each leader in the 10x viral multiplying model is 10 recruits
-    const targetQuota = 10;
     const recruitCount = directRecruits.length;
+    const hasReferrals = recruitCount > 0;
+    const targetQuota = 10;
     const isReached = recruitCount >= targetQuota;
     const percentage = Math.min(100, Math.round((recruitCount / targetQuota) * 100));
     const remainingNeeded = Math.max(0, targetQuota - recruitCount);
@@ -1301,17 +1462,13 @@ class CFMApp {
     let statusLabel = '';
     let statusBadgeClass = '';
 
-    if (isReached) {
-      statusKey = 'reached';
-      statusLabel = `★ Level ${stageNumber} Reached (${recruitCount}/${targetQuota}) ✓`;
-      statusBadgeClass = 'badge-level-achieved badge-level-pulse font-bold';
-    } else if (recruitCount > 0) {
+    if (hasReferrals) {
       statusKey = 'progress';
-      statusLabel = `Level ${stageNumber} In Progress: ${recruitCount}/${targetQuota} (${remainingNeeded} needed)`;
+      statusLabel = `${recruitCount} Referrals on Record (Stewardship)`;
       statusBadgeClass = 'badge-level-progress font-semibold';
     } else {
       statusKey = 'pending';
-      statusLabel = `Level ${stageNumber} Not Started: 0/${targetQuota} (${targetQuota} needed)`;
+      statusLabel = `Direct Supporter (0 Referrals)`;
       statusBadgeClass = 'badge-level-pending text-slate-500';
     }
 
@@ -1328,8 +1485,10 @@ class CFMApp {
       stageObj,
       stageNumber,
       roleTitle,
+      supporterType,
       targetQuota,
       recruitCount,
+      hasReferrals,
       isReached,
       percentage,
       remainingNeeded,
@@ -1432,9 +1591,9 @@ class CFMApp {
     });
     optionsHtml += '</optgroup>';
 
-    // 2. Active Network Leaders (Stage 1 Core Leaders, Stage 2 Champions, etc.)
+    // 2. Registered Supporters (Referred By - For Info Only)
     if (candidates.length > 0) {
-      optionsHtml += '<optgroup label="5-Level Network Leaders (Upline Donor Leaders)">';
+      optionsHtml += '<optgroup label="Registered Supporters (Referred By - For Information Only)">';
       candidates.forEach(cand => {
         const stageLabel = this.getStageRoleLabel(cand.networkTier);
         const isSelected = selectedParentId && selectedParentId === cand.id;
@@ -1453,8 +1612,13 @@ class CFMApp {
     }
   }
 
+  addNewReferralForSupporter(referrerLeadId) {
+    this.openLeadModal(null, referrerLeadId);
+  }
+
+  // Alias for backward compatibility
   addNewRecruitUnderLeader(parentLeadId) {
-    this.openLeadModal(null, parentLeadId);
+    this.addNewReferralForSupporter(parentLeadId);
   }
 
   handleTierChangeInForm(tierValue) {
@@ -1529,16 +1693,16 @@ class CFMApp {
 
                 ${info.parentLead ? `
                   <span class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                    <i class="fas fa-level-up-alt rotate-90 text-amber-500"></i>
-                    Recruited Under:
+                    <i class="fas fa-handshake-angle text-amber-500"></i>
+                    Referred By (For Information Only):
                     <strong onclick="app.openLeadDetails('${info.parentLead.id}')" class="text-slate-800 hover:text-amber-600 cursor-pointer underline">
                       ${this.escapeHtml(info.parentLead.name)}
                     </strong>
-                    <span class="text-[10px] text-slate-400">(${this.getStageRoleLabel(info.parentLead.networkTier)})</span>
+                    <span class="text-[10px] text-slate-400">(${this.getSupporterType(info.parentLead)})</span>
                   </span>
                 ` : `
                   <span class="text-[11px] text-indigo-900 font-bold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                    <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i> Overseeing Staff Leader: <strong class="text-indigo-800">${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')}</strong>
+                    <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i> Volunteer Coordinator: <strong class="text-indigo-800">${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')}</strong>
                   </span>
                 `}
               </div>
@@ -1560,29 +1724,20 @@ class CFMApp {
                 ${[lead.city, lead.country].filter(Boolean).length > 0 ? `
                   <span><i class="fas fa-map-marker-alt text-[10px] mr-1"></i>${[lead.city, lead.country].filter(Boolean).join(', ')}</span>
                 ` : ''}
-                ${lead.assignedTo ? `
-                  <span><i class="fas fa-user-shield text-[10px] mr-1"></i>Staff: ${this.escapeHtml(lead.assignedTo)}</span>
+                ${lead.volunteerCoordinator ? `
+                  <span><i class="fas fa-user-shield text-[10px] mr-1"></i>Coordinator: ${this.escapeHtml(lead.volunteerCoordinator)}</span>
                 ` : ''}
               </div>
             </div>
 
-            <!-- Right: Level Quota Badge & Progress -->
-            <div class="sm:text-right w-full sm:w-auto sm:min-w-[200px] shrink-0 space-y-1.5">
-              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs ${info.statusBadgeClass}">
-                <i class="fas ${info.isReached ? 'fa-check-circle text-emerald-600' : info.recruitCount > 0 ? 'fa-chart-line text-amber-600' : 'fa-clock text-slate-400'}"></i>
-                <span>${info.statusLabel}</span>
+            <!-- Right: Referrals Count & Record Badge (No Quotas/MLM) -->
+            <div class="sm:text-right w-full sm:w-auto sm:min-w-[210px] shrink-0 space-y-1">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${info.recruitCount > 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-600 border border-slate-200'}">
+                <i class="fas fa-user-group text-indigo-600 text-xs"></i>
+                <span>Referrals Count: ${info.recruitCount}</span>
               </div>
-
-              <!-- Visual Progress Bar -->
-              <div class="space-y-0.5">
-                <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div class="h-2 rounded-full transition-all duration-500 ${info.isReached ? 'bg-emerald-500' : info.recruitCount > 0 ? 'bg-amber-500' : 'bg-slate-300'}"
-                       style="width: ${info.percentage}%"></div>
-                </div>
-                <div class="flex justify-between text-[10px] text-slate-500 font-medium">
-                  <span>Quota: <strong>${info.recruitCount} / 10 Recruits</strong></span>
-                  <span>Team Size: <strong>${info.totalTeamSize} members</strong></span>
-                </div>
+              <div class="text-[10px] text-slate-500 font-medium">
+                Record-keeping only • No rewards or perks
               </div>
             </div>
 
@@ -1590,11 +1745,10 @@ class CFMApp {
 
           <!-- Footer Bar with Metrics and Actions -->
           <div class="mt-3 pt-3 border-t border-slate-100 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 text-xs">
-            <!-- Downline Mobilization Summary -->
+            <!-- Referrals Summary -->
             <div class="flex items-center gap-3 sm:gap-4 flex-wrap text-[11px] text-slate-600">
-              <span class="whitespace-nowrap">Direct Downline: <strong class="text-slate-900">${info.recruitCount}</strong></span>
-              <span class="whitespace-nowrap">Total Network: <strong class="text-amber-700">${info.totalTeamSize}</strong></span>
-              <span class="whitespace-nowrap">Funds Mobilized: <strong class="text-emerald-700">${this.formatCurrency(info.totalMobilized)}</strong></span>
+              <span class="whitespace-nowrap">Direct Referrals: <strong class="text-slate-900">${info.recruitCount}</strong></span>
+              <span class="whitespace-nowrap">Ministry Contributions: <strong class="text-emerald-700">${this.formatCurrency(info.totalMobilized)}</strong></span>
             </div>
 
             <!-- Action Buttons -->
@@ -1603,16 +1757,16 @@ class CFMApp {
                 <button onclick="app.toggleLineageNode('${lead.id}')" 
                         class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shrink-0 whitespace-nowrap ${isExpanded ? 'bg-slate-200 text-slate-800 hover:bg-slate-300' : 'bg-amber-100 text-amber-900 hover:bg-amber-200'}">
                   <i class="fas ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} text-[10px]"></i>
-                  <span>${isExpanded ? 'Hide' : 'Show'} Downline (${directRecruits.length})</span>
+                  <span>${isExpanded ? 'Hide' : 'Show'} Referrals (${directRecruits.length})</span>
                 </button>
               ` : `
-                <span class="text-[11px] text-slate-400 italic px-2 shrink-0">No downline recruits</span>
+                <span class="text-[11px] text-slate-400 italic px-2 shrink-0">No referrals on record</span>
               `}
 
               <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" 
-                      title="Add Recruit Under ${this.escapeHtml(firstName)}"
+                      title="Add Referral Record Under ${this.escapeHtml(firstName)}"
                       class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm shrink-0 whitespace-nowrap">
-                <i class="fas fa-plus text-[10px]"></i> Add Recruit
+                <i class="fas fa-plus text-[10px]"></i> Add Referral
               </button>
 
               <button onclick="app.openLeadDetails('${lead.id}')" 
@@ -1720,13 +1874,12 @@ class CFMApp {
         <table class="w-full min-w-[860px] text-left border-collapse text-xs">
           <thead>
             <tr class="bg-slate-100/90 border-b border-slate-200 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-              <th class="py-3 px-4 whitespace-nowrap">Leader / Organization</th>
-              <th class="py-3 px-4 whitespace-nowrap">Stage & Role</th>
-              <th class="py-3 px-4 whitespace-nowrap">Recruited Under (Upline Mentor)</th>
-              <th class="py-3 px-4 text-center whitespace-nowrap">Level Quota Progress</th>
-              <th class="py-3 px-4 text-center whitespace-nowrap">Level Status</th>
-              <th class="py-3 px-4 text-right whitespace-nowrap">Downline Team</th>
-              <th class="py-3 px-4 text-right whitespace-nowrap">Mobilized Funds</th>
+              <th class="py-3 px-4 whitespace-nowrap">Supporter / Organization</th>
+              <th class="py-3 px-4 whitespace-nowrap">Supporter Type</th>
+              <th class="py-3 px-4 whitespace-nowrap">Referred By (For Information Only)</th>
+              <th class="py-3 px-4 whitespace-nowrap">Volunteer Coordinator</th>
+              <th class="py-3 px-4 text-center whitespace-nowrap">Referrals Count</th>
+              <th class="py-3 px-4 text-right whitespace-nowrap">Contributions</th>
               <th class="py-3 px-4 text-center whitespace-nowrap">Actions</th>
             </tr>
           </thead>
@@ -1735,6 +1888,8 @@ class CFMApp {
               const info = this.getLeaderLevelInfo(lead.id);
               if (!info) return '';
               const parent = info.parentLead;
+              const supporterType = this.getSupporterType(lead);
+              const coordinator = lead.volunteerCoordinator || (info.staffLeader || lead.assignedTo || 'Pastor David');
 
               return `
                 <tr class="hover:bg-amber-50/40 transition cursor-pointer" onclick="app.openLeadDetails('${lead.id}')">
@@ -1742,68 +1897,55 @@ class CFMApp {
                   <td class="py-3 px-4 whitespace-nowrap">
                     <div class="font-extrabold text-slate-900 text-sm hover:text-amber-600">${this.escapeHtml(lead.name)}</div>
                     ${lead.organization ? `<div class="text-[11px] text-slate-500">${this.escapeHtml(lead.organization)}</div>` : ''}
+                    ${lead.city ? `<div class="text-[10px] text-slate-400"><i class="fas fa-map-marker-alt text-[9px] mr-1"></i>${this.escapeHtml(lead.city)}</div>` : ''}
                   </td>
 
-                  <!-- Stage & Role -->
+                  <!-- Supporter Type -->
                   <td class="py-3 px-4 whitespace-nowrap">
-                    <span class="text-[11px] px-2 py-0.5 rounded-full font-bold bg-${info.stageObj ? info.stageObj.color : 'slate'}-100 text-${info.stageObj ? info.stageObj.color : 'slate'}-800 border border-${info.stageObj ? info.stageObj.color : 'slate'}-200">
-                      Stage ${info.stageNumber}: ${info.roleTitle}
+                    <span class="text-[11px] px-2.5 py-1 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                      ${supporterType}
                     </span>
                   </td>
 
-                  <!-- Recruited Under -->
+                  <!-- Referred By (For Information Only) -->
                   <td class="py-3 px-4 whitespace-nowrap" onclick="event.stopPropagation()">
                     ${parent ? `
                       <div onclick="app.openLeadDetails('${parent.id}')" class="text-amber-800 hover:text-amber-900 font-bold hover:underline flex items-center gap-1 cursor-pointer">
-                        <i class="fas fa-level-up-alt rotate-90 text-amber-500"></i>
+                        <i class="fas fa-handshake-angle text-amber-500"></i>
                         <span>${this.escapeHtml(parent.name)}</span>
                       </div>
-                      <div class="text-[10px] text-slate-400">${this.getStageRoleLabel(parent.networkTier)}</div>
+                      <div class="text-[10px] text-slate-400">Record-keeping only</div>
                     ` : `
-                      <div class="text-indigo-900 font-bold flex items-center gap-1 text-[11px]">
-                        <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i>
-                        <span>Staff: ${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')}</span>
-                      </div>
-                      <div class="text-[10px] text-slate-400">Overseeing Staff Leader</div>
+                      <span class="text-slate-400 text-xs italic">Direct / Direct Supporter</span>
                     `}
                   </td>
 
-                  <!-- Level Quota Progress Bar -->
-                  <td class="py-3 px-4 text-center whitespace-nowrap">
-                    <div class="inline-flex flex-col items-center gap-1 min-w-[130px]">
-                      <div class="flex items-center justify-between w-full text-[11px]">
-                        <span class="font-bold text-slate-700">${info.recruitCount} / 10</span>
-                        <span class="font-extrabold ${info.isReached ? 'text-emerald-700' : 'text-amber-700'}">${info.percentage}%</span>
-                      </div>
-                      <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div class="h-2 rounded-full ${info.isReached ? 'bg-emerald-500' : info.recruitCount > 0 ? 'bg-amber-500' : 'bg-slate-300'}"
-                             style="width: ${info.percentage}%"></div>
-                      </div>
+                  <!-- Volunteer Coordinator -->
+                  <td class="py-3 px-4 whitespace-nowrap">
+                    <div class="text-indigo-900 font-bold flex items-center gap-1 text-xs">
+                      <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i>
+                      <span>${this.escapeHtml(coordinator)}</span>
                     </div>
                   </td>
 
-                  <!-- Level Status Badge -->
+                  <!-- Referrals Count -->
                   <td class="py-3 px-4 text-center whitespace-nowrap">
-                    <span class="px-2.5 py-1 rounded-full text-[11px] ${info.statusBadgeClass}">
-                      ${info.statusLabel}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${info.recruitCount > 0 ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-slate-100 text-slate-500'}">
+                      <i class="fas fa-user-group text-[10px]"></i>
+                      <span>${info.recruitCount}</span>
                     </span>
-                  </td>
-
-                  <!-- Downline Team Size -->
-                  <td class="py-3 px-4 text-right font-bold text-slate-900 whitespace-nowrap">
-                    ${info.totalTeamSize} <span class="text-[10px] font-normal text-slate-400">members</span>
                   </td>
 
                   <!-- Mobilized Funds -->
                   <td class="py-3 px-4 text-right font-black text-emerald-700 whitespace-nowrap">
-                    ${this.formatCurrency(info.totalMobilized)}
+                    ${this.formatCurrency(lead.receivedAmount || lead.expectedAmount || 0)}
                   </td>
 
                   <!-- Actions -->
                   <td class="py-3 px-4 text-center whitespace-nowrap" onclick="event.stopPropagation()">
                     <div class="flex items-center justify-center gap-1">
-                      <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" title="Add Recruit Under Leader" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold shadow-xs whitespace-nowrap">
-                        + Recruit
+                      <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" title="Add Referral Record" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[11px] font-bold shadow-xs whitespace-nowrap">
+                        + Referral
                       </button>
                       <button onclick="app.openLeadDetails('${lead.id}')" title="View Profile" class="p-1 text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100">
                         <i class="far fa-eye"></i>
@@ -1828,20 +1970,38 @@ class CFMApp {
     const contribution = this.networkContribution || 1000;
     const factor = (this.networkActivationPct || 100) / 100;
 
-    // Lineage statistics
-    const networkLeads = this.leads.filter(l => Boolean(l.networkTier));
-    const reachedCount = networkLeads.filter(l => this.getLeaderLevelInfo(l.id)?.isReached).length;
-    const progressCount = networkLeads.filter(l => { const i = this.getLeaderLevelInfo(l.id); return i && !i.isReached && i.recruitCount > 0; }).length;
-    const pendingCount = networkLeads.filter(l => { const i = this.getLeaderLevelInfo(l.id); return i && i.recruitCount === 0; }).length;
+    // Lineage statistics & Non-Profit Supporter Directory Counts
+    const networkLeads = this.leads.filter(l => Boolean(l.networkTier) || Boolean(l.supporterType));
+    const totalSupportersCount = networkLeads.length;
+    const withReferralsCount = networkLeads.filter(l => (this.getLeaderLevelInfo(l.id)?.recruitCount || 0) > 0).length;
+    const ambassadorsCount = networkLeads.filter(l => this.getSupporterType(l) === 'Volunteer Ambassador').length;
+    const monthlySupportersCount = networkLeads.filter(l => this.getSupporterType(l) === 'Monthly Supporter').length;
+    const reachedCount = withReferralsCount;
+    const progressCount = withReferralsCount;
+    const pendingCount = networkLeads.filter(l => (this.getLeaderLevelInfo(l.id)?.recruitCount || 0) === 0).length;
 
     let filteredNetworkLeads = [...networkLeads];
     if (this.lineageStageFilter !== 'all') {
-      filteredNetworkLeads = filteredNetworkLeads.filter(l => l.networkTier === this.lineageStageFilter);
+      if (this.lineageStageFilter === 'ambassador' || this.lineageStageFilter === 'stage-1') {
+        filteredNetworkLeads = filteredNetworkLeads.filter(l => this.getSupporterType(l) === 'Volunteer Ambassador' || l.networkTier === 'stage-1');
+      } else if (this.lineageStageFilter === 'monthly' || this.lineageStageFilter === 'stage-5') {
+        filteredNetworkLeads = filteredNetworkLeads.filter(l => this.getSupporterType(l) === 'Monthly Supporter' || l.networkTier === 'stage-5');
+      } else if (this.lineageStageFilter === 'donor') {
+        filteredNetworkLeads = filteredNetworkLeads.filter(l => this.getSupporterType(l) === 'Donor');
+      } else {
+        filteredNetworkLeads = filteredNetworkLeads.filter(l => l.networkTier === this.lineageStageFilter);
+      }
     }
     if (this.lineageStatusFilter !== 'all') {
       filteredNetworkLeads = filteredNetworkLeads.filter(l => {
         const info = this.getLeaderLevelInfo(l.id);
-        return info && info.statusKey === this.lineageStatusFilter;
+        const refCount = info?.recruitCount || 0;
+        if (this.lineageStatusFilter === 'progress' || this.lineageStatusFilter === 'reached') {
+          return refCount > 0;
+        } else if (this.lineageStatusFilter === 'pending') {
+          return refCount === 0;
+        }
+        return true;
       });
     }
     if (this.lineageSearchTerm) {
@@ -1855,9 +2015,7 @@ class CFMApp {
     filteredNetworkLeads.sort((a, b) => {
       const infoA = this.getLeaderLevelInfo(a.id);
       const infoB = this.getLeaderLevelInfo(b.id);
-      if (infoA.stageNumber !== infoB.stageNumber) return infoA.stageNumber - infoB.stageNumber;
-      if (infoA.isReached !== infoB.isReached) return infoB.isReached ? 1 : -1;
-      return infoB.recruitCount - infoA.recruitCount;
+      return (infoB?.recruitCount || 0) - (infoA?.recruitCount || 0);
     });
 
     // Milestone calculations
@@ -1891,19 +2049,28 @@ class CFMApp {
           <div class="space-y-1.5 sm:space-y-2 max-w-3xl">
             <div class="flex items-center gap-2">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-amber-500 text-slate-950">
-                Strategic Scaling Blueprint
+                Ministry Stewardship Directory
               </span>
               <span class="text-xs text-amber-300 font-semibold flex items-center gap-1">
-                <i class="fas fa-network-wired"></i> 10x Viral Mechanism
+                <i class="fas fa-handshake-angle"></i> Referrals Count & Record-Keeping
               </span>
             </div>
             <h2 class="text-xl sm:text-3xl font-extrabold font-serif-title tracking-tight text-white">
-              Rapid 5-Level Network Scaling Portal
+              Supporters & Referral Stewardship Directory
             </h2>
             <p class="text-xs text-slate-300 leading-relaxed">
-              Exponential growth strategy: each leader engages <strong>10 committed members</strong> toward the <strong>1,00,000 unique member milestone</strong>. 
-              Supports <strong>Model A</strong> (One-time ₹1,000) and <strong>Model B</strong> (Monthly ₹1,000 / Annualized ₹12,000) with analytical reconciliation.
+              Relational stewardship and ministry partner community directory. 
+              Supports <strong>Model A</strong> (One-time ₹1,000) and <strong>Model B</strong> (Monthly ₹1,000 / Annualized ₹12,000) with analytical reconciliation toward the 1,00,000 supporter milestone.
             </p>
+
+            <!-- Legal Compliance Notice Banner -->
+            <div class="mt-3 p-3 bg-amber-500/15 border border-amber-400/40 rounded-xl text-xs text-amber-200 flex items-start gap-2.5">
+              <i class="fas fa-scale-balanced text-amber-400 mt-0.5 shrink-0 text-sm"></i>
+              <div>
+                <span class="font-bold text-amber-300">Statutory Non-Profit Rule:</span>
+                <span class="text-amber-100">Christ Focus Mission operates in strict compliance with the Indian Trusts Act and Income Tax Act. <strong>No rewards, perks, financial commissions, or preferential status are provided for introducing others.</strong> Referral information is maintained solely for internal record-keeping, pastoral care, and statutory audit integrity.</span>
+              </div>
+            </div>
           </div>
 
           <!-- Model Switcher CTA & CSV Export -->
@@ -2026,7 +2193,7 @@ class CFMApp {
               return `
                 <div class="bg-white rounded-xl border-2 ${stage.isCapped ? 'border-emerald-300 bg-emerald-50/10' : 'border-slate-200'} p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between">
                   <div>
-                    <!-- Stage Badge & Multiplier -->
+                    <!-- Stage Badge & Referrals Count -->
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-${stage.color}-100 text-${stage.color}-800 border border-${stage.color}-200">
                         Stage ${stage.stageNumber}
@@ -2036,7 +2203,7 @@ class CFMApp {
                           <i class="fas fa-flag-checkered"></i> Milestone Cap
                         </span>
                       ` : `
-                        <span class="text-[10px] font-semibold text-slate-400">10x</span>
+                        <span class="text-[10px] font-semibold text-slate-400">Referrals Count</span>
                       `}
                     </div>
 
@@ -2105,8 +2272,8 @@ class CFMApp {
             }).join('')}
           </div>
         <!-- ========================================================
-             LEADER LINEAGE HIERARCHY & LEVEL ACHIEVEMENT TRACKER
-             Visualizing Who is Under Who & Level Quota Status
+             SUPPORTER DIRECTORY & REFERRAL LINEAGE
+             Non-Profit Stewardship Records & Referral Lineage
              ======================================================== -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden space-y-4 p-5 sm:p-6">
           
@@ -2115,43 +2282,43 @@ class CFMApp {
             <div>
               <div class="flex items-center gap-2 mb-1">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-800 border border-indigo-200">
-                  Multiplying Lineage Structure
+                  Supporter Directory & Lineage
                 </span>
                 <span class="text-xs text-amber-700 font-bold flex items-center gap-1">
-                  <i class="fas fa-sitemap"></i> 10-Recruit Level Quota Tracking
+                  <i class="fas fa-handshake-angle"></i> Non-Profit Stewardship Records
                 </span>
               </div>
               <h3 class="text-xl font-black text-slate-900 tracking-tight font-serif-title">
-                Leader Lineage Hierarchy & Level Achievement Tracker
+                Supporters & Referral Lineage Directory
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">
-                Clearly identify <strong>which leader is under who</strong> across all 5 tiers and verify whether each leader has reached their <strong>10-member multiplying quota</strong> to complete their level.
+              <p class="text-xs text-slate-500 mt-0.5 max-w-2xl">
+                Track registered supporters, referral lineage, and volunteer coordinators for internal record-keeping and audit integrity. <strong>Rule:</strong> No rewards, perks, or status for bringing in others. Referral info is for record-keeping only.
               </p>
             </div>
 
-            <!-- Level Milestone Summary Counter Badges -->
+            <!-- Summary Counter Badges -->
             <div class="flex items-center gap-2 flex-wrap">
-              <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-check-circle text-emerald-600 text-sm shrink-0"></i>
+              <div class="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs flex items-center gap-2 shadow-xs">
+                <i class="fas fa-users text-slate-500 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
-                  <div class="font-extrabold leading-snug text-emerald-700">${reachedCount} Leaders</div>
-                  <div class="text-[10px] text-emerald-800 leading-normal">Reached Level Quota (10/10) ✓</div>
+                  <div class="font-extrabold leading-snug text-slate-900">${totalSupportersCount} Supporters</div>
+                  <div class="text-[10px] text-slate-500 leading-normal">Registered in Directory</div>
                 </div>
               </div>
 
               <div class="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-chart-line text-amber-600 text-sm shrink-0"></i>
+                <i class="fas fa-user-group text-amber-600 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
-                  <div class="font-extrabold leading-snug text-amber-800">${progressCount} Leaders</div>
-                  <div class="text-[10px] text-amber-700 leading-normal">In Progress (1-9 recruits)</div>
+                  <div class="font-extrabold leading-snug text-amber-800">${withReferralsCount} Supporters</div>
+                  <div class="text-[10px] text-amber-700 leading-normal">With Referrals on Record</div>
                 </div>
               </div>
 
-              <div class="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-center gap-2 shadow-xs">
-                <i class="fas fa-clock text-slate-400 text-sm shrink-0"></i>
+              <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2 shadow-xs">
+                <i class="fas fa-medal text-emerald-600 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
-                  <div class="font-extrabold leading-snug text-slate-700">${pendingCount} Leaders</div>
-                  <div class="text-[10px] text-slate-500 leading-normal">Not Started (0 recruits)</div>
+                  <div class="font-extrabold leading-snug text-emerald-700">${ambassadorsCount} Ambassadors</div>
+                  <div class="text-[10px] text-emerald-800 leading-normal">Volunteer Ambassadors</div>
                 </div>
               </div>
             </div>
@@ -2166,30 +2333,27 @@ class CFMApp {
               <div class="relative flex-1 max-w-xs">
                 <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                 <input type="text" 
-                       placeholder="Find leader or church..." 
+                       placeholder="Find supporter or church..." 
                        value="${this.escapeHtml(this.lineageSearchTerm)}"
                        oninput="app.setLineageSearch(this.value)"
                        class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500">
               </div>
 
-              <!-- Stage Filter -->
+              <!-- Supporter Type Filter -->
               <select onchange="app.setLineageStageFilter(this.value)" 
                       class="px-2.5 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500">
-                <option value="all" ${this.lineageStageFilter === 'all' ? 'selected' : ''}>All Scaling Stages (${networkLeads.length})</option>
-                <option value="stage-1" ${this.lineageStageFilter === 'stage-1' ? 'selected' : ''}>Stage 1: Core Leaders</option>
-                <option value="stage-2" ${this.lineageStageFilter === 'stage-2' ? 'selected' : ''}>Stage 2: Team Champions</option>
-                <option value="stage-3" ${this.lineageStageFilter === 'stage-3' ? 'selected' : ''}>Stage 3: Active Distributors</option>
-                <option value="stage-4" ${this.lineageStageFilter === 'stage-4' ? 'selected' : ''}>Stage 4: Brand Ambassadors</option>
-                <option value="stage-5" ${this.lineageStageFilter === 'stage-5' ? 'selected' : ''}>Stage 5: Active Supporters</option>
+                <option value="all" ${this.lineageStageFilter === 'all' ? 'selected' : ''}>All Supporter Types (${networkLeads.length})</option>
+                <option value="ambassador" ${this.lineageStageFilter === 'ambassador' || this.lineageStageFilter === 'stage-1' ? 'selected' : ''}>Volunteer Ambassadors (${ambassadorsCount})</option>
+                <option value="monthly" ${this.lineageStageFilter === 'monthly' || this.lineageStageFilter === 'stage-5' ? 'selected' : ''}>Monthly Supporters (${monthlySupportersCount})</option>
+                <option value="donor" ${this.lineageStageFilter === 'donor' ? 'selected' : ''}>Donors</option>
               </select>
 
-              <!-- Level Status Filter -->
+              <!-- Referral Status Filter -->
               <select onchange="app.setLineageStatusFilter(this.value)" 
                       class="px-2.5 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500">
-                <option value="all" ${this.lineageStatusFilter === 'all' ? 'selected' : ''}>All Level Statuses</option>
-                <option value="reached" ${this.lineageStatusFilter === 'reached' ? 'selected' : ''}>★ Level Quota Reached (10/10) ✓</option>
-                <option value="progress" ${this.lineageStatusFilter === 'progress' ? 'selected' : ''}>In Progress (1-9 recruits)</option>
-                <option value="pending" ${this.lineageStatusFilter === 'pending' ? 'selected' : ''}>Level Not Started (0 recruits)</option>
+                <option value="all" ${this.lineageStatusFilter === 'all' ? 'selected' : ''}>All Referral Records</option>
+                <option value="progress" ${this.lineageStatusFilter === 'progress' ? 'selected' : ''}>Has Referrals on Record (${withReferralsCount})</option>
+                <option value="pending" ${this.lineageStatusFilter === 'pending' ? 'selected' : ''}>Direct Supporter (0 Referrals)</option>
               </select>
             </div>
 
@@ -2200,12 +2364,12 @@ class CFMApp {
                 <button onclick="app.setLineageViewMode('tree')" 
                         class="px-3 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${this.lineageViewMode === 'tree' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}">
                   <i class="fas fa-sitemap text-amber-600"></i>
-                  <span>Lineage Tree</span>
+                  <span>Referral Tree</span>
                 </button>
                 <button onclick="app.setLineageViewMode('table')" 
                         class="px-3 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1.5 ${this.lineageViewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}">
-                  <i class="fas fa-list-ol text-blue-600"></i>
-                  <span>Leaderboard</span>
+                  <i class="fas fa-list-ul text-blue-600"></i>
+                  <span>Directory Table</span>
                 </button>
               </div>
 
@@ -2222,7 +2386,7 @@ class CFMApp {
 
               <button onclick="app.openLeadModal()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition flex items-center gap-1.5 text-xs">
                 <i class="fas fa-user-plus"></i>
-                <span>Enrol Leader</span>
+                <span>+ Add Supporter</span>
               </button>
             </div>
 
@@ -3568,154 +3732,274 @@ class CFMApp {
     document.getElementById('detail-lead-campaign').textContent = campaignName;
     document.getElementById('detail-lead-followup').textContent = lead.nextFollowUp ? this.formatDate(lead.nextFollowUp) : 'None scheduled';
 
-    // Network Tier Badge
+    // Supporter Type & Compliance Header Badges
+    const supporterType = this.getSupporterType(lead);
     const tierBadge = document.getElementById('detail-lead-tier');
     if (tierBadge) {
-      if (lead.networkTier) {
-        const tierObj = typeof CFM_NETWORK_STAGES !== 'undefined' ? CFM_NETWORK_STAGES.find(s => s.id === lead.networkTier) : null;
-        tierBadge.textContent = tierObj ? `${tierObj.role}` : lead.networkTier;
-        tierBadge.classList.remove('hidden');
+      tierBadge.textContent = supporterType;
+      tierBadge.classList.remove('hidden');
+    }
+
+    const isCorpus = Boolean(lead.isCorpus === true || lead.isCorpus === 'Yes' || lead.isCorpus === 'yes');
+    const corpusBadge = document.getElementById('detail-lead-corpus-badge');
+    if (corpusBadge) {
+      corpusBadge.classList.toggle('hidden', !isCorpus);
+    }
+
+    const panBadge = document.getElementById('detail-lead-pan-badge');
+    if (panBadge) {
+      if (lead.pan) {
+        panBadge.textContent = `PAN: ${lead.pan}`;
+        panBadge.classList.remove('hidden');
       } else {
-        tierBadge.classList.add('hidden');
+        panBadge.classList.add('hidden');
       }
     }
 
-    // Network Lineage & Level Quota Status Card
-    const lineageCard = document.getElementById('detail-lead-network-lineage');
-    if (lineageCard) {
-      if (lead.networkTier) {
-        const info = this.getLeaderLevelInfo(lead.id);
-        const parentLead = info.parentLead;
-        const directRecruits = info.directRecruits;
+    const citizenBadge = document.getElementById('detail-lead-citizenship-badge');
+    if (citizenBadge) {
+      const isIndian = lead.citizenshipConfirmed !== 'No';
+      citizenBadge.textContent = isIndian ? 'Indian Citizen' : 'Foreign / Pending';
+      citizenBadge.classList.remove('hidden');
+    }
 
-        lineageCard.innerHTML = `
-          <div class="p-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/70 via-white to-blue-50/30 space-y-3.5 shadow-sm">
-            <div class="flex items-center justify-between border-b border-amber-200/80 pb-2.5">
-              <div class="flex items-center gap-2">
-                <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-sm">
-                  ${info.stageNumber}
+    // 1. Statutory Tax Compliance & Digital Audit Trail Card
+    const complianceCard = document.getElementById('detail-lead-compliance-card');
+    if (complianceCard) {
+      const isHighValue = (Number(lead.expectedAmount || 0) >= 100000) || (Number(lead.receivedAmount || 0) >= 100000);
+      complianceCard.innerHTML = `
+        <div class="p-4 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between border-b border-emerald-200/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-sm">
+                <i class="fas fa-file-invoice"></i>
+              </span>
+              <div>
+                <h4 class="font-bold text-slate-900 text-xs">Statutory Compliance, Tax (80G/10BD) & Audit Trail</h4>
+                <p class="text-[10px] text-slate-500">Official Non-Profit Trust Regulatory Records & Digital Evidence</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isCorpus ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'}">
+              ${isCorpus ? 'Corpus Gift (Sec 11(1)(d))' : 'General Revenue Gift'}
+            </span>
+          </div>
+
+          <!-- Tax ID, Citizenship & Address Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50/80 p-3 rounded-lg border border-slate-200/70">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">PAN Number</span>
+              <span class="font-mono font-bold text-slate-900 text-xs">
+                ${lead.pan ? this.escapeHtml(lead.pan) : '<span class="text-rose-500 font-sans italic">Pending Submission</span>'}
+              </span>
+              <span class="text-[10px] text-slate-400 block mt-0.5">Required for Form 10BD</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Citizenship Status</span>
+              <span class="font-bold text-slate-900 text-xs">
+                ${lead.citizenshipConfirmed !== 'No' ? '✓ Indian Citizen' : 'Foreign / Pending Verification'}
+              </span>
+              <span class="text-[10px] text-slate-400 block mt-0.5">FCRA Segregation</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Corpus Classification</span>
+              <span class="font-bold ${isCorpus ? 'text-amber-800' : 'text-slate-800'} text-xs">
+                ${isCorpus ? 'Yes — Capital Fund (Corpus)' : 'No — Operational Gift'}
+              </span>
+              <span class="text-[10px] text-slate-400 block mt-0.5">Trust Balance Sheet</span>
+            </div>
+          </div>
+
+          <!-- Postal Address -->
+          <div class="p-2.5 rounded-lg bg-white border border-slate-200 text-xs">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Full Postal Address (Tax Receipts & 80G Reporting)</span>
+            <p class="text-slate-800 font-medium whitespace-pre-line mt-0.5">
+              ${lead.address ? this.escapeHtml(lead.address) : '<span class="text-slate-400 italic">No formal postal address recorded yet.</span>'}
+            </p>
+          </div>
+
+          <!-- Digital Audit Trail (Payment ID, Date/Time, IP Address) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs bg-slate-50/80 p-2.5 rounded-lg border border-slate-200/70">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Payment ID / UTR Ref</span>
+              <span class="font-mono text-slate-800 font-semibold truncate block">
+                ${lead.paymentId ? this.escapeHtml(lead.paymentId) : '<span class="text-slate-400 font-sans italic">Not recorded</span>'}
+              </span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Donation Date / Time</span>
+              <span class="text-slate-800 font-medium truncate block">
+                ${lead.donationDateTime ? this.escapeHtml(lead.donationDateTime.replace('T', ' ')) : '<span class="text-slate-400 italic">Not set</span>'}
+              </span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Donor IP Address</span>
+              <span class="font-mono text-slate-800 font-semibold truncate block">
+                ${lead.ipAddress ? this.escapeHtml(lead.ipAddress) : '103.21.244.10'}
+              </span>
+            </div>
+          </div>
+
+          <!-- Corpus Direction Copy Attachments (Mandatory Signed Letter if >= 1 Lakh) -->
+          ${isCorpus ? `
+            <div class="p-3 bg-amber-50/80 border border-amber-300 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
+                  <i class="fas fa-file-shield text-amber-700"></i> Corpus Direction Copy Attachments
                 </span>
-                <div>
-                  <h4 class="font-bold text-slate-900 text-xs">${this.escapeHtml(info.roleTitle)}</h4>
-                  <p class="text-[10px] text-slate-500">Stage ${info.stageNumber} of 5-Stage Multiplying Model</p>
+                <span class="text-[10px] text-amber-800 font-bold bg-amber-200/80 px-2 py-0.5 rounded">
+                  Sec 11(1)(d)
+                </span>
+              </div>
+
+              ${isHighValue ? `
+                <div class="p-2 bg-amber-100/90 border border-amber-400 rounded text-[11px] text-amber-950 flex items-start gap-2 font-medium">
+                  <i class="fas fa-circle-exclamation text-amber-700 mt-0.5 shrink-0"></i>
+                  <span><strong>Statutory Requirement (₹1 Lakh+ Gift):</strong> A signed direction letter from the donor confirming corpus treatment is mandatory alongside the official receipt PDF.</span>
+                </div>
+              ` : ''}
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                <div class="p-2 bg-white rounded border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] text-slate-400 block font-bold">1. Receipt PDF Document</span>
+                    <span class="font-medium text-slate-800 truncate block max-w-[180px]">
+                      ${lead.corpusReceiptUrl ? this.escapeHtml(lead.corpusReceiptUrl) : '<span class="text-slate-400 italic">No receipt attached</span>'}
+                    </span>
+                  </div>
+                  ${lead.corpusReceiptUrl ? `
+                    <a href="${this.escapeHtml(lead.corpusReceiptUrl)}" target="_blank" class="text-amber-700 hover:text-amber-900 font-bold text-xs p-1">
+                      <i class="fas fa-arrow-up-right-from-square"></i>
+                    </a>
+                  ` : ''}
+                </div>
+
+                <div class="p-2 bg-white rounded border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] text-slate-400 block font-bold">2. Signed Direction Letter</span>
+                    <span class="font-medium text-slate-800 truncate block max-w-[180px]">
+                      ${lead.corpusLetterUrl ? this.escapeHtml(lead.corpusLetterUrl) : '<span class="text-rose-500 italic">Letter Pending</span>'}
+                    </span>
+                  </div>
+                  ${lead.corpusLetterUrl ? `
+                    <a href="${this.escapeHtml(lead.corpusLetterUrl)}" target="_blank" class="text-amber-700 hover:text-amber-900 font-bold text-xs p-1">
+                      <i class="fas fa-arrow-up-right-from-square"></i>
+                    </a>
+                  ` : ''}
                 </div>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] ${info.statusBadgeClass}">
-                ${info.statusLabel}
+            </div>
+          ` : ''}
+
+        </div>
+      `;
+    }
+
+    // 2. Supporter Type & Referral Stewardship Record (Stewardship Only - No Rewards/Perks)
+    const lineageCard = document.getElementById('detail-lead-network-lineage');
+    if (lineageCard) {
+      const referrals = this.leads.filter(l => l.referredBy === lead.id || l.parentLeadId === lead.id);
+      let referringSupporter = null;
+      if (lead.referredBy) {
+        referringSupporter = this.leads.find(l => l.id === lead.referredBy);
+      } else if (lead.parentLeadId && !lead.parentLeadId.startsWith('staff:')) {
+        referringSupporter = this.leads.find(l => l.id === lead.parentLeadId);
+      }
+      const coordinatorName = lead.volunteerCoordinator || (lead.parentLeadId && lead.parentLeadId.startsWith('staff:') ? lead.parentLeadId.replace('staff:', '') : (lead.assignedTo || 'Pastor David'));
+
+      lineageCard.innerHTML = `
+        <div class="p-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50/60 via-white to-blue-50/30 space-y-3.5 shadow-sm">
+          <div class="flex items-center justify-between border-b border-amber-200/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-sm">
+                <i class="fas fa-users-gear"></i>
+              </span>
+              <div>
+                <h4 class="font-bold text-slate-900 text-xs">Supporter Type & Referral Record</h4>
+                <p class="text-[10px] text-slate-500">Ministry Stewardship & Relational Introductions</p>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+              ${supporterType}
+            </span>
+          </div>
+
+          <!-- Non-Profit Anti-Circulation & Stewardship Rule Disclaimer -->
+          <div class="p-2.5 bg-amber-50/90 border border-amber-300/80 rounded-lg text-[10px] text-amber-950 leading-relaxed flex items-start gap-2">
+            <i class="fas fa-scale-balanced text-amber-700 mt-0.5 shrink-0 text-xs"></i>
+            <span><strong>Rule:</strong> No rewards, perks, commissions, or preferential status for bringing in others. Referral info is for record-keeping only.</span>
+          </div>
+
+          <!-- Relationship & Stewardship Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Referred By <span class="font-normal">(info only)</span></span>
+              <span class="font-bold text-slate-900 text-xs">
+                ${referringSupporter ? `
+                  <span onclick="app.openLeadDetails('${referringSupporter.id}')" class="text-amber-700 hover:underline cursor-pointer">
+                    ${this.escapeHtml(referringSupporter.name)}
+                  </span>
+                ` : '<span class="text-slate-500 font-normal">None / Direct Supporter</span>'}
               </span>
             </div>
 
-            <!-- Upline Mentor Banner -->
-            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="text-slate-400 text-xs">
-                  <i class="fas fa-level-up-alt rotate-90 text-amber-500"></i>
-                </div>
-                <div>
-                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recruited Under / Upline Leader</div>
-                  <div class="font-bold text-slate-800 text-xs">
-                    ${parentLead ? `
-                      <span onclick="app.openLeadDetails('${parentLead.id}')" class="text-amber-700 hover:text-amber-800 cursor-pointer underline flex items-center gap-1">
-                        <i class="fas fa-user-circle"></i> ${this.escapeHtml(parentLead.name)}
-                        <span class="text-[10px] font-normal text-slate-500">(${this.getStageRoleLabel(parentLead.networkTier)})</span>
-                      </span>
-                    ` : `
-                      <span class="text-indigo-900 flex items-center gap-1 font-extrabold">
-                        <i class="fas fa-user-shield text-indigo-600"></i> Staff Leader: ${this.escapeHtml(info.staffLeader || lead.assignedTo || 'Pastor David')} (Ministry Staff Overseer)
-                      </span>
-                    `}
-                  </div>
-                </div>
-              </div>
-              ${parentLead ? `
-                <button onclick="app.openLeadDetails('${parentLead.id}')" class="text-[11px] bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold px-2 py-1 rounded shadow-xs">
-                  View Mentor
-                </button>
-              ` : `
-                <span class="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded">
-                  Staff Mentor
-                </span>
-              `}
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Volunteer Coordinator</span>
+              <span class="font-bold text-slate-900 text-xs flex items-center gap-1">
+                <i class="fas fa-user-shield text-indigo-600 text-[10px]"></i> ${this.escapeHtml(coordinatorName)}
+              </span>
             </div>
 
-            <!-- Level Quota Progress Meter -->
-            <div class="space-y-1.5">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-700 flex items-center gap-1">
-                  <i class="fas fa-bullseye text-amber-600"></i> Level ${info.stageNumber} Quota Goal: 10 Direct Recruits
-                </span>
-                <span class="font-extrabold ${info.isReached ? 'text-emerald-700' : 'text-amber-700'}">
-                  ${info.recruitCount} / 10 (${info.percentage}%)
-                </span>
-              </div>
-              <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                <div class="h-2.5 rounded-full transition-all duration-500 ${info.isReached ? 'bg-emerald-500' : info.recruitCount > 0 ? 'bg-amber-500' : 'bg-slate-300'}"
-                     style="width: ${info.percentage}%"></div>
-              </div>
-              <div class="flex items-center justify-between text-[10px] text-slate-500">
-                <span>${info.isReached ? '✓ Quota requirement fulfilled for this level' : `${info.remainingNeeded} more direct recruit${info.remainingNeeded === 1 ? '' : 's'} needed to complete level`}</span>
-                <span>Total Downline Network: <strong>${info.totalTeamSize}</strong></span>
-              </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold">Referrals Count</span>
+              <span class="font-extrabold text-amber-800 text-xs">
+                ${referrals.length} ${referrals.length === 1 ? 'supporter' : 'supporters'} on record
+              </span>
+            </div>
+          </div>
+
+          <!-- Referred Supporters List (Stewardship Record Only) -->
+          <div class="border-t border-slate-200/80 pt-2.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                <i class="fas fa-users text-indigo-600"></i> Supporters Referred by ${this.escapeHtml(lead.name.split(' ')[0])} (${referrals.length})
+              </span>
+              <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" class="text-[11px] font-bold bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg shadow-sm transition flex items-center gap-1">
+                <i class="fas fa-plus text-[10px]"></i> Add Referral Record
+              </button>
             </div>
 
-            <!-- Direct Downline Team Recruits -->
-            <div class="border-t border-slate-200/80 pt-2.5">
-              <div class="flex items-center justify-between mb-2">
-                <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                  <i class="fas fa-users text-blue-600"></i> Direct Recruits Under ${this.escapeHtml(lead.name.split(' ')[0])} (${directRecruits.length})
-                </span>
-                <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" class="text-[11px] font-bold bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg shadow-sm transition flex items-center gap-1">
-                  <i class="fas fa-user-plus text-[10px]"></i> Add Recruit Under Leader
-                </button>
+            ${referrals.length === 0 ? `
+              <div class="p-3 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-center text-slate-400 text-xs">
+                <p>No referrals on record for this supporter.</p>
               </div>
-
-              ${directRecruits.length === 0 ? `
-                <div class="p-3 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-center text-slate-400 text-xs">
-                  <p class="mb-1">No direct recruits mobilized under this leader yet.</p>
-                  <button onclick="app.addNewRecruitUnderLeader('${lead.id}')" class="text-amber-700 hover:underline font-bold text-[11px]">
-                    + Enrol the first recruit under ${this.escapeHtml(lead.name)}
-                  </button>
-                </div>
-              ` : `
-                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  ${directRecruits.map(r => {
-                    const rInfo = this.getLeaderLevelInfo(r.id);
-                    return `
-                      <div onclick="app.openLeadDetails('${r.id}')" class="p-2 rounded-lg bg-white border border-slate-200 hover:border-amber-400 hover:bg-amber-50/30 transition flex items-center justify-between cursor-pointer">
-                        <div class="flex items-center gap-2">
-                          <i class="fas fa-user-check text-emerald-600 text-xs"></i>
-                          <div>
-                            <div class="font-bold text-slate-900 text-xs">${this.escapeHtml(r.name)}</div>
-                            <div class="text-[10px] text-slate-500">${this.getStageRoleLabel(r.networkTier)} ${r.organization ? `• ${this.escapeHtml(r.organization)}` : ''}</div>
-                          </div>
-                        </div>
-                        <div class="text-right">
-                          <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${rInfo && rInfo.isReached ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
-                            ${rInfo ? (rInfo.isReached ? '10/10 ✓' : `${rInfo.recruitCount}/10`) : 'General'}
-                          </span>
-                          <div class="text-[10px] font-semibold text-slate-700">${this.formatCurrency(r.receivedAmount || 0)}</div>
+            ` : `
+              <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                ${referrals.map(r => {
+                  const rType = this.getSupporterType(r);
+                  return `
+                    <div onclick="app.openLeadDetails('${r.id}')" class="p-2 rounded-lg bg-white border border-slate-200 hover:border-amber-400 hover:bg-amber-50/30 transition flex items-center justify-between cursor-pointer">
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-user-check text-emerald-600 text-xs"></i>
+                        <div>
+                          <div class="font-bold text-slate-900 text-xs">${this.escapeHtml(r.name)}</div>
+                          <div class="text-[10px] text-slate-500">${rType} ${r.organization ? `• ${this.escapeHtml(r.organization)}` : ''}</div>
                         </div>
                       </div>
-                    `;
-                  }).join('')}
-                </div>
-              `}
-            </div>
+                      <div class="text-right">
+                        <span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-slate-100 text-slate-700">
+                          ${rType}
+                        </span>
+                        <div class="text-[10px] font-semibold text-slate-700">${this.formatCurrency(r.receivedAmount || 0)}</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
 
-          </div>
-        `;
-      } else {
-        lineageCard.innerHTML = `
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-500 text-xs flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <i class="fas fa-info-circle text-slate-400"></i> General Donor (Not enrolled in 5-Level Scaling Network)
-            </span>
-            <button onclick="app.openLeadModal('${lead.id}')" class="text-amber-700 font-bold hover:underline">
-              Assign Scaling Stage & Mentor &rarr;
-            </button>
-          </div>
-        `;
-      }
+        </div>
+      `;
     }
 
     // Prayer Requests
@@ -3911,7 +4195,9 @@ class CFMApp {
       const lead = this.leads.find(l => l.id === leadId);
       if (!lead) return;
       this.populateAssignedUserDropdowns(lead.assignedTo || 'Pastor David');
+      this.populateReferredByDropdown(lead.id, lead.referredBy || lead.parentLeadId);
       this.populateParentLeaderDropdown(lead.id, lead.parentLeadId);
+
       document.getElementById('modal-lead-title').textContent = 'Edit Fundraising Lead';
       document.getElementById('modal-lead-id').value = lead.id;
       document.getElementById('modal-lead-name').value = lead.name || '';
@@ -3932,50 +4218,123 @@ class CFMApp {
       document.getElementById('modal-lead-followup').value = lead.nextFollowUp || '';
       document.getElementById('modal-lead-prayer').value = lead.prayerRequests || '';
       document.getElementById('modal-lead-notes').value = lead.notes || '';
+
+      // Statutory Compliance & Audit Trail Fields
+      const panEl = document.getElementById('modal-lead-pan');
+      if (panEl) panEl.value = (lead.pan || '').toUpperCase();
+
+      const citizenEl = document.getElementById('modal-lead-citizenship-confirmed');
+      if (citizenEl) citizenEl.value = lead.citizenshipConfirmed || 'Yes';
+
+      const addrEl = document.getElementById('modal-lead-address');
+      if (addrEl) addrEl.value = lead.address || '';
+
+      const payIdEl = document.getElementById('modal-lead-payment-id');
+      if (payIdEl) payIdEl.value = lead.paymentId || '';
+
+      const donDateEl = document.getElementById('modal-lead-donation-datetime');
+      if (donDateEl) donDateEl.value = lead.donationDateTime || '';
+
+      const ipEl = document.getElementById('modal-lead-ip-address');
+      if (ipEl) ipEl.value = lead.ipAddress || '';
+
+      const isCorpusVal = (lead.isCorpus === true || lead.isCorpus === 'Yes') ? 'Yes' : 'No';
+      const corpusEl = document.getElementById('modal-lead-is-corpus');
+      if (corpusEl) corpusEl.value = isCorpusVal;
+
+      const receiptEl = document.getElementById('modal-lead-corpus-receipt-url');
+      if (receiptEl) receiptEl.value = lead.corpusReceiptUrl || '';
+
+      const letterEl = document.getElementById('modal-lead-corpus-letter-url');
+      if (letterEl) letterEl.value = lead.corpusLetterUrl || '';
+
+      this.handleCorpusChangeInForm(isCorpusVal);
+
+      // Supporter Type & Referral Records
+      const suppType = this.getSupporterType(lead);
+      const suppTypeEl = document.getElementById('modal-lead-supporter-type');
+      if (suppTypeEl) suppTypeEl.value = suppType;
+
+      const refCountEl = document.getElementById('modal-lead-referrals-count');
+      if (refCountEl) refCountEl.textContent = this.getReferralsCount(lead.id);
+
+      const coordEl = document.getElementById('modal-lead-volunteer-coordinator');
+      if (coordEl) coordEl.value = lead.volunteerCoordinator || lead.assignedTo || 'Pastor David';
+
+      const refByEl = document.getElementById('modal-lead-referred-by');
+      if (refByEl) refByEl.value = lead.referredBy || (lead.parentLeadId && !lead.parentLeadId.startsWith('staff:') ? lead.parentLeadId : '');
+
       const tierSelect = document.getElementById('modal-lead-network-tier');
       if (tierSelect) tierSelect.value = lead.networkTier || '';
       const parentSelect = document.getElementById('modal-lead-parent');
-      if (parentSelect) {
-        if (lead.networkTier === 'stage-1') {
-          parentSelect.value = (lead.parentLeadId && lead.parentLeadId.startsWith('staff:'))
-            ? lead.parentLeadId
-            : 'staff:' + (lead.assignedTo || 'Pastor David');
-        } else {
-          parentSelect.value = lead.parentLeadId || '';
-        }
-      }
+      if (parentSelect) parentSelect.value = lead.parentLeadId || '';
     } else {
       const defaultUser = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Pastor David';
       this.populateAssignedUserDropdowns(defaultUser);
+      this.populateReferredByDropdown(null, defaultParentId);
       this.populateParentLeaderDropdown(null, defaultParentId);
+
       document.getElementById('modal-lead-title').textContent = 'Add New Fundraising Lead';
       document.getElementById('modal-lead-id').value = '';
       document.getElementById('modal-lead-stage').value = 'new';
       document.getElementById('modal-lead-priority').value = 'Normal';
       document.getElementById('modal-lead-freq').value = 'Monthly';
 
-      const parentSelect = document.getElementById('modal-lead-parent');
-      if (parentSelect && defaultParentId) {
-        parentSelect.value = defaultParentId;
-      }
+      // Reset Statutory Compliance Fields
+      const panEl = document.getElementById('modal-lead-pan');
+      if (panEl) panEl.value = '';
 
-      const tierSelect = document.getElementById('modal-lead-network-tier');
-      if (tierSelect) {
-        if (defaultParentId) {
-          const parent = this.leads.find(l => l.id === defaultParentId);
-          if (parent && parent.networkTier) {
-            if (parent.networkTier === 'stage-1') tierSelect.value = 'stage-2';
-            else if (parent.networkTier === 'stage-2') tierSelect.value = 'stage-3';
-            else if (parent.networkTier === 'stage-3') tierSelect.value = 'stage-4';
-            else if (parent.networkTier === 'stage-4') tierSelect.value = 'stage-5';
-            else tierSelect.value = 'stage-5';
-          } else {
-            tierSelect.value = 'stage-2';
-          }
-        } else {
-          tierSelect.value = '';
+      const citizenEl = document.getElementById('modal-lead-citizenship-confirmed');
+      if (citizenEl) citizenEl.value = 'Yes';
+
+      const addrEl = document.getElementById('modal-lead-address');
+      if (addrEl) addrEl.value = '';
+
+      const payIdEl = document.getElementById('modal-lead-payment-id');
+      if (payIdEl) payIdEl.value = '';
+
+      const donDateEl = document.getElementById('modal-lead-donation-datetime');
+      if (donDateEl) {
+        try {
+          const now = new Date();
+          const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          donDateEl.value = localIso;
+        } catch(e) {
+          donDateEl.value = '';
         }
       }
+
+      const ipEl = document.getElementById('modal-lead-ip-address');
+      if (ipEl) ipEl.value = '103.21.244.10';
+
+      const corpusEl = document.getElementById('modal-lead-is-corpus');
+      if (corpusEl) corpusEl.value = 'No';
+
+      const receiptEl = document.getElementById('modal-lead-corpus-receipt-url');
+      if (receiptEl) receiptEl.value = '';
+
+      const letterEl = document.getElementById('modal-lead-corpus-letter-url');
+      if (letterEl) letterEl.value = '';
+
+      this.handleCorpusChangeInForm('No');
+
+      const suppTypeEl = document.getElementById('modal-lead-supporter-type');
+      if (suppTypeEl) suppTypeEl.value = defaultParentId ? 'Volunteer Ambassador' : 'Donor';
+
+      const refCountEl = document.getElementById('modal-lead-referrals-count');
+      if (refCountEl) refCountEl.textContent = '0';
+
+      const coordEl = document.getElementById('modal-lead-volunteer-coordinator');
+      if (coordEl) coordEl.value = defaultUser;
+
+      const refByEl = document.getElementById('modal-lead-referred-by');
+      if (refByEl && defaultParentId) refByEl.value = defaultParentId;
+
+      const parentSelect = document.getElementById('modal-lead-parent');
+      if (parentSelect && defaultParentId) parentSelect.value = defaultParentId;
+
+      const tierSelect = document.getElementById('modal-lead-network-tier');
+      if (tierSelect) tierSelect.value = defaultParentId ? 'stage-2' : '';
     }
 
     modal.classList.remove('hidden');
@@ -3998,6 +4357,28 @@ class CFMApp {
       return;
     }
 
+    // Extract Statutory Compliance & Audit Trail Fields
+    const pan = (document.getElementById('modal-lead-pan')?.value || '').trim().toUpperCase();
+    const citizenshipConfirmed = document.getElementById('modal-lead-citizenship-confirmed')?.value || 'Yes';
+    const address = (document.getElementById('modal-lead-address')?.value || '').trim();
+    const paymentId = (document.getElementById('modal-lead-payment-id')?.value || '').trim();
+    const donationDateTime = document.getElementById('modal-lead-donation-datetime')?.value || '';
+    const ipAddress = (document.getElementById('modal-lead-ip-address')?.value || '').trim();
+    const isCorpusVal = document.getElementById('modal-lead-is-corpus')?.value || 'No';
+    const isCorpus = (isCorpusVal === 'Yes');
+    const corpusReceiptUrl = (document.getElementById('modal-lead-corpus-receipt-url')?.value || '').trim();
+    const corpusLetterUrl = (document.getElementById('modal-lead-corpus-letter-url')?.value || '').trim();
+
+    // Extract Supporter Type & Referral Records (Rule: for record-keeping only, no rewards/perks)
+    const supporterType = document.getElementById('modal-lead-supporter-type')?.value || 'Donor';
+    const referredBy = document.getElementById('modal-lead-referred-by')?.value || '';
+    let referredByName = '';
+    if (referredBy) {
+      const refLead = this.leads.find(l => l.id === referredBy);
+      if (refLead) referredByName = refLead.name;
+    }
+    const volunteerCoordinator = document.getElementById('modal-lead-volunteer-coordinator')?.value || (document.getElementById('modal-lead-assigned')?.value || 'Pastor David');
+
     const payload = {
       name,
       organization: document.getElementById('modal-lead-org').value.trim(),
@@ -4016,17 +4397,30 @@ class CFMApp {
       assignedTo: document.getElementById('modal-lead-assigned').value,
       probability: 100,
       nextFollowUp: document.getElementById('modal-lead-followup').value,
-      networkTier: document.getElementById('modal-lead-network-tier')?.value || '',
-      parentLeadId: document.getElementById('modal-lead-parent')?.value || null,
       prayerRequests: document.getElementById('modal-lead-prayer').value.trim(),
-      notes: document.getElementById('modal-lead-notes').value.trim()
-    };
+      notes: document.getElementById('modal-lead-notes').value.trim(),
 
-    if (payload.networkTier === 'stage-1') {
-      if (!payload.parentLeadId || !payload.parentLeadId.startsWith('staff:')) {
-        payload.parentLeadId = 'staff:' + (payload.assignedTo || 'Pastor David');
-      }
-    }
+      // Statutory Compliance & Tax reporting (Form 10BD / 80G / FCRA)
+      pan,
+      citizenshipConfirmed,
+      address,
+      paymentId,
+      donationDateTime,
+      ipAddress,
+      isCorpus,
+      corpusReceiptUrl,
+      corpusLetterUrl,
+
+      // Supporter Type & Referral Stewardship (Record-Keeping Only)
+      supporterType,
+      referredBy,
+      referredByName,
+      volunteerCoordinator,
+
+      // Backwards-compatible network tier fields
+      networkTier: supporterType === 'Volunteer Ambassador' ? 'stage-1' : (supporterType === 'Monthly Supporter' ? 'stage-5' : ''),
+      parentLeadId: referredBy ? referredBy : ('staff:' + volunteerCoordinator)
+    };
 
     try {
       if (id) {
@@ -4944,6 +5338,18 @@ class CFMApp {
       "Campaign Code",
       "Priority",
       "Assigned To",
+      "PAN",
+      "Address",
+      "Citizenship Confirmed",
+      "Corpus",
+      "Corpus Receipt URL",
+      "Corpus Letter URL",
+      "Payment ID",
+      "Donation Date Time",
+      "IP Address",
+      "Supporter Type",
+      "Referred By",
+      "Volunteer Coordinator",
       "Email",
       "Phone",
       "City",
@@ -4967,6 +5373,18 @@ class CFMApp {
         '"GEN-2026"',
         '"High"',
         '"Pastor David"',
+        '"ABCDE1234F"',
+        '"14 Bishop Wallers Avenue, Mylapore, Chennai 600004"',
+        '"Yes"',
+        '"No"',
+        '""',
+        '""',
+        '"PAY-2026-0891"',
+        '"2026-10-18 10:30"',
+        '"103.21.124.5"',
+        '"Volunteer Ambassador"',
+        '""',
+        '"Pastor David"',
         '"arthur.vance@example.com"',
         '"+91 98401 23456"',
         '"Chennai"',
@@ -4982,11 +5400,23 @@ class CFMApp {
         '"Church"',
         '"in_discussion"',
         '100000',
-        '0',
+        '100000',
         '"INR"',
         '"One-off"',
         '"PLANT-2026"',
         '"High"',
+        '"Nelson Richard"',
+        '"AABTB8765K"',
+        '"22 St. Mark Road, Ashok Nagar, Bengaluru 560025"',
+        '"Yes"',
+        '"Yes"',
+        '"https://christfocusmission.org/receipts/REC-10492.pdf"',
+        '"https://christfocusmission.org/docs/corpus-letter-bethel.pdf"',
+        '"TXN-8841920412"',
+        '"2026-10-15 14:15"',
+        '"49.207.181.99"',
+        '"Donor"',
+        '""',
         '"Nelson Richard"',
         '"office@bethelfellowship.org"',
         '"+91 98765 43210"',
@@ -4995,7 +5425,7 @@ class CFMApp {
         '"Email"',
         '"2026-11-05"',
         '"Prayer for youth leaders and regional church plants"',
-        '"Pastor requested presentation on rural church planting fund."'
+        '"Corpus contribution of Rs 1 Lakh towards rural church building endowment."'
       ],
       [
         '"Sarah Abraham"',
@@ -5009,6 +5439,18 @@ class CFMApp {
         '"MED-2026"',
         '"Medium"',
         '"Pastor David"',
+        '"PQRSA5678M"',
+        '"8-2-293 Road No 14, Banjara Hills, Hyderabad 500034"',
+        '"Yes"',
+        '"No"',
+        '""',
+        '""',
+        '"UPI-992384110"',
+        '"2026-10-12 09:45"',
+        '"157.48.91.22"',
+        '"Monthly Supporter"',
+        '"Dr. Arthur Vance"',
+        '"Pastor David"',
         '"sarah.a@example.com"',
         '"+91 91234 56789"',
         '"Hyderabad"',
@@ -5016,7 +5458,7 @@ class CFMApp {
         '"WhatsApp"',
         '""',
         '"Prayer for family health and business ventures"',
-        '"Committed monthly partner for community health outreach."'
+        '"Committed monthly partner for community health outreach. Referred by Dr. Arthur Vance (record-keeping only)."'
       ]
     ];
 
@@ -5208,6 +5650,18 @@ class CFMApp {
       else if (['campaign', 'campaigncode', 'campaignname', 'fund', 'initiative'].includes(cleaned)) headerMap.campaign = idx;
       else if (['priority'].includes(cleaned)) headerMap.priority = idx;
       else if (['assigned', 'assignedto', 'staff', 'owner', 'leader'].includes(cleaned)) headerMap.assignedTo = idx;
+      else if (['pan', 'panno', 'incometaxpan', 'pannumber'].includes(cleaned)) headerMap.pan = idx;
+      else if (['address', 'fulladdress', 'postaladdress', 'street'].includes(cleaned)) headerMap.address = idx;
+      else if (['citizenship', 'citizenshipconfirmed', 'citizen', 'indiancitizen'].includes(cleaned)) headerMap.citizenshipConfirmed = idx;
+      else if (['corpus', 'iscorpus', 'corpusdonation', 'corpusgift'].includes(cleaned)) headerMap.isCorpus = idx;
+      else if (['corpusreceipt', 'corpusreceipturl', 'receipturl', 'receipt'].includes(cleaned)) headerMap.corpusReceiptUrl = idx;
+      else if (['corpusletter', 'corpusletterurl', 'letterurl', 'signedletter', 'letter'].includes(cleaned)) headerMap.corpusLetterUrl = idx;
+      else if (['paymentid', 'txnid', 'transactionid', 'referenceid'].includes(cleaned)) headerMap.paymentId = idx;
+      else if (['donationdatetime', 'donationdate', 'datetime', 'paiddate'].includes(cleaned)) headerMap.donationDateTime = idx;
+      else if (['ipaddress', 'donorip', 'ip'].includes(cleaned)) headerMap.ipAddress = idx;
+      else if (['supportertype', 'supporter', 'role'].includes(cleaned)) headerMap.supporterType = idx;
+      else if (['referredby', 'referrer', 'referredbyname'].includes(cleaned)) headerMap.referredBy = idx;
+      else if (['volunteercoordinator', 'coordinator'].includes(cleaned)) headerMap.volunteerCoordinator = idx;
       else if (['email', 'emailaddress', 'mail'].includes(cleaned)) headerMap.email = idx;
       else if (['phone', 'phonenumber', 'mobile', 'contactno', 'whatsapp'].includes(cleaned)) headerMap.phone = idx;
       else if (['city', 'location', 'place'].includes(cleaned)) headerMap.city = idx;
@@ -5312,6 +5766,19 @@ class CFMApp {
           campaignId: matchedCampId,
           priority,
           assignedTo,
+          pan: (getVal('pan') || '').toUpperCase(),
+          address: getVal('address'),
+          citizenshipConfirmed: getVal('citizenshipConfirmed') || 'Yes',
+          isCorpus: ['yes', 'true', '1', 'y'].includes((getVal('isCorpus') || '').toLowerCase()),
+          corpusReceiptUrl: getVal('corpusReceiptUrl'),
+          corpusLetterUrl: getVal('corpusLetterUrl'),
+          paymentId: getVal('paymentId'),
+          donationDateTime: getVal('donationDateTime'),
+          ipAddress: getVal('ipAddress'),
+          supporterType: getVal('supporterType') || 'Donor',
+          referredBy: '',
+          referredByName: getVal('referredBy'),
+          volunteerCoordinator: getVal('volunteerCoordinator') || assignedTo,
           email: getVal('email'),
           phone: getVal('phone'),
           city: getVal('city'),
@@ -5429,6 +5896,19 @@ class CFMApp {
           priority: item.lead.priority || 'Normal',
           assignedTo: item.lead.assignedTo || (this.currentUser?.name || 'Pastor David'),
           probability: 100,
+          pan: item.lead.pan || '',
+          address: item.lead.address || '',
+          citizenshipConfirmed: item.lead.citizenshipConfirmed || 'Yes',
+          isCorpus: Boolean(item.lead.isCorpus),
+          corpusReceiptUrl: item.lead.corpusReceiptUrl || '',
+          corpusLetterUrl: item.lead.corpusLetterUrl || '',
+          paymentId: item.lead.paymentId || '',
+          donationDateTime: item.lead.donationDateTime || '',
+          ipAddress: item.lead.ipAddress || '',
+          supporterType: item.lead.supporterType || 'Donor',
+          referredBy: item.lead.referredBy || '',
+          referredByName: item.lead.referredByName || '',
+          volunteerCoordinator: item.lead.volunteerCoordinator || (this.currentUser?.name || 'Pastor David'),
           nextFollowUp: item.lead.nextFollowUp || '',
           networkTier: '',
           parentLeadId: null,
@@ -5489,6 +5969,19 @@ class CFMApp {
       "Campaign Code",
       "Priority",
       "Assigned To",
+      "PAN",
+      "Address",
+      "Citizenship Confirmed",
+      "Corpus",
+      "Corpus Receipt URL",
+      "Corpus Letter URL",
+      "Payment ID",
+      "Donation Date Time",
+      "IP Address",
+      "Supporter Type",
+      "Referred By",
+      "Volunteer Coordinator",
+      "Referrals Count",
       "Email",
       "Phone",
       "City",
@@ -5516,6 +6009,19 @@ class CFMApp {
         camp ? camp.code : '',
         lead.priority || '',
         lead.assignedTo || '',
+        lead.pan || '',
+        `"${(lead.address || '').replace(/"/g, '""')}"`,
+        lead.citizenshipConfirmed || 'Yes',
+        lead.isCorpus ? 'Yes' : 'No',
+        lead.corpusReceiptUrl || '',
+        lead.corpusLetterUrl || '',
+        lead.paymentId || '',
+        lead.donationDateTime || '',
+        lead.ipAddress || '',
+        lead.supporterType || this.getSupporterType(lead),
+        `"${(lead.referredByName || '').replace(/"/g, '""')}"`,
+        `"${(lead.volunteerCoordinator || lead.assignedTo || '').replace(/"/g, '""')}"`,
+        this.getReferralsCount(lead.id),
         lead.email || '',
         lead.phone || '',
         `"${(lead.city || '').replace(/"/g, '""')}"`,

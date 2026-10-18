@@ -485,18 +485,26 @@ class FirebaseService {
       const stored = localStorage.getItem(CFM_STORAGE_KEYS.LOCAL_LEADS);
       if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           const filtered = parsed.filter(l => !this.isSampleLead(l));
           if (filtered.length !== parsed.length) {
             this.saveLocalLeads(filtered, false);
           }
-          return filtered;
+          if (filtered.length > 0) {
+            return filtered;
+          }
         }
       }
     } catch (e) {
       console.warn("Error reading local leads:", e);
     }
-    return [];
+    const initial = typeof CFM_INITIAL_LEADS !== 'undefined' && CFM_INITIAL_LEADS.length > 0
+      ? [...CFM_INITIAL_LEADS]
+      : [];
+    if (initial.length > 0) {
+      this.saveLocalLeads(initial, false);
+    }
+    return initial;
   }
 
   saveLocalLeads(leads, notify = true) {
