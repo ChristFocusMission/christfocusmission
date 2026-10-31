@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Christ Focus Mission | Donation Invoice & Receipt Generator</title>
+  <meta name="description" content="Official Donation Invoice and 80G Contribution Receipt Generator for Christ Focus Mission.">
+  <link rel="icon" type="image/svg+xml" href="assets/cfm-icon.svg">
+
+  <!-- Fonts: Space Grotesk, Inter, Caveat Handwriting, Baloo 2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cfm: {
+              primary: '#333366',
+              primarydark: '#22224A',
+              indigo: '#4A4B8C',
+              cyan: '#1BA3CC',
+              teal: '#1E9AC3',
+              amber: '#F5A623',
+              gold: '#FBC10A',
+              cream: '#F8F9FD'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Confetti Celebration CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- HTML2PDF CDN for Client-side Direct High-Res PDF Rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <!-- Firebase Compatibility SDKs (Identical to CFM CRM) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <!-- Custom App Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col text-slate-800">
+
+  <!-- ==================== 1. LOGIN MODAL (Uses Same CRM Credentials) ==================== -->
+  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#22224A] via-[#333366] to-[#4A4B8C] p-6 text-white text-center relative">
+        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 backdrop-blur-sm border border-white/20 p-2 shadow-inner">
+          <img src="assets/cfm-icon.svg" alt="CFM" class="w-10 h-10 object-contain drop-shadow">
+        </div>
+        <h2 class="text-xl font-bold font-heading tracking-wide">Christ Focus Mission</h2>
+        <p class="text-xs text-indigo-200 mt-1">Donation Receipt & Invoice Portal</p>
+      </div>
+
+      <!-- Form Body -->
+      <form onsubmit="app.handleLogin(event)" class="p-6 space-y-4">
+        <div id="login-error" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+          <i class="fas fa-exclamation-circle text-rose-500"></i>
+          <span>Invalid username/email or password.</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Username or Email *</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <i class="fas fa-user text-xs"></i>
+            </span>
+            <input type="text" id="login-username" required placeholder="admin or your email"
+                   class="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white font-medium">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+              <i class="fas fa-lock text-xs"></i>
+            </span>
+            <input type="password" id="login-password" required placeholder="Enter CRM password"
+                   class="w-full pl-9 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+            <button type="button" onclick="app.toggleLoginPassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+              <i id="login-pwd-toggle-icon" class="fas fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="flex items-center gap-2 text-slate-600 cursor-pointer">
+            <input type="checkbox" id="login-remember" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span>Keep me logged in</span>
+          </label>
+          <span class="text-[11px] text-slate-400">Same as CRM login</span>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-700 to-indigo-900 hover:from-indigo-800 hover:to-indigo-950 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-700/25 transition duration-200 flex items-center justify-center gap-2 cursor-pointer">
+          <i class="fas fa-sign-in-alt"></i> Sign In to Receipt Portal
+        </button>
+
+        <!-- Quick Login Helpers for Admin convenience -->
+        <div class="pt-3 border-t border-slate-100">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">Quick Credentials Fill</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="app.quickFillLogin('admin', 'cfmAdmin2026!')" class="px-2.5 py-1.5 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-left truncate">
+              <i class="fas fa-shield-alt text-indigo-600 mr-1"></i> Pastor David
+            </button>
+            <button type="button" onclick="app.quickFillLogin('nelson', 'nels@2026')" class="px-2.5 py-1.5 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-left truncate">
+              <i class="fas fa-user-check text-cyan-600 mr-1"></i> Nelson Richard
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 2. MAIN APPLICATION CONTAINER ==================== -->
+  <div id="app-container" class="hidden flex-1 flex flex-col">
+
+    <!-- Top Navigation Bar (no-print) -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+
+          <!-- Left: Brand Logo & Title -->
+          <div class="flex items-center gap-3">
+            <a href="/" class="flex items-center gap-2.5 group">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#333366] to-[#4A4B8C] flex items-center justify-center p-1.5 shadow-md shadow-indigo-900/10">
+                <img src="assets/cfm-icon.svg" alt="CFM" class="w-full h-full object-contain">
+              </div>
+              <div>
+                <span class="font-heading font-extrabold text-base tracking-tight text-slate-900 block leading-tight">
+                  CHRIST FOCUS MISSION
+                </span>
+                <span class="text-[11px] text-indigo-600 font-bold uppercase tracking-wider">
+                  Donation Receipt & Invoice Portal
+                </span>
+              </div>
+            </a>
+
+            <!-- Firebase Sync Status Badge -->
+            <div id="firebase-status-badge" class="hidden sm:inline-flex items-center gap-1.5 ml-4 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200" title="Connected to cfmcrm">
+              <span id="firebase-status-icon" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="firebase-status-text">Cloud Sync Live</span>
+            </div>
+          </div>
+
+          <!-- Middle: Navigation Tabs -->
+          <nav class="hidden md:flex items-center space-x-1">
+            <button id="tab-btn-create" onclick="app.switchTab('create')" class="app-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-700 text-white shadow-sm flex items-center gap-2 transition">
+              <i class="fas fa-plus-circle"></i> Create Receipt
+            </button>
+            <button id="tab-btn-donors" onclick="app.switchTab('donors')" class="app-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2 transition">
+              <i class="fas fa-address-book"></i> Saved Donors (<span id="stat-donors-count">0</span>)
+            </button>
+            <button id="tab-btn-history" onclick="app.switchTab('history')" class="app-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2 transition">
+              <i class="fas fa-receipt"></i> Issued History (<span id="stat-receipts-count">0</span>)
+            </button>
+          </nav>
+
+          <!-- Right: User Profile & Actions -->
+          <div class="flex items-center gap-2.5">
+            <a href="/crm/" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition" title="Open CRM Leads Pipeline">
+              <i class="fas fa-chart-line text-indigo-600"></i> Open CRM
+            </a>
+
+            <!-- Logged in user pill -->
+            <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <div class="text-right hidden sm:block">
+                <div id="user-display-name" class="text-xs font-bold text-slate-900 leading-tight">Pastor David</div>
+                <div id="user-display-role" class="text-[10px] text-slate-400">Administrator</div>
+              </div>
+              <button onclick="app.logout()" title="Sign Out" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                <i class="fas fa-power-off text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Navigation Row -->
+        <div class="flex md:hidden items-center justify-around py-2 border-t border-slate-100">
+          <button onclick="app.switchTab('create')" class="text-xs font-bold text-indigo-700 py-1 px-3 flex items-center gap-1.5">
+            <i class="fas fa-plus-circle"></i> Create
+          </button>
+          <button onclick="app.switchTab('donors')" class="text-xs font-bold text-slate-600 py-1 px-3 flex items-center gap-1.5">
+            <i class="fas fa-address-book"></i> Donors
+          </button>
+          <button onclick="app.switchTab('history')" class="text-xs font-bold text-slate-600 py-1 px-3 flex items-center gap-1.5">
+            <i class="fas fa-receipt"></i> History
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+      <!-- ==================== TAB 1: CREATE RECEIPT (Interactive Form + Live Preview) ==================== -->
+      <div id="tab-panel-create" class="app-tab-panel">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          <!-- LEFT COLUMN: Input Form (lg:col-span-5) (no-print) -->
+          <div class="lg:col-span-5 space-y-5 no-print">
+
+            <!-- Donor Selection Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <i class="fas fa-user-circle text-indigo-600"></i> Donor Details
+                </h3>
+                <button type="button" onclick="app.openDonorModal()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                  <i class="fas fa-user-plus"></i> New Donor
+                </button>
+              </div>
+
+              <!-- Presaved Donor Dropdown -->
+              <div class="mb-4">
+                <label class="block text-xs font-bold text-slate-700 mb-1">Select Presaved Donor</label>
+                <div class="relative">
+                  <select id="donor-select" onchange="app.handleDonorSelect(this.value)" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-medium cursor-pointer">
+                    <option value="">-- Choose a pre-saved donor --</option>
+                  </select>
+                </div>
+                <div class="flex items-center justify-between mt-1 text-[11px] text-slate-400">
+                  <span>Pulls saved names, PAN & addresses</span>
+                  <button type="button" onclick="app.importDonorsFromCRM()" class="text-indigo-600 hover:underline">
+                    <i class="fas fa-sync-alt text-[10px]"></i> Import from CRM
+                  </button>
+                </div>
+              </div>
+
+              <!-- Editable Donor Info Inputs -->
+              <div class="space-y-3 pt-3 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Donor Full Name *</label>
+                  <input type="text" id="donor-name" required placeholder="e.g. Pearline D"
+                         class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Donor PAN (Optional)</label>
+                    <input type="text" id="donor-pan" placeholder="ABCDE1234F" maxlength="10"
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white uppercase font-mono">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Mobile / Phone</label>
+                    <input type="tel" id="donor-phone" placeholder="+91 98401 23456"
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Donor Postal Address</label>
+                  <textarea id="donor-address" rows="2" placeholder="Full postal address for 80G tax receipt"
+                            class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Donor Email Address</label>
+                  <input type="email" id="donor-email" placeholder="donor@example.com"
+                         class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                  <input type="checkbox" id="auto-save-donor" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                  <label for="auto-save-donor" class="text-xs text-slate-600 cursor-pointer">
+                    Save/update donor to directory for future receipts
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Receipt & Contribution Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+                <i class="fas fa-file-invoice-dollar text-emerald-600"></i> Contribution Information
+              </h3>
+
+              <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Receipt No. *</label>
+                    <input type="text" id="receipt-number" required placeholder="1210"
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-mono font-bold text-red-600">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Date *</label>
+                    <input type="date" id="receipt-date" required
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-semibold">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Donation Amount (INR ₹) *</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center font-bold text-base text-slate-500">₹</span>
+                    <input type="number" id="receipt-amount" required min="1" step="1" placeholder="5000"
+                           oninput="app.handleAmountChange(this.value)"
+                           class="w-full pl-8 pr-3 py-2.5 text-sm font-bold font-mono bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white text-slate-900">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Amount in Words (Auto-generated)</label>
+                  <input type="text" id="receipt-amount-words" placeholder="Five Thousand Only"
+                         class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-medium">
+                </div>
+
+                <!-- Payment Modes (as on physical receipt: Cash, NEFT/IMPS, Cheque, DD, UPI) -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1.5">Payment Method</label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-slate-100">
+                      <input type="radio" name="payment_mode" value="Cheque" checked class="text-indigo-600">
+                      <span class="font-semibold">Cheque</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-slate-100">
+                      <input type="radio" name="payment_mode" value="UPI" class="text-indigo-600">
+                      <span class="font-semibold">UPI</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-slate-100">
+                      <input type="radio" name="payment_mode" value="NEFT/IMPS" class="text-indigo-600">
+                      <span class="font-semibold">NEFT/IMPS</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-slate-100">
+                      <input type="radio" name="payment_mode" value="Cash" class="text-indigo-600">
+                      <span class="font-semibold">Cash</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs cursor-pointer hover:bg-slate-100">
+                      <input type="radio" name="payment_mode" value="DD" class="text-indigo-600">
+                      <span class="font-semibold">Demand Draft</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Cheque / Txn / Ref No.</label>
+                    <input type="text" id="payment-ref-no" placeholder="CHQ-890214 or UPI ref"
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-mono">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Bank Name (if Cheque/NEFT)</label>
+                    <input type="text" id="payment-bank-name" placeholder="e.g. Canara Bank"
+                           class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Scheme / Project</label>
+                  <select id="receipt-scheme" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-medium cursor-pointer">
+                    <option value="King David Music Programme">King David Music Programme (Trinity College Certification)</option>
+                    <option value="General Charitable Mission">General Charitable Mission & Outreach</option>
+                    <option value="Data for Christ Research">Data for Christ Research & Mapping</option>
+                    <option value="Corpus Fund">Corpus Fund (Specific Written Direction)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="pt-5 mt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+                <button type="button" onclick="app.handleSaveReceipt(false)" class="py-2.5 px-4 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                  <i class="fas fa-save"></i> Save Receipt
+                </button>
+                <button type="button" onclick="app.handleSaveReceipt(true)" class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                  <i class="fas fa-print"></i> Save & Print
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Exact Live Receipt Canvas (lg:col-span-7) -->
+          <div class="lg:col-span-7 space-y-4">
+
+            <!-- Toolbar above preview (no-print) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 no-print">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-700">Receipt Style:</span>
+                <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100">
+                  <button id="font-btn-typed" onclick="app.setFontStyle('typed')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-xs transition">
+                    Clean Typed
+                  </button>
+                  <button id="font-btn-hand" onclick="app.setFontStyle('handwriting')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white text-slate-700 hover:text-slate-900 transition">
+                    Pen Handwriting
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 action-btn-group">
+                <button type="button" onclick="app.printReceipt()" class="px-3.5 py-1.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                  <i class="fas fa-print text-indigo-600"></i> Print / PDF
+                </button>
+                <button type="button" onclick="app.downloadReceiptPdf()" class="px-3.5 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                  <i class="fas fa-file-pdf text-red-500"></i> Download PDF
+                </button>
+              </div>
+            </div>
+
+            <!-- PRINTABLE VOUCHER CANVAS (Exact Replica of Physical CFM Receipt Book) -->
+            <div id="printable-receipt-area">
+              <div id="printable-receipt-card" class="receipt-sheet p-5 sm:p-7">
+                <div class="receipt-inner-frame">
+                  <div class="receipt-content space-y-3.5">
+
+                    <!-- Header: Trust Title & Logo -->
+                    <div class="flex items-start justify-between border-b-2 border-indigo-950 pb-2.5">
+                      <div class="flex-1 pr-4">
+                        <h1 class="receipt-header-title">CHRIST FOCUS MISSION</h1>
+                        <p class="text-[12px] font-bold text-slate-700 tracking-wide mt-0.5">
+                          Unique Registration Number : <span class="font-mono text-indigo-950 font-extrabold">AADTC2907RF20241</span>
+                        </p>
+                      </div>
+                      <div class="w-24 h-12 flex items-center justify-end">
+                        <img src="assets/cfm-logo.svg" alt="Focus" class="h-10 w-auto object-contain">
+                      </div>
+                    </div>
+
+                    <!-- Line 1: PAN & Red Receipt No -->
+                    <div class="flex items-center justify-between pt-1">
+                      <div class="text-[13px] font-bold text-slate-900">
+                        <span>PAN: <strong class="font-mono text-indigo-950">AADTC2907R</strong></span>
+                        <span id="pv-donor-pan" class="ml-2 font-mono text-slate-800 font-bold">| DONOR PAN: </span>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-xs font-bold text-slate-700 mr-2">Receipt No:</span>
+                        <span id="pv-receipt-no" class="receipt-number-badge">1210</span>
+                      </div>
+                    </div>
+
+                    <!-- Line 2: Gratitude Message & Date -->
+                    <div class="flex items-start justify-between gap-4 pt-1">
+                      <div class="flex-1">
+                        <div class="text-[13.5px] font-extrabold text-slate-900">
+                          Thank you very much for contributing to Christ Focus Mission.
+                        </div>
+                        <div class="text-[11.5px] text-slate-700 leading-snug mt-0.5 italic">
+                          We at Christ Focus Mission express our gratitude for the thoughtful and compassionate gesture on your part. May God Bless you abundantly
+                        </div>
+                      </div>
+                      <div class="text-right whitespace-nowrap pl-2">
+                        <span class="text-xs font-bold text-slate-800">Date:</span>
+                        <span id="pv-date" class="font-semibold text-slate-900 ml-1 text-sm">6 July 2026</span>
+                      </div>
+                    </div>
+
+                    <!-- Line 3: Received with thanks from -->
+                    <div class="flex items-baseline pt-1">
+                      <span class="text-[13px] font-bold text-slate-900 whitespace-nowrap mr-2">
+                        Received with thanks from
+                      </span>
+                      <div class="flex-1 receipt-dotted-line">
+                        <span id="pv-donor-name" class="font-semibold text-slate-900 text-sm">Pearline D</span>
+                      </div>
+                    </div>
+
+                    <!-- Line 4: Address -->
+                    <div class="flex items-baseline">
+                      <span class="text-[13px] font-bold text-slate-900 whitespace-nowrap mr-2">
+                        Address
+                      </span>
+                      <div class="flex-1 receipt-dotted-line">
+                        <span id="pv-donor-address" class="font-medium text-slate-800 text-xs">Plot 14, Anna Nagar West Extension, Chennai - 600 101</span>
+                      </div>
+                    </div>
+
+                    <!-- Line 5: The sum of INR (Words) -->
+                    <div class="flex items-baseline">
+                      <span class="text-[13px] font-bold text-slate-900 whitespace-nowrap mr-2">
+                        The sum of INR
+                      </span>
+                      <div class="flex-1 receipt-dotted-line">
+                        <span id="pv-amount-words" class="font-semibold text-slate-900 text-sm">Five Thousand Only</span>
+                      </div>
+                    </div>
+
+                    <!-- Line 6: Payment Mode Checkboxes -->
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-[12.5px] font-bold text-slate-900">
+                      <span>by Cash <span id="pv-mode-Cash" class="receipt-check-box"></span></span>
+                      <span>NEFT/IMPS <span id="pv-mode-NEFTIMPS" class="receipt-check-box"></span></span>
+                      <span>Cheque <span id="pv-mode-Cheque" class="receipt-check-box bg-indigo-900 text-white">✓</span></span>
+                      <span>DD <span id="pv-mode-DD" class="receipt-check-box"></span></span>
+                      <span>UPI <span id="pv-mode-UPI" class="receipt-check-box"></span></span>
+                      <span id="pv-ref-line" class="text-[11.5px] font-normal text-slate-600 italic ml-auto">(King David Music Programme)</span>
+                    </div>
+
+                    <!-- Line 7: Amount Box (Left) & Authorized Signatory (Right) -->
+                    <div class="flex items-end justify-between pt-3">
+                      <!-- Big Rupee Amount Box -->
+                      <div class="receipt-amount-box">
+                        <span class="currency-symbol">₹</span>
+                        <span id="pv-amount-digits" class="amount-digits">5,000/-</span>
+                      </div>
+
+                      <!-- Signatory -->
+                      <div class="text-center pr-2">
+                        <div class="h-12 flex items-center justify-center">
+                          <img src="assets/signature.png" alt="Signature" class="h-11 w-auto object-contain">
+                        </div>
+                        <div class="text-[12px] font-extrabold text-indigo-950 uppercase tracking-wider border-t border-indigo-950 pt-0.5 mt-0.5">
+                          Authorized Signatory
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Footer: Registered Office Address & Tax 80G Claim -->
+                    <div class="border-t border-slate-300 pt-2 mt-2 text-[10px] text-slate-700 text-center space-y-0.5 leading-tight">
+                      <div class="font-semibold">
+                        Christ Focus Mission, Regus Olympia Platina, 9th Floor, Olympia Platina, Plot No.33-B, South Phase, Guindy Industrial Estate, Chennai - 600 032.
+                      </div>
+                      <div class="text-slate-600">
+                        www.christfocusmission.org | admin@christfocusmission.org | +91 9962680639 | 044-6610-8092 | UPI: 9962680639@okbizaxis
+                      </div>
+                      <div class="font-bold text-slate-900 pt-0.5 tracking-wide uppercase text-[10.5px]">
+                        Contributions made to Christ Focus Mission are eligible for deduction u/s 80G
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: SAVED DONORS DIRECTORY ==================== -->
+      <div id="tab-panel-donors" class="app-tab-panel hidden space-y-4">
+        <!-- Donors Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold font-heading text-slate-900">Saved Donors Directory</h2>
+            <p class="text-xs text-slate-500">Manage regular donors, corporate sponsors, and church fellowship partners.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="app.importDonorsFromCRM()" class="px-3.5 py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fas fa-sync-alt text-indigo-600"></i> Sync from CRM Leads
+            </button>
+            <button type="button" onclick="app.openDonorModal()" class="px-3.5 py-2 text-xs font-bold bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fas fa-plus"></i> Add New Donor
+            </button>
+          </div>
+        </div>
+
+        <!-- Donors Search & Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div class="relative flex-1 max-w-sm">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                <i class="fas fa-search text-xs"></i>
+              </span>
+              <input type="text" placeholder="Search by donor name, PAN, phone or email..."
+                     oninput="app.searchQuery = this.value; app.renderDonorsTable()"
+                     class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            </div>
+            <span id="donors-count" class="text-xs font-semibold text-slate-500 whitespace-nowrap">0 donors</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th class="px-4 py-3">#</th>
+                  <th class="px-4 py-3">Donor Name</th>
+                  <th class="px-4 py-3">PAN</th>
+                  <th class="px-4 py-3">Address</th>
+                  <th class="px-4 py-3">Contact</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="donors-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: ISSUED RECEIPTS HISTORY ==================== -->
+      <div id="tab-panel-history" class="app-tab-panel hidden space-y-4">
+        <!-- History Header -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold font-heading text-slate-900">Issued Receipts Log</h2>
+            <p class="text-xs text-slate-500">Every donation receipt generated through the portal, tracked in real-time.</p>
+          </div>
+          <div class="flex items-center gap-4 text-right">
+            <div>
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Recorded</span>
+              <span id="stat-total-donations" class="font-heading font-extrabold text-lg text-emerald-700">₹0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Search & Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between gap-4">
+            <div class="relative flex-1 max-w-sm">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                <i class="fas fa-search text-xs"></i>
+              </span>
+              <input type="text" placeholder="Search by receipt #, donor name, or PAN..."
+                     oninput="app.searchQuery = this.value; app.renderReceiptsTable()"
+                     class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            </div>
+            <span id="receipts-count" class="text-xs font-semibold text-slate-500 whitespace-nowrap">0 receipts</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th class="px-4 py-3">Receipt No.</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Donor Name</th>
+                  <th class="px-4 py-3">Amount</th>
+                  <th class="px-4 py-3">Payment Mode</th>
+                  <th class="px-4 py-3">Scheme</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="receipts-table-body">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer Note (no-print) -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 no-print">
+      <div class="max-w-7xl mx-auto px-4">
+        &copy; 2026 Christ Focus Mission · Reg. Trust PAN: AADTC2907R · Unique Reg: AADTC2907RF20241
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== 3. MODAL: ADD / EDIT DONOR (no-print) ==================== -->
+  <div id="modal-donor-form" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden no-print">
+    <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <div class="bg-slate-900 p-5 text-white flex items-center justify-between">
+        <h3 id="donor-modal-title" class="font-heading font-bold text-sm tracking-wide">Add New Donor</h3>
+        <button type="button" onclick="app.closeDonorModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form id="donor-form" onsubmit="app.handleSaveDonorForm(event)" class="p-6 space-y-4">
+        <input type="hidden" id="donor-form-id">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Donor Name / Organization *</label>
+          <input type="text" id="donor-form-name" required placeholder="Full legal name"
+                 class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-semibold">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">PAN Number</label>
+            <input type="text" id="donor-form-pan" placeholder="ABCDE1234F" maxlength="10"
+                   class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white uppercase font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Category</label>
+            <select id="donor-form-category" class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white font-medium">
+              <option value="Individual Donor">Individual Donor</option>
+              <option value="Patron">Patron / Major Donor</option>
+              <option value="Church Partner">Church Partner</option>
+              <option value="Corporate / CSR">Corporate / CSR</option>
+              <option value="Family Foundation">Family Foundation</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Postal Address</label>
+          <textarea id="donor-form-address" rows="2" placeholder="Full postal address"
+                    class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+            <input type="email" id="donor-form-email" placeholder="donor@example.com"
+                   class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Phone</label>
+            <input type="tel" id="donor-form-phone" placeholder="+91 98401 23456"
+                   class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Internal Notes</label>
+          <input type="text" id="donor-form-notes" placeholder="Notes on preferences, pledge, etc."
+                 class="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:bg-white">
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="app.closeDonorModal()" class="px-4 py-2 border border-slate-300 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs rounded-xl shadow-md transition">
+            Save Donor
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 4. APP TOAST NOTIFICATION (no-print) ==================== -->
+  <div id="app-toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 transition-all duration-300 hidden no-print">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-800 flex items-center gap-3">
+      <i id="toast-icon" class="fas fa-check-circle text-emerald-400 text-base"></i>
+      <span id="toast-message" class="text-xs font-medium">Notification message</span>
+    </div>
+  </div>
+
+  <!-- App Script Dependencies -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

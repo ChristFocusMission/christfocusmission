@@ -1,0 +1,238 @@
+/* ===================================================================
+   Christ Focus Mission - Invoice & Receipt Generator Styles
+   =================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Caveat:wght@600;700&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap');
+
+:root {
+  --cfm-primary: #333366;
+  --cfm-primary-dark: #22224A;
+  --cfm-indigo: #4A4B8C;
+  --cfm-cyan: #1BA3CC;
+  --cfm-teal: #1E9AC3;
+  --cfm-aqua: #5FC2C3;
+  --cfm-amber: #F5A623;
+  --cfm-gold: #FBC10A;
+  --cfm-rose: #E63946;
+  --cfm-cream: #F8F9FD;
+  --cfm-border: #E2E8F0;
+  --cfm-ink: #1E293B;
+  --cfm-ink-muted: #64748B;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--cfm-ink);
+  background-color: #F1F5F9;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* Handwriting font for receipt feel */
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  color: #1A237E;
+}
+
+/* ===================================================================
+   RECEIPT CANVAS (Exact Replica of CFM Physical Receipt Book)
+   Dimensions: Standard A5 Landscape / DL Voucher (~ 800px x 560px)
+   =================================================================== */
+
+.receipt-sheet {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -15px rgba(51, 51, 102, 0.15), 0 0 0 1px rgba(51, 51, 102, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Inner Double Security Border as on the original physical voucher */
+.receipt-inner-frame {
+  border: 2.5px solid #282860;
+  border-radius: 8px;
+  padding: 16px 22px 14px;
+  position: relative;
+  background: #FFFFFF;
+}
+
+/* Subtle Security Watermark in the Center of Receipt */
+.receipt-inner-frame::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  background: url('../assets/cfm-logo.svg') no-repeat center;
+  background-size: contain;
+  opacity: 0.035;
+  transform: translate(-50%, -50%) rotate(-5deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.receipt-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Header Banner */
+.receipt-header-title {
+  font-family: 'Space Grotesk', 'Arial Black', sans-serif;
+  font-weight: 800;
+  font-size: 1.45rem;
+  letter-spacing: 0.06em;
+  color: #1A1F52;
+  text-transform: uppercase;
+}
+
+/* Red Letterpress Receipt Number */
+.receipt-number-badge {
+  font-family: 'Space Grotesk', monospace;
+  font-weight: 800;
+  font-size: 1.65rem;
+  color: #C23028;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 1px rgba(194, 48, 40, 0.15);
+}
+
+/* Dotted Underline Field Lines like paper receipt book */
+.receipt-dotted-line {
+  border-bottom: 1.5px dotted #94A3B8;
+  display: inline-block;
+  padding: 0 8px;
+  min-height: 28px;
+  line-height: 26px;
+}
+
+/* Big Amount Display Box (Bottom Left) */
+.receipt-amount-box {
+  border: 2px solid #1A1F52;
+  background: #F8FAFC;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 4px;
+}
+
+.receipt-amount-box .currency-symbol {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1A1F52;
+}
+
+.receipt-amount-box .amount-digits {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1A1F52;
+  letter-spacing: 0.04em;
+}
+
+/* Custom Checkbox for Payment Mode */
+.receipt-check-box {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #282860;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  background: #FFF;
+  margin-right: 5px;
+  vertical-align: -2px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #1A1F52;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ===================================================================
+   PRINT STYLES: Strict A4 / A5 Clean Page Centering
+   =================================================================== */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Hide entire web UI (navbars, toolbars, sidebar, modals, buttons) */
+  header, nav, #app-sidebar, #app-navbar, .no-print,
+  #modal-donor-form, #modal-preview, #search-bar, .action-btn-group {
+    display: none !important;
+  }
+
+  /* Make sure print container takes full width and centers the voucher */
+  #printable-receipt-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 10px 0 !important;
+  }
+
+  .receipt-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 195mm !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  .receipt-inner-frame {
+    border: 2px solid #000000 !important;
+    padding: 16px 20px 12px !important;
+  }
+
+  .receipt-number-badge {
+    color: #C23028 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .receipt-amount-box {
+    border: 2px solid #000 !important;
+    background: #FAFAFA !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .font-handwriting {
+    color: #0C2340 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
