@@ -397,6 +397,17 @@ class InvoiceApp {
       }
     }
 
+    // Toggle 80G Tax Exemption Note on Voucher Preview
+    const is80gEligible = document.getElementById('receipt-eligible-80g')?.checked !== false;
+    const preview80g = document.getElementById('pv-80g-container');
+    if (preview80g) {
+      if (is80gEligible) {
+        preview80g.classList.remove('hidden');
+      } else {
+        preview80g.classList.add('hidden');
+      }
+    }
+
     // Apply font styling
     this.applyFontStyle();
   }
@@ -496,7 +507,10 @@ class InvoiceApp {
       issuedBy: this.currentUser ? this.currentUser.name : 'Authorized Signatory',
       uniqueRegNo: 'AADTC2907RF20241',
       trustPan: 'AADTC2907R',
-      taxNote: 'Contributions made to Christ Focus Mission are eligible for deduction u/s 80G',
+      is80gEligible: document.getElementById('receipt-eligible-80g')?.checked !== false,
+      taxNote: (document.getElementById('receipt-eligible-80g')?.checked !== false) 
+        ? 'Contributions made to Christ Focus Mission are eligible for deduction u/s 80G' 
+        : '',
       fontStyle: this.fontStyle,
       createdAt: new Date().toISOString()
     };
@@ -815,6 +829,12 @@ class InvoiceApp {
     document.getElementById('payment-bank-name').value = r.bankName || '';
     if (r.scheme) document.getElementById('receipt-scheme').value = r.scheme;
 
+    // Check 80G tax note preference
+    const cb80g = document.getElementById('receipt-eligible-80g');
+    if (cb80g) {
+      cb80g.checked = (r.is80gEligible !== false) && (r.taxNote !== '');
+    }
+
     // Check payment mode
     const modeRadio = document.querySelector(`input[name="payment_mode"][value="${r.paymentMode}"]`);
     if (modeRadio) modeRadio.checked = true;
@@ -951,6 +971,11 @@ class InvoiceApp {
     document.querySelectorAll('input[name="payment_mode"]').forEach(r => {
       r.addEventListener('change', () => this.updatePreviewFromForm());
     });
+
+    const el80g = document.getElementById('receipt-eligible-80g');
+    if (el80g) {
+      el80g.addEventListener('change', () => this.updatePreviewFromForm());
+    }
   }
 }
 
