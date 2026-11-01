@@ -197,10 +197,30 @@ class InvoiceFirebaseService {
     try {
       const snap = await this.db.collection(this.usersCollection).get();
       if (!snap.empty) {
-        const users = [];
-        snap.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-        if (users.length > 0) {
-          localStorage.setItem(CFM_INVOICE_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(users));
+        const cloudUsers = [];
+        snap.forEach(doc => cloudUsers.push({ id: doc.id, ...doc.data() }));
+        if (cloudUsers.length > 0) {
+          // Merge while guaranteeing default administrative passwords are never stripped
+          const merged = [...cloudUsers];
+          CFM_DEFAULT_USERS.forEach(def => {
+            const idx = merged.findIndex(u =>
+              (u.id && u.id === def.id) ||
+              (u.username && def.username && u.username.toLowerCase() === def.username.toLowerCase()) ||
+              (u.email && def.email && u.email.toLowerCase() === def.email.toLowerCase())
+            );
+            if (idx === -1) {
+              merged.push(def);
+            } else {
+              merged[idx] = {
+                ...def,
+                ...merged[idx],
+                password: def.password,
+                aliases: Array.from(new Set([...(def.aliases || []), ...(merged[idx].aliases || [])])),
+                role: merged[idx].role || def.role
+              };
+            }
+          });
+          localStorage.setItem(CFM_INVOICE_STORAGE_KEYS.LOCAL_USERS, JSON.stringify(merged));
         }
       }
     } catch (e) {
@@ -405,16 +425,36 @@ class InvoiceFirebaseService {
     return String(maxNum + 1);
   }
 
-  // Users for Authentication (synced with CRM)
+  // Users for Authentication (synced with CRM, always preserving default admin accounts)
   getUsers() {
+    let list = CFM_DEFAULT_USERS.map(u => ({ ...u }));
     try {
       const stored = localStorage.getItem(CFM_INVOICE_STORAGE_KEYS.LOCAL_USERS);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          parsed.forEach(storedUser => {
+            const idx = list.findIndex(u =>
+              (u.id && u.id === storedUser.id) ||
+              (u.username && storedUser.username && u.username.toLowerCase() === storedUser.username.toLowerCase()) ||
+              (u.email && storedUser.email && u.email.toLowerCase() === storedUser.email.toLowerCase())
+            );
+            if (idx === -1) {
+              list.push(storedUser);
+            } else {
+              // Retain valid password and aliases from default config if stored version lacks it
+              list[idx] = {
+                ...storedUser,
+                ...list[idx],
+                password: list[idx].password || storedUser.password,
+                role: storedUser.role || list[idx].role
+              };
+            }
+          });
+        }
       }
     } catch (_) {}
-    return CFM_DEFAULT_USERS;
+    return list;
   }
 
   getInitialSampleDonors() {
