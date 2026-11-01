@@ -30,7 +30,14 @@ const CFM_DEFAULT_USERS = [
     name: "Pastor David",
     username: "admin",
     email: "admin@christfocusmission.org",
-    aliases: ["admin", "david", "david@christfocusmission.org"],
+    aliases: [
+      "admin",
+      "david",
+      "david@christfocusmission.org",
+      "admin@christfocusmission.org",
+      "admin@christocusmission.org",
+      "christfocusmission"
+    ],
     password: "cfmAdmin2026!",
     role: "admin",
     title: "Ministry Director & Founder",
