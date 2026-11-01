@@ -20,31 +20,39 @@ class InvoiceApp {
     this.checkSession();
     this.setupEventListeners();
 
-    // Initialize Firebase in background
-    await cfmInvoiceFirebase.initialize();
+    // Register subscriber callbacks first
+    if (typeof cfmInvoiceFirebase !== 'undefined') {
+      cfmInvoiceFirebase.donorSubscribers.push(donors => {
+        this.donors = donors;
+        this.renderDonorsSelect();
+        if (this.activeTab === 'donors') this.renderDonorsTable();
+      });
 
-    // Register subscriber callbacks
-    cfmInvoiceFirebase.donorSubscribers.push(donors => {
-      this.donors = donors;
-      this.renderDonorsSelect();
-      if (this.activeTab === 'donors') this.renderDonorsTable();
-    });
+      cfmInvoiceFirebase.receiptSubscribers.push(receipts => {
+        this.receipts = receipts;
+        this.renderStats();
+        if (this.activeTab === 'history') this.renderReceiptsTable();
+      });
 
-    cfmInvoiceFirebase.receiptSubscribers.push(receipts => {
-      this.receipts = receipts;
-      this.renderStats();
-      if (this.activeTab === 'history') this.renderReceiptsTable();
-    });
-
-    // Initial local load
-    this.donors = cfmInvoiceFirebase.getLocalDonors();
-    this.receipts = cfmInvoiceFirebase.getLocalReceipts();
+      // Initial local load immediately
+      this.donors = cfmInvoiceFirebase.getLocalDonors();
+      this.receipts = cfmInvoiceFirebase.getLocalReceipts();
+    }
 
     this.renderDonorsSelect();
     this.renderStats();
     this.setDefaultFormValues();
     this.updatePreviewFromForm();
     this.updateFirebaseBadge();
+
+    // Initialize Firebase in background without blocking login or UI
+    if (typeof cfmInvoiceFirebase !== 'undefined' && typeof cfmInvoiceFirebase.initialize === 'function') {
+      cfmInvoiceFirebase.initialize().then(() => {
+        this.updateFirebaseBadge();
+      }).catch(err => {
+        console.warn('Firebase init notice:', err);
+      });
+    }
   }
 
   // ===================== AUTHENTICATION =====================
