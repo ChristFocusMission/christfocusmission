@@ -3,13 +3,26 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Christ Focus Mission - Fundraising Leads Collection
     match /cfm_leads/{leadId} {
-      // Allow read and write for your mission team members
-      // (For production with Firebase Auth, change to: if request.auth != null)
       allow read, write: if true;
     }
     
     // Christ Focus Mission - Campaigns Collection
     match /cfm_campaigns/{campaignId} {
+      allow read, write: if true;
+    }
+
+    // Christ Focus Mission - Team Users Collection
+    match /cfm_users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Christ Focus Mission - Invoice Donors Directory
+    match /cfm_invoice_donors/{donorId} {
+      allow read, write: if true;
+    }
+
+    // Christ Focus Mission - Issued Invoice Receipts
+    match /cfm_invoice_receipts/{receiptId} {
       allow read, write: if true;
     }
   }
