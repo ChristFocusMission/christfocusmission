@@ -282,8 +282,10 @@ class InvoiceApp {
     }
 
     const numInput = document.getElementById('receipt-number');
-    if (numInput && !numInput.value) {
-      numInput.value = cfmInvoiceFirebase.getNextReceiptNumber();
+    if (numInput) {
+      if (!numInput.value || numInput.value === '1210') {
+        numInput.value = cfmInvoiceFirebase.getNextReceiptNumber();
+      }
     }
 
     const amountInput = document.getElementById('receipt-amount');
@@ -342,7 +344,7 @@ class InvoiceApp {
 
   // Update live receipt voucher from form fields
   updatePreviewFromForm() {
-    const receiptNo = document.getElementById('receipt-number')?.value.trim() || '1210';
+    const receiptNo = document.getElementById('receipt-number')?.value.trim() || 'IG001';
     const dateVal = document.getElementById('receipt-date')?.value || new Date().toISOString().split('T')[0];
     const donorName = document.getElementById('donor-name')?.value.trim() || 'Pearline D';
     const donorPan = document.getElementById('donor-pan')?.value.trim() || '';
@@ -527,10 +529,11 @@ class InvoiceApp {
 
     if (printAfter) {
       this.printReceipt();
-    } else {
-      // Auto-increment receipt number for next entry
-      document.getElementById('receipt-number').value = cfmInvoiceFirebase.getNextReceiptNumber();
     }
+    // Auto-increment receipt number for next entry (IG001 -> IG002 -> ...)
+    const nextNo = cfmInvoiceFirebase.getNextReceiptNumber();
+    const numEl = document.getElementById('receipt-number');
+    if (numEl) numEl.value = nextNo;
   }
 
   // ===================== PRINT & DOWNLOAD PDF =====================

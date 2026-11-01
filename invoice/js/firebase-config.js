@@ -367,14 +367,24 @@ class InvoiceFirebaseService {
     this.setLocalReceipts(receipts);
     this.notifyReceiptSubscribers(receipts);
 
-    // Update last receipt number tracking
+    // Update last receipt number tracking (supports IG001, IG002... prefix)
     if (receipt.receiptNo) {
-      const numMatch = String(receipt.receiptNo).match(/(\d+)/g);
-      if (numMatch) {
-        const lastNum = parseInt(numMatch[numMatch.length - 1], 10);
+      const igMatch = String(receipt.receiptNo).match(/IG[-_]?(\d+)/i);
+      if (igMatch) {
+        const lastNum = parseInt(igMatch[1], 10);
         if (!isNaN(lastNum)) {
-          const curMax = parseInt(localStorage.getItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO) || '0', 10);
-          if (lastNum > curMax) {
+          const curStored = localStorage.getItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO);
+          const curMatch = curStored ? String(curStored).match(/IG[-_]?(\d+)/i) : null;
+          const curMax = curMatch ? parseInt(curMatch[1], 10) : 0;
+          if (lastNum >= curMax) {
+            localStorage.setItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO, `IG${String(lastNum).padStart(3, '0')}`);
+          }
+        }
+      } else {
+        const numMatch = String(receipt.receiptNo).match(/(\d+)/g);
+        if (numMatch) {
+          const lastNum = parseInt(numMatch[numMatch.length - 1], 10);
+          if (!isNaN(lastNum)) {
             localStorage.setItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO, String(lastNum));
           }
         }
@@ -409,20 +419,31 @@ class InvoiceFirebaseService {
 
   getNextReceiptNumber() {
     const receipts = this.getLocalReceipts();
-    let maxNum = 1210; // From actual paper receipt book #1210
-    const stored = parseInt(localStorage.getItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO) || '0', 10);
-    if (stored > maxNum) maxNum = stored;
+    let maxIgNum = 0;
 
+    // Check stored IG receipt tracking in localStorage
+    const stored = localStorage.getItem(CFM_INVOICE_STORAGE_KEYS.LAST_RECEIPT_NO);
+    if (stored) {
+      const match = String(stored).match(/IG[-_]?(\d+)/i);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (!isNaN(n) && n > maxIgNum) maxIgNum = n;
+      }
+    }
+
+    // Check existing receipts in directory (ignoring legacy sample 1210)
     receipts.forEach(r => {
-      if (r.receiptNo) {
-        const matches = String(r.receiptNo).match(/(\d+)/g);
-        if (matches) {
-          const n = parseInt(matches[matches.length - 1], 10);
-          if (!isNaN(n) && n > maxNum) maxNum = n;
+      if (r && r.receiptNo && r.id !== 'rec-1210') {
+        const match = String(r.receiptNo).match(/IG[-_]?(\d+)/i);
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (!isNaN(n) && n > maxIgNum) maxIgNum = n;
         }
       }
     });
-    return String(maxNum + 1);
+
+    const nextNum = maxIgNum + 1;
+    return `IG${String(nextNum).padStart(3, '0')}`;
   }
 
   // Users for Authentication (synced with CRM, always preserving default admin accounts)
