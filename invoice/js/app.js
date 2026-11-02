@@ -596,8 +596,8 @@ class InvoiceApp {
     }
     this.updatePreviewFromForm();
 
-    const element = document.getElementById('printable-receipt-card');
-    if (!element) return;
+    const voucherEl = document.querySelector('.receipt-inner-frame');
+    if (!voucherEl) return;
 
     const receiptNo = document.getElementById('receipt-number')?.value.trim() || (specificReceipt ? specificReceipt.receiptNo : 'receipt');
     const donorName = document.getElementById('donor-name')?.value.trim() || (specificReceipt ? specificReceipt.donorName : 'donor');
@@ -606,20 +606,38 @@ class InvoiceApp {
 
     this.showToast(`Preparing PDF for Receipt #${receiptNo}...`, 'info');
 
-    // Allow browser DOM to paint
-    await new Promise(resolve => setTimeout(resolve, 80));
+    // Create an offscreen export wrapper with fixed standard voucher dimensions (820px)
+    // Ensures clean, un-squished landscape export on ALL devices (mobile, tablet, desktop)
+    const exportWrapper = document.createElement('div');
+    exportWrapper.id = 'cfm-pdf-sandbox';
+    exportWrapper.style.position = 'fixed';
+    exportWrapper.style.left = '-9999px';
+    exportWrapper.style.top = '0';
+    exportWrapper.style.width = '820px';
+    exportWrapper.style.background = '#FFFFFF';
+    exportWrapper.style.padding = '12px';
+    exportWrapper.style.boxSizing = 'border-box';
+    exportWrapper.style.zIndex = '-9999';
+
+    const clonedVoucher = voucherEl.cloneNode(true);
+    clonedVoucher.style.width = '100%';
+    clonedVoucher.style.boxSizing = 'border-box';
+    exportWrapper.appendChild(clonedVoucher);
+    document.body.appendChild(exportWrapper);
+
+    await new Promise(resolve => setTimeout(resolve, 150));
 
     try {
       const opt = {
-        margin: [8, 10, 8, 10],
+        margin: [6, 6, 6, 6],
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { scale: 2.5, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
       };
 
       if (typeof html2pdf !== 'undefined') {
-        await html2pdf().set(opt).from(element).save();
+        await html2pdf().set(opt).from(exportWrapper).save();
         this.showToast(`Receipt #${receiptNo} PDF downloaded successfully!`, 'success');
       } else {
         window.print();
@@ -627,6 +645,8 @@ class InvoiceApp {
     } catch (err) {
       console.error('PDF generation error:', err);
       window.print();
+    } finally {
+      if (exportWrapper.parentNode) exportWrapper.parentNode.removeChild(exportWrapper);
     }
   }
 
@@ -638,8 +658,8 @@ class InvoiceApp {
     }
     this.updatePreviewFromForm();
 
-    const element = document.getElementById('printable-receipt-card');
-    if (!element) return;
+    const voucherEl = document.querySelector('.receipt-inner-frame');
+    if (!voucherEl) return;
 
     const receiptNo = document.getElementById('receipt-number')?.value.trim() || (specificReceipt ? specificReceipt.receiptNo : 'receipt');
     const donorName = document.getElementById('donor-name')?.value.trim() || (specificReceipt ? specificReceipt.donorName : 'donor');
@@ -648,18 +668,42 @@ class InvoiceApp {
 
     this.showToast(`Generating image for Receipt #${receiptNo} (PNG)...`, 'info');
 
-    // Wait for DOM paint
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Create an offscreen export wrapper with fixed standard voucher dimensions (820px)
+    // Ensures clean, un-squished landscape export on ALL devices (mobile, tablet, desktop)
+    const exportWrapper = document.createElement('div');
+    exportWrapper.id = 'cfm-export-sandbox';
+    exportWrapper.style.position = 'fixed';
+    exportWrapper.style.left = '-9999px';
+    exportWrapper.style.top = '0';
+    exportWrapper.style.width = '820px';
+    exportWrapper.style.background = '#FFFFFF';
+    exportWrapper.style.padding = '14px';
+    exportWrapper.style.boxSizing = 'border-box';
+    exportWrapper.style.zIndex = '-9999';
+
+    const clonedVoucher = voucherEl.cloneNode(true);
+    clonedVoucher.style.width = '100%';
+    clonedVoucher.style.boxSizing = 'border-box';
+    exportWrapper.appendChild(clonedVoucher);
+    document.body.appendChild(exportWrapper);
+
+    // Wait for clone DOM paint & assets
+    await new Promise(resolve => setTimeout(resolve, 150));
 
     try {
       if (typeof html2canvas === 'function') {
-        const canvas = await html2canvas(element, {
+        const canvas = await html2canvas(exportWrapper, {
           scale: 3, // Crisp 300 DPI high-definition resolution
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false
         });
+
+        // Clean up sandbox element
+        if (exportWrapper.parentNode) {
+          exportWrapper.parentNode.removeChild(exportWrapper);
+        }
 
         // Convert canvas to downloadable blob
         canvas.toBlob((blob) => {
@@ -684,11 +728,13 @@ class InvoiceApp {
           this.showToast(`Receipt #${receiptNo} image downloaded!`, 'success');
         }, 'image/png');
       } else {
+        if (exportWrapper.parentNode) exportWrapper.parentNode.removeChild(exportWrapper);
         this.showToast('Image generator is initializing, please try again.', 'error');
       }
     } catch (err) {
+      if (exportWrapper.parentNode) exportWrapper.parentNode.removeChild(exportWrapper);
       console.error('Image generation error:', err);
-      this.showToast('Could not export image: ' + err.message, 'error');
+      this.showToast('Could not generate image. Please try printing or PDF.', 'error');
     }
   }
 
