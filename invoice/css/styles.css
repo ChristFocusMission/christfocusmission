@@ -112,46 +112,37 @@ h1, h2, h3, h4, .font-heading {
   line-height: 26px;
 }
 
-/* Big Amount Display Box (Bottom Left) - Perfectly Centered */
+/* Big Amount Display Box (Bottom Left) - Flawlessly Centered in Browser & html2canvas */
 .receipt-amount-box {
   border: 2px solid #1A1F52;
   background-color: #FFFFFF;
-  padding: 0 16px;
+  padding: 6px 16px;
   width: 200px;
-  height: 48px;
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   text-align: center;
-  gap: 6px;
   border-radius: 6px;
   box-sizing: border-box;
+  display: inline-block;
 }
 
 .receipt-amount-box .currency-symbol {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 1.55rem;
+  font-size: 24px;
   font-weight: 800;
   color: #1A1F52;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  margin: 0;
-  padding: 0;
+  line-height: 1.1;
+  display: inline;
+  vertical-align: middle;
 }
 
 .receipt-amount-box .amount-digits {
   font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 1.65rem;
+  font-size: 24px;
   font-weight: 800;
   color: #1A1F52;
   letter-spacing: 0.04em;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  margin: 0;
-  padding: 0;
+  line-height: 1.1;
+  display: inline;
+  vertical-align: middle;
 }
 
 /* Custom Checkbox for Payment Mode - Clean paper receipt voucher style */
