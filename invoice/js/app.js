@@ -380,7 +380,7 @@ class InvoiceApp {
       previewDigits.textContent = parsedAmount > 0 ? (parsedAmount.toLocaleString('en-IN') + '/-') : '—';
     }
 
-    const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5 text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="#1A1F52" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
     // Payment Mode Checkbox highlights
     ['Cash', 'NEFT/IMPS', 'Cheque', 'DD', 'UPI'].forEach(m => {
@@ -388,10 +388,11 @@ class InvoiceApp {
       if (box) {
         if (m === mode) {
           box.innerHTML = checkSvg;
-          box.classList.add('bg-indigo-950', 'text-white');
+          box.classList.add('is-checked');
+          box.classList.remove('bg-indigo-950', 'text-white');
         } else {
           box.innerHTML = '';
-          box.classList.remove('bg-indigo-950', 'text-white');
+          box.classList.remove('is-checked', 'bg-indigo-950', 'text-white');
         }
       }
     });

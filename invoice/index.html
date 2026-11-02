@@ -52,7 +52,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
   <!-- Custom App Styles -->
-  <link rel="stylesheet" href="css/styles.css?v=20261102_v8">
+  <link rel="stylesheet" href="css/styles.css?v=20261102_v11">
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col text-slate-800">
 
@@ -505,8 +505,8 @@
                           Unique Registration Number : <span class="font-mono text-indigo-950 font-extrabold">AADTC2907RF20241</span>
                         </p>
                       </div>
-                      <div class="w-24 h-12 flex items-center justify-end">
-                        <img src="assets/cfm-logo.svg" alt="Focus" class="h-10 w-auto object-contain">
+                      <div class="w-28 h-12 flex items-center justify-end">
+                        <img src="assets/cfm-logo.png" alt="Focus" class="h-11 w-auto object-contain">
                       </div>
                     </div>
 
@@ -569,17 +569,17 @@
                     </div>
 
                     <!-- Line 6: Payment Mode Checkboxes (Optically Centered) -->
-                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1.5 pb-0.5 text-[12.5px] font-bold text-slate-900">
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-2 pb-0.5 text-[12.5px] font-bold text-slate-900">
                       <span class="inline-flex items-center gap-1.5"><span>by Cash</span><span id="pv-mode-Cash" class="receipt-check-box"></span></span>
                       <span class="inline-flex items-center gap-1.5"><span>NEFT/IMPS</span><span id="pv-mode-NEFTIMPS" class="receipt-check-box"></span></span>
-                      <span class="inline-flex items-center gap-1.5"><span>Cheque</span><span id="pv-mode-Cheque" class="receipt-check-box bg-indigo-950 text-white"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5 text-white"><polyline points="20 6 9 17 4 12"></polyline></svg></span></span>
+                      <span class="inline-flex items-center gap-1.5"><span>Cheque</span><span id="pv-mode-Cheque" class="receipt-check-box"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1F52" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span></span>
                       <span class="inline-flex items-center gap-1.5"><span>DD</span><span id="pv-mode-DD" class="receipt-check-box"></span></span>
                       <span class="inline-flex items-center gap-1.5"><span>UPI</span><span id="pv-mode-UPI" class="receipt-check-box"></span></span>
                       <span id="pv-ref-line" class="text-[11.5px] font-normal text-slate-600 italic ml-auto">(King David Music Programme)</span>
                     </div>
 
                     <!-- Line 7: Amount Box (Left) & Authorized Signatory (Right) -->
-                    <div class="flex items-end justify-between pt-3">
+                    <div class="flex items-center justify-between pt-4 pb-2">
                       <!-- Big Rupee Amount Box -->
                       <div class="receipt-amount-box">
                         <span class="currency-symbol">₹</span>
@@ -587,18 +587,18 @@
                       </div>
 
                       <!-- Signatory -->
-                      <div class="text-center pr-2">
-                        <div class="h-12 flex items-center justify-center">
+                      <div class="text-center pr-2 flex flex-col items-center">
+                        <div class="h-11 flex items-center justify-center">
                           <img src="assets/signature.png" alt="Signature" class="h-11 w-auto object-contain">
                         </div>
-                        <div class="text-[12px] font-extrabold text-indigo-950 uppercase tracking-wider border-t border-indigo-950 pt-0.5 mt-0.5">
+                        <div class="w-44 border-t border-indigo-950 pt-0.5 mt-0.5 text-[11.5px] font-extrabold text-indigo-950 uppercase tracking-wider text-center">
                           Authorized Signatory
                         </div>
                       </div>
                     </div>
 
                     <!-- Footer: Registered Office Address & Optional Tax 80G Claim -->
-                    <div class="border-t border-slate-300 pt-2 mt-2 text-[10px] text-slate-700 text-center space-y-0.5 leading-tight">
+                    <div class="pt-3 text-[10px] text-slate-700 text-center space-y-0.5 leading-tight">
                       <div class="font-semibold">
                         Christ Focus Mission, Regus Olympia Platina, 9th Floor, Olympia Platina, Plot No.33-B, South Phase, Guindy Industrial Estate, Chennai - 600 032.
                       </div>
@@ -817,7 +817,7 @@
   </div>
 
   <!-- App Script Dependencies with cache busting -->
-  <script src="js/firebase-config.js?v=20261102_v10"></script>
-  <script src="js/app.js?v=20261102_v10"></script>
+  <script src="js/firebase-config.js?v=20261102_v11"></script>
+  <script src="js/app.js?v=20261102_v11"></script>
 </body>
 </html>
