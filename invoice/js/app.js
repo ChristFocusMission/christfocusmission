@@ -371,8 +371,8 @@ class InvoiceApp {
     if (previewNo) previewNo.textContent = receiptNo;
     if (previewDate) previewDate.textContent = formattedDate;
     if (previewDonorPan) previewDonorPan.textContent = donorPan ? `| DONOR PAN: ${donorPan}` : '| DONOR PAN: ';
-    if (previewName) previewName.textContent = donorName || '—';
-    if (previewAddress) previewAddress.textContent = address || '—';
+    if (previewName) previewName.textContent = donorName || '';
+    if (previewAddress) previewAddress.textContent = address || '';
     if (previewWords) previewWords.textContent = wordsVal || '—';
     
     const parsedAmount = parseInt(amountVal || '0', 10);
