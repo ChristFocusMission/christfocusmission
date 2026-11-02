@@ -376,16 +376,18 @@ class InvoiceApp {
     if (previewWords) previewWords.textContent = wordsVal;
     if (previewDigits) previewDigits.textContent = parseInt(amountVal || '0', 10).toLocaleString('en-IN') + '/-';
 
+    const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5 text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
     // Payment Mode Checkbox highlights
     ['Cash', 'NEFT/IMPS', 'Cheque', 'DD', 'UPI'].forEach(m => {
       const box = document.getElementById(`pv-mode-${m.replace(/[^a-zA-Z]/g, '')}`);
       if (box) {
         if (m === mode) {
-          box.textContent = '✓';
-          box.classList.add('bg-indigo-900', 'text-white');
+          box.innerHTML = checkSvg;
+          box.classList.add('bg-indigo-950', 'text-white');
         } else {
-          box.textContent = '';
-          box.classList.remove('bg-indigo-900', 'text-white');
+          box.innerHTML = '';
+          box.classList.remove('bg-indigo-950', 'text-white');
         }
       }
     });

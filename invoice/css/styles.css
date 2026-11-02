@@ -112,47 +112,77 @@ h1, h2, h3, h4, .font-heading {
   line-height: 26px;
 }
 
-/* Big Amount Display Box (Bottom Left) */
+/* Big Amount Display Box (Bottom Left) - Optically Centered */
 .receipt-amount-box {
   border: 2px solid #1A1F52;
-  background: #F8FAFC;
-  padding: 8px 18px;
+  background: #FFFFFF;
+  padding: 0 16px;
+  height: 46px;
+  min-height: 46px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .receipt-amount-box .currency-symbol {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.75rem;
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.55rem;
   font-weight: 800;
   color: #1A1F52;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-1px);
 }
 
 .receipt-amount-box .amount-digits {
   font-family: 'Space Grotesk', monospace;
-  font-size: 1.9rem;
+  font-size: 1.65rem;
   font-weight: 800;
   color: #1A1F52;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-1px);
 }
 
-/* Custom Checkbox for Payment Mode */
+/* Custom Checkbox for Payment Mode - Optically Centered */
 .receipt-check-box {
-  width: 15px;
-  height: 15px;
-  border: 1.5px solid #282860;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #1A1F52;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 2px;
-  background: #FFF;
-  margin-right: 5px;
-  vertical-align: -2px;
-  font-size: 12px;
-  font-weight: 900;
-  color: #1A1F52;
+  background: #FFFFFF;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.receipt-check-box.bg-indigo-950,
+.receipt-check-box.bg-indigo-900 {
+  background: #1A1F52 !important;
+  border-color: #1A1F52 !important;
+  color: #FFFFFF !important;
+}
+
+.receipt-check-box svg {
+  width: 9px;
+  height: 9px;
+  display: block;
 }
 
 /* Custom Scrollbars */
