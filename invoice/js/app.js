@@ -573,6 +573,62 @@ class InvoiceApp {
     }
   }
 
+  // High-Resolution Image Download (PNG format, perfect for WhatsApp & Mobile Sharing)
+  async downloadReceiptImage() {
+    const element = document.getElementById('printable-receipt-card');
+    if (!element) return;
+
+    this.showToast('Generating high-resolution receipt image (PNG)...', 'info');
+
+    try {
+      const receiptNo = document.getElementById('receipt-number')?.value.trim() || 'receipt';
+      const donorName = document.getElementById('donor-name')?.value.trim() || 'donor';
+      const cleanDonor = donorName.replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `CFM_Receipt_${receiptNo}_${cleanDonor}.png`;
+
+      // Guarantee latest form fields are painted onto DOM before screenshot
+      this.updatePreviewFromForm();
+
+      if (typeof html2canvas === 'function') {
+        const canvas = await html2canvas(element, {
+          scale: 3, // Crisp 300 DPI high-definition resolution
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        // Convert canvas to downloadable blob
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            // Data URL fallback
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = dataUrl;
+            link.click();
+            this.showToast(`Receipt #${receiptNo} image downloaded!`, 'success');
+            return;
+          }
+          const link = document.createElement('a');
+          link.download = filename;
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          this.showToast(`Receipt #${receiptNo} image downloaded!`, 'success');
+        }, 'image/png');
+      } else {
+        this.showToast('Image generator is initializing, please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Image generation error:', err);
+      this.showToast('Could not export image: ' + err.message, 'error');
+    }
+  }
+
   // ===================== DONORS DIRECTORY =====================
 
   renderDonorsTable() {
@@ -789,7 +845,10 @@ class InvoiceApp {
           <button type="button" onclick="app.viewReceipt('${r.id}')" class="px-2.5 py-1 text-xs font-bold bg-white text-indigo-700 hover:bg-indigo-50 rounded border border-indigo-200 transition mr-1">
             <i class="fas fa-eye"></i> View
           </button>
-          <button type="button" onclick="app.printExistingReceipt('${r.id}')" class="p-1 text-slate-600 hover:text-indigo-600" title="Print">
+          <button type="button" onclick="app.downloadExistingReceiptImage('${r.id}')" class="p-1 text-emerald-600 hover:text-emerald-800 mr-1" title="Download Image (PNG for WhatsApp/Sharing)">
+            <i class="fas fa-image"></i>
+          </button>
+          <button type="button" onclick="app.printExistingReceipt('${r.id}')" class="p-1 text-slate-600 hover:text-indigo-600 mr-1" title="Print / PDF">
             <i class="fas fa-print"></i>
           </button>
           <button type="button" onclick="app.deleteReceipt('${r.id}')" class="p-1 text-red-500 hover:text-red-700 ml-1" title="Delete">
@@ -816,6 +875,16 @@ class InvoiceApp {
     setTimeout(() => {
       window.print();
     }, 250);
+  }
+
+  downloadExistingReceiptImage(receiptId) {
+    const r = this.receipts.find(item => item.id === receiptId);
+    if (!r) return;
+    this.loadReceiptIntoForm(r);
+    this.switchTab('create');
+    setTimeout(() => {
+      this.downloadReceiptImage();
+    }, 300);
   }
 
   loadReceiptIntoForm(r) {

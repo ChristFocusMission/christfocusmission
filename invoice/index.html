@@ -43,6 +43,8 @@
 
   <!-- HTML2PDF CDN for Client-side Direct High-Res PDF Rendering -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- HTML2Canvas CDN for High-Res PNG/JPEG Image Generation (WhatsApp & Mobile Sharing) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Firebase Compatibility SDKs (Identical to CFM CRM) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -472,11 +474,14 @@
               </div>
 
               <div class="flex items-center gap-2 action-btn-group">
-                <button type="button" onclick="app.printReceipt()" class="px-3.5 py-1.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
-                  <i class="fas fa-print text-indigo-600"></i> Print / PDF
+                <button type="button" onclick="app.printReceipt()" class="px-3 py-1.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                  <i class="fas fa-print text-indigo-600"></i> Print
                 </button>
-                <button type="button" onclick="app.downloadReceiptPdf()" class="px-3.5 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
-                  <i class="fas fa-file-pdf text-red-500"></i> Download PDF
+                <button type="button" onclick="app.downloadReceiptPdf()" class="px-3 py-1.5 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                  <i class="fas fa-file-pdf text-red-500"></i> PDF
+                </button>
+                <button type="button" onclick="app.downloadReceiptImage()" class="px-3 py-1.5 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs" title="Download image to share directly on WhatsApp or mobile">
+                  <i class="fas fa-image text-emerald-600"></i> Download Image
                 </button>
               </div>
             </div>
@@ -807,7 +812,7 @@
   </div>
 
   <!-- App Script Dependencies with cache busting -->
-  <script src="js/firebase-config.js?v=20261102_v6"></script>
-  <script src="js/app.js?v=20261102_v6"></script>
+  <script src="js/firebase-config.js?v=20261102_v7"></script>
+  <script src="js/app.js?v=20261102_v7"></script>
 </body>
 </html>
