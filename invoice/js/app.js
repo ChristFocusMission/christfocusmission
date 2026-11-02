@@ -346,14 +346,14 @@ class InvoiceApp {
   updatePreviewFromForm() {
     const receiptNo = document.getElementById('receipt-number')?.value.trim() || 'IG001';
     const dateVal = document.getElementById('receipt-date')?.value || new Date().toISOString().split('T')[0];
-    const donorName = document.getElementById('donor-name')?.value.trim() || 'Pearline D';
+    const donorName = document.getElementById('donor-name')?.value.trim() || '';
     const donorPan = document.getElementById('donor-pan')?.value.trim() || '';
-    const address = document.getElementById('donor-address')?.value.trim() || 'Plot 14, Anna Nagar West Extension, Chennai - 600 101';
-    const amountVal = document.getElementById('receipt-amount')?.value.trim() || '5000';
-    const wordsVal = document.getElementById('receipt-amount-words')?.value.trim() || 'Five Thousand Only';
-    const mode = document.querySelector('input[name="payment_mode"]:checked')?.value || 'Cheque';
+    const address = document.getElementById('donor-address')?.value.trim() || '';
+    const amountVal = document.getElementById('receipt-amount')?.value.trim() || '';
+    const wordsVal = document.getElementById('receipt-amount-words')?.value.trim() || '';
+    const mode = document.querySelector('input[name="payment_mode"]:checked')?.value || 'Cash';
     const refNo = document.getElementById('payment-ref-no')?.value.trim() || '';
-    const scheme = document.getElementById('receipt-scheme')?.value || 'King David Music Programme';
+    const scheme = document.getElementById('receipt-scheme')?.value || 'General Charitable Mission';
 
     // Format date in Indian style: e.g. "6 July 2026"
     const formattedDate = this.formatDateIndian(dateVal);
@@ -371,10 +371,14 @@ class InvoiceApp {
     if (previewNo) previewNo.textContent = receiptNo;
     if (previewDate) previewDate.textContent = formattedDate;
     if (previewDonorPan) previewDonorPan.textContent = donorPan ? `| DONOR PAN: ${donorPan}` : '| DONOR PAN: ';
-    if (previewName) previewName.textContent = donorName;
+    if (previewName) previewName.textContent = donorName || '—';
     if (previewAddress) previewAddress.textContent = address || '—';
-    if (previewWords) previewWords.textContent = wordsVal;
-    if (previewDigits) previewDigits.textContent = parseInt(amountVal || '0', 10).toLocaleString('en-IN') + '/-';
+    if (previewWords) previewWords.textContent = wordsVal || '—';
+    
+    const parsedAmount = parseInt(amountVal || '0', 10);
+    if (previewDigits) {
+      previewDigits.textContent = parsedAmount > 0 ? (parsedAmount.toLocaleString('en-IN') + '/-') : '—';
+    }
 
     const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5 text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
@@ -522,20 +526,59 @@ class InvoiceApp {
     const saved = await cfmInvoiceFirebase.saveReceipt(receiptObj);
     this.currentReceipt = saved;
 
-    this.showToast(`Receipt #${receiptNo} generated and saved successfully!`, 'success');
+    this.showToast(`Receipt #${receiptNo} saved! You can now Download Image, PDF or Print.`, 'success');
 
     // Trigger confetti celebratory effect
     if (typeof confetti === 'function') {
       confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
     }
 
+    // Keep this exact saved receipt on screen so downloading image/PDF captures THIS receipt!
+    this.updatePreviewFromForm();
+
+    // Update "+ New Receipt" button text with next number
+    const newBtn = document.getElementById('btn-new-receipt');
+    if (newBtn) {
+      newBtn.innerHTML = `<i class="fas fa-plus-circle text-indigo-600"></i> New Receipt (${cfmInvoiceFirebase.getNextReceiptNumber()})`;
+    }
+
     if (printAfter) {
       this.printReceipt();
     }
-    // Auto-increment receipt number for next entry (IG001 -> IG002 -> ...)
+  }
+
+  // Prepares the form for a fresh new receipt with the next auto-incremented receipt number
+  prepareNewReceipt() {
     const nextNo = cfmInvoiceFirebase.getNextReceiptNumber();
-    const numEl = document.getElementById('receipt-number');
-    if (numEl) numEl.value = nextNo;
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+
+    setVal('receipt-number', nextNo);
+    setVal('receipt-date', new Date().toISOString().split('T')[0]);
+    setVal('donor-name', '');
+    setVal('donor-pan', '');
+    setVal('donor-address', '');
+    setVal('donor-email', '');
+    setVal('donor-phone', '');
+    setVal('payment-ref-no', '');
+    setVal('payment-bank-name', '');
+    setVal('receipt-amount', '5000');
+    this.handleAmountChange(5000);
+
+    const sel = document.getElementById('donor-select');
+    if (sel) sel.value = '';
+    this.selectedDonor = null;
+    this.currentReceipt = null;
+
+    this.updatePreviewFromForm();
+    this.showToast(`Prepared new receipt #${nextNo}`, 'info');
+
+    const newBtn = document.getElementById('btn-new-receipt');
+    if (newBtn) {
+      newBtn.innerHTML = `<i class="fas fa-plus-circle text-indigo-600"></i> New Receipt (Next Number)`;
+    }
   }
 
   // ===================== PRINT & DOWNLOAD PDF =====================
@@ -545,19 +588,30 @@ class InvoiceApp {
     window.print();
   }
 
-  async downloadReceiptPdf() {
+  async downloadReceiptPdf(specificReceipt = null) {
+    if (specificReceipt) {
+      this.loadReceiptIntoForm(specificReceipt);
+      this.currentReceipt = specificReceipt;
+    }
+    this.updatePreviewFromForm();
+
     const element = document.getElementById('printable-receipt-card');
     if (!element) return;
 
-    this.showToast('Preparing PDF download...', 'info');
+    const receiptNo = document.getElementById('receipt-number')?.value.trim() || (specificReceipt ? specificReceipt.receiptNo : 'receipt');
+    const donorName = document.getElementById('donor-name')?.value.trim() || (specificReceipt ? specificReceipt.donorName : 'donor');
+    const cleanDonor = (donorName || 'donor').replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `CFM_Receipt_${receiptNo}_${cleanDonor}.pdf`;
+
+    this.showToast(`Preparing PDF for Receipt #${receiptNo}...`, 'info');
+
+    // Allow browser DOM to paint
+    await new Promise(resolve => setTimeout(resolve, 80));
 
     try {
-      const receiptNo = document.getElementById('receipt-number').value.trim() || 'receipt';
-      const donorName = document.getElementById('donor-name').value.trim() || 'donor';
-
       const opt = {
         margin: [8, 10, 8, 10],
-        filename: `CFM_Receipt_${receiptNo}_${donorName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
@@ -565,7 +619,7 @@ class InvoiceApp {
 
       if (typeof html2pdf !== 'undefined') {
         await html2pdf().set(opt).from(element).save();
-        this.showToast('PDF downloaded successfully!', 'success');
+        this.showToast(`Receipt #${receiptNo} PDF downloaded successfully!`, 'success');
       } else {
         window.print();
       }
@@ -576,21 +630,27 @@ class InvoiceApp {
   }
 
   // High-Resolution Image Download (PNG format, perfect for WhatsApp & Mobile Sharing)
-  async downloadReceiptImage() {
+  async downloadReceiptImage(specificReceipt = null) {
+    if (specificReceipt) {
+      this.loadReceiptIntoForm(specificReceipt);
+      this.currentReceipt = specificReceipt;
+    }
+    this.updatePreviewFromForm();
+
     const element = document.getElementById('printable-receipt-card');
     if (!element) return;
 
-    this.showToast('Generating high-resolution receipt image (PNG)...', 'info');
+    const receiptNo = document.getElementById('receipt-number')?.value.trim() || (specificReceipt ? specificReceipt.receiptNo : 'receipt');
+    const donorName = document.getElementById('donor-name')?.value.trim() || (specificReceipt ? specificReceipt.donorName : 'donor');
+    const cleanDonor = (donorName || 'donor').replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `CFM_Receipt_${receiptNo}_${cleanDonor}.png`;
+
+    this.showToast(`Generating image for Receipt #${receiptNo} (PNG)...`, 'info');
+
+    // Wait for DOM paint
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
-      const receiptNo = document.getElementById('receipt-number')?.value.trim() || 'receipt';
-      const donorName = document.getElementById('donor-name')?.value.trim() || 'donor';
-      const cleanDonor = donorName.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `CFM_Receipt_${receiptNo}_${cleanDonor}.png`;
-
-      // Guarantee latest form fields are painted onto DOM before screenshot
-      this.updatePreviewFromForm();
-
       if (typeof html2canvas === 'function') {
         const canvas = await html2canvas(element, {
           scale: 3, // Crisp 300 DPI high-definition resolution
@@ -861,47 +921,71 @@ class InvoiceApp {
     `).join('');
   }
 
+  findReceiptRecord(receiptId) {
+    if (!receiptId) return null;
+    return this.receipts.find(item => 
+      String(item.id) === String(receiptId) || 
+      String(item.receiptNo) === String(receiptId)
+    );
+  }
+
   viewReceipt(receiptId) {
-    const r = this.receipts.find(item => item.id === receiptId);
-    if (!r) return;
+    const r = this.findReceiptRecord(receiptId);
+    if (!r) {
+      this.showToast('Could not find receipt record.', 'error');
+      return;
+    }
     this.loadReceiptIntoForm(r);
+    this.currentReceipt = r;
     this.switchTab('create');
-    this.showToast(`Loaded Receipt #${r.receiptNo}`, 'info');
+    this.showToast(`Loaded Receipt #${r.receiptNo} (${r.donorName || 'Donor'})`, 'info');
   }
 
   printExistingReceipt(receiptId) {
-    const r = this.receipts.find(item => item.id === receiptId);
-    if (!r) return;
+    const r = this.findReceiptRecord(receiptId);
+    if (!r) {
+      this.showToast('Could not find receipt record.', 'error');
+      return;
+    }
     this.loadReceiptIntoForm(r);
+    this.currentReceipt = r;
     this.switchTab('create');
     setTimeout(() => {
       window.print();
-    }, 250);
+    }, 200);
   }
 
-  downloadExistingReceiptImage(receiptId) {
-    const r = this.receipts.find(item => item.id === receiptId);
-    if (!r) return;
+  async downloadExistingReceiptImage(receiptId) {
+    const r = this.findReceiptRecord(receiptId);
+    if (!r) {
+      this.showToast('Could not find receipt record.', 'error');
+      return;
+    }
     this.loadReceiptIntoForm(r);
+    this.currentReceipt = r;
     this.switchTab('create');
-    setTimeout(() => {
-      this.downloadReceiptImage();
-    }, 300);
+    await this.downloadReceiptImage(r);
   }
 
   loadReceiptIntoForm(r) {
-    document.getElementById('receipt-number').value = r.receiptNo || '';
-    document.getElementById('receipt-date').value = r.date || '';
-    document.getElementById('donor-name').value = r.donorName || '';
-    document.getElementById('donor-pan').value = r.donorPan || '';
-    document.getElementById('donor-address').value = r.donorAddress || '';
-    document.getElementById('donor-email').value = r.donorEmail || '';
-    document.getElementById('donor-phone').value = r.donorPhone || '';
-    document.getElementById('receipt-amount').value = r.amount || '';
-    document.getElementById('receipt-amount-words').value = r.amountWords || '';
-    document.getElementById('payment-ref-no').value = r.paymentRefNo || '';
-    document.getElementById('payment-bank-name').value = r.bankName || '';
-    if (r.scheme) document.getElementById('receipt-scheme').value = r.scheme;
+    if (!r) return;
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = (val !== undefined && val !== null) ? val : '';
+    };
+
+    setVal('receipt-number', r.receiptNo || '');
+    setVal('receipt-date', r.date || new Date().toISOString().split('T')[0]);
+    setVal('donor-name', r.donorName || '');
+    setVal('donor-pan', r.donorPan || '');
+    setVal('donor-address', r.donorAddress || '');
+    setVal('donor-email', r.donorEmail || '');
+    setVal('donor-phone', r.donorPhone || '');
+    setVal('receipt-amount', r.amount || '');
+    setVal('receipt-amount-words', r.amountWords || (r.amount ? this.numberToIndianWords(r.amount) + ' Only' : ''));
+    setVal('payment-ref-no', r.paymentRefNo || '');
+    setVal('payment-bank-name', r.bankName || '');
+    if (r.scheme) setVal('receipt-scheme', r.scheme);
 
     // Check 80G tax note preference
     const cb80g = document.getElementById('receipt-eligible-80g');
@@ -910,8 +994,14 @@ class InvoiceApp {
     }
 
     // Check payment mode
-    const modeRadio = document.querySelector(`input[name="payment_mode"][value="${r.paymentMode}"]`);
-    if (modeRadio) modeRadio.checked = true;
+    const mode = r.paymentMode || 'Cash';
+    const modeRadio = document.querySelector(`input[name="payment_mode"][value="${mode}"]`);
+    if (modeRadio) {
+      modeRadio.checked = true;
+    } else {
+      const firstRadio = document.querySelector('input[name="payment_mode"]');
+      if (firstRadio) firstRadio.checked = true;
+    }
 
     if (r.fontStyle) this.setFontStyle(r.fontStyle);
     this.updatePreviewFromForm();
